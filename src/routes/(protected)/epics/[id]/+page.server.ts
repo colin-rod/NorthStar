@@ -5,30 +5,31 @@
  */
 
 import { error } from '@sveltejs/kit';
+
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	// Load epic
-	const { data: epic, error: epicError } = await locals.supabase
-		.from('epics')
-		.select(
-			`
+  // Load epic
+  const { data: epic, error: epicError } = await locals.supabase
+    .from('epics')
+    .select(
+      `
       *,
       project:projects(*)
-    `
-		)
-		.eq('id', params.id)
-		.single();
+    `,
+    )
+    .eq('id', params.id)
+    .single();
 
-	if (epicError || !epic) {
-		throw error(404, 'Epic not found');
-	}
+  if (epicError || !epic) {
+    throw error(404, 'Epic not found');
+  }
 
-	// Load issues in this epic
-	const { data: issues, error: issuesError } = await locals.supabase
-		.from('issues')
-		.select(
-			`
+  // Load issues in this epic
+  const { data: issues, error: issuesError } = await locals.supabase
+    .from('issues')
+    .select(
+      `
       *,
       project:projects(*),
       epic:epics(*),
@@ -37,17 +38,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         depends_on_issue_id,
         depends_on_issue:issues(*)
       )
-    `
-		)
-		.eq('epic_id', params.id)
-		.order('sort_order', { ascending: true });
+    `,
+    )
+    .eq('epic_id', params.id)
+    .order('sort_order', { ascending: true });
 
-	if (issuesError) {
-		console.error('Error loading issues:', issuesError);
-	}
+  if (issuesError) {
+    console.error('Error loading issues:', issuesError);
+  }
 
-	return {
-		epic,
-		issues: issues || []
-	};
+  return {
+    epic,
+    issues: issues || [],
+  };
 };

@@ -20,18 +20,21 @@ Add `user_id` columns to `epics` and `issues` tables and update RLS policies to 
 ### 1. Schema Changes
 
 **Add user_id to epics:**
+
 ```sql
 ALTER TABLE epics ADD COLUMN user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE;
 CREATE INDEX idx_epics_user_id ON epics(user_id);
 ```
 
 **Add user_id to issues:**
+
 ```sql
 ALTER TABLE issues ADD COLUMN user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE;
 CREATE INDEX idx_issues_user_id ON issues(user_id);
 ```
 
 **Rationale:**
+
 - Denormalize user_id for RLS performance (avoids JOINs in policy checks)
 - Indexed for fast policy evaluation
 - NOT NULL ensures data integrity
@@ -41,6 +44,7 @@ CREATE INDEX idx_issues_user_id ON issues(user_id);
 ### 2. Automatic Synchronization with Triggers
 
 **Epic user_id sync:**
+
 ```sql
 CREATE OR REPLACE FUNCTION sync_epic_user_id()
 RETURNS TRIGGER AS $$
@@ -57,6 +61,7 @@ CREATE TRIGGER sync_epic_user_id_trigger
 ```
 
 **Issue user_id sync:**
+
 ```sql
 CREATE OR REPLACE FUNCTION sync_issue_user_id()
 RETURNS TRIGGER AS $$
@@ -73,6 +78,7 @@ CREATE TRIGGER sync_issue_user_id_trigger
 ```
 
 **Rationale:**
+
 - Zero application code changes needed
 - Consistency enforced at database level
 - Automatic synchronization if project ownership changes
@@ -81,6 +87,7 @@ CREATE TRIGGER sync_issue_user_id_trigger
 ### 3. Updated RLS Policies
 
 **Epics - Replace JOIN-based policy:**
+
 ```sql
 DROP POLICY "Users can access epics in their projects" ON epics;
 
@@ -90,6 +97,7 @@ CREATE POLICY "Users can access their own epics"
 ```
 
 **Issues - Replace JOIN-based policy:**
+
 ```sql
 DROP POLICY "Users can access issues in their projects" ON issues;
 
@@ -99,11 +107,13 @@ CREATE POLICY "Users can access their own issues"
 ```
 
 **Unchanged policies:**
+
 - Projects: Already uses `auth.uid() = user_id` ✓
 - Milestones: Already uses `auth.uid() = user_id` ✓
 - Dependencies: Keep JOIN-based (no user_id, checks through issues)
 
 **Rationale:**
+
 - Simpler policies without subqueries
 - Better performance (indexed equality vs EXISTS)
 - Consistent pattern across user-owned tables
@@ -140,6 +150,7 @@ CREATE POLICY "Users can access their own issues"
    - Delete test data
 
 **Output format:**
+
 ```
 check_name                          | expected | actual | status
 ------------------------------------|----------|--------|--------
@@ -150,6 +161,7 @@ Other user cannot SELECT projects   | 0        | 0      | PASS
 ```
 
 **Rationale:**
+
 - Matches existing `verify.sql` pattern
 - Fast execution (no external dependencies)
 - Can run with: `psql < verify-rls.sql`
@@ -162,6 +174,7 @@ Other user cannot SELECT projects   | 0        | 0      | PASS
 **Execution order:**
 
 1. **Add columns (nullable first):**
+
    ```sql
    ALTER TABLE epics ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
    ALTER TABLE issues ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
@@ -172,12 +185,14 @@ Other user cannot SELECT projects   | 0        | 0      | PASS
    - Create triggers on epics and issues
 
 3. **Backfill existing data:**
+
    ```sql
    UPDATE epics SET user_id = user_id; -- Triggers populate from projects
    UPDATE issues SET user_id = user_id; -- Triggers populate from projects
    ```
 
 4. **Add NOT NULL constraints:**
+
    ```sql
    ALTER TABLE epics ALTER COLUMN user_id SET NOT NULL;
    ALTER TABLE issues ALTER COLUMN user_id SET NOT NULL;
@@ -244,6 +259,7 @@ ALTER TABLE issues DROP COLUMN user_id CASCADE;
 **Alternative:** Keep JOIN-based policies
 
 **Why denormalization wins:**
+
 - Minimal overhead (triggers only fire on INSERT/UPDATE)
 - Significant performance gain on every SELECT with RLS
 - Single-user app means no complex ownership changes

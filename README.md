@@ -69,10 +69,12 @@ pnpm dev
 Navigate to [http://localhost:5173/test](http://localhost:5173/test)
 
 You should see:
+
 - ✅ Server-side timestamp (proving server connection works)
 - ✅ Client-side timestamp (proving browser connection works)
 
 If you see errors:
+
 - Check that `.env.local` exists with correct `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_ANON_KEY`
 - Verify credentials in Supabase dashboard (Project Settings → API)
 - Ensure Supabase project is not paused

@@ -297,12 +297,12 @@ src/
 ```typescript
 // +page.server.ts
 export const load = async ({ locals: { supabase } }) => {
-	const { data: issues } = await supabase
-		.from('issues')
-		.select('*, epic:epics(*), project:projects(*)')
-		.eq('status', 'todo');
+  const { data: issues } = await supabase
+    .from('issues')
+    .select('*, epic:epics(*), project:projects(*)')
+    .eq('status', 'todo');
 
-	return { issues };
+  return { issues };
 };
 ```
 
@@ -311,10 +311,10 @@ export const load = async ({ locals: { supabase } }) => {
 ```typescript
 // +page.server.ts
 export const actions = {
-	createIssue: async ({ request, locals: { supabase } }) => {
-		const data = await request.formData();
-		// Validate, insert, redirect
-	}
+  createIssue: async ({ request, locals: { supabase } }) => {
+    const data = await request.formData();
+    // Validate, insert, redirect
+  },
 };
 ```
 
@@ -325,7 +325,7 @@ export const actions = {
 import { derived } from 'svelte/store';
 
 export const readyIssues = derived(issues, ($issues) =>
-	$issues.filter((issue) => issue.status === 'todo' && !isBlocked(issue))
+  $issues.filter((issue) => issue.status === 'todo' && !isBlocked(issue)),
 );
 ```
 
@@ -333,14 +333,14 @@ export const readyIssues = derived(issues, ($issues) =>
 
 ```svelte
 <script>
-	import { Sheet, SheetContent } from '$lib/components/ui/sheet';
-	let open = false;
+  import { Sheet, SheetContent } from '$lib/components/ui/sheet';
+  let open = false;
 </script>
 
 <Sheet bind:open>
-	<SheetContent>
-		<!-- Issue detail form -->
-	</SheetContent>
+  <SheetContent>
+    <!-- Issue detail form -->
+  </SheetContent>
 </Sheet>
 ```
 

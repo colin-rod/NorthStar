@@ -69,6 +69,7 @@ IssueTracker/
 ### Component Organization
 
 **Domain Components** (`lib/components/`)
+
 - `IssueRow.svelte` - Reusable issue list item
 - `IssueSheet.svelte` - Bottom sheet for editing issues
 - `ProjectCard.svelte` - Project overview card
@@ -76,35 +77,41 @@ IssueTracker/
 - `DependencyGraph.svelte` - Dependency visualization
 
 **UI Components** (`lib/components/ui/`)
+
 - shadcn/svelte components (Button, Input, Card, etc.)
 - Generic, reusable UI primitives
 
 ### State Management
 
 **Stores** (`lib/stores/`)
+
 - `issues.ts` - Writable stores for issues, projects, epics
 - `computed.ts` - Derived stores for Ready/Blocked/Doing filters
 
 ### Business Logic
 
 **Utilities** (`lib/utils/`)
+
 - `issue-helpers.ts` - Status computations (isBlocked, isReady)
 - `dependency-graph.ts` - Cycle detection, topological sort
 
 ### Route Structure
 
 **Protected Routes** (`routes/(protected)/`)
+
 - Require authentication
 - Main application functionality
 - Home, Projects, Epics, Issues
 
 **Public Routes** (`routes/(public)/`)
+
 - No authentication required
 - Login, Signup, Confirmation
 
 ### Database
 
 **Schema** (`supabase/migrations/001_initial_schema.sql`)
+
 - Complete schema with all tables, indexes, functions, triggers
 - RLS policies for security
 - Cycle detection for dependencies
@@ -113,6 +120,7 @@ IssueTracker/
 ## Next Steps
 
 1. **Set up Supabase**
+
    ```bash
    npx supabase init
    npx supabase start
@@ -124,11 +132,13 @@ IssueTracker/
    - Add your Supabase URL and anon key
 
 3. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 4. **Run development server**
+
    ```bash
    pnpm dev
    ```
@@ -170,11 +180,13 @@ import { supabase } from '$lib/supabase';
 ## Testing
 
 **Unit Tests**: Test utility functions
+
 ```bash
 pnpm test
 ```
 
 **E2E Tests**: Test full user flows
+
 ```bash
 pnpm test:e2e
 ```

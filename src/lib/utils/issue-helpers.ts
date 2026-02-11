@@ -18,14 +18,14 @@ import type { Issue } from '$lib/types';
  * with status NOT in ['done', 'canceled']
  */
 export function isBlocked(issue: Issue): boolean {
-	if (!issue.dependencies || issue.dependencies.length === 0) {
-		return false;
-	}
+  if (!issue.dependencies || issue.dependencies.length === 0) {
+    return false;
+  }
 
-	// Check if any dependency is not done or canceled
-	return issue.dependencies.some((dep) => {
-		return dep.depends_on_issue.status !== 'done' && dep.depends_on_issue.status !== 'canceled';
-	});
+  // Check if any dependency is not done or canceled
+  return issue.dependencies.some((dep) => {
+    return dep.depends_on_issue.status !== 'done' && dep.depends_on_issue.status !== 'canceled';
+  });
 }
 
 /**
@@ -34,7 +34,7 @@ export function isBlocked(issue: Issue): boolean {
  * Ready = status is 'todo' AND not blocked
  */
 export function isReady(issue: Issue): boolean {
-	return issue.status === 'todo' && !isBlocked(issue);
+  return issue.status === 'todo' && !isBlocked(issue);
 }
 
 /**
@@ -43,13 +43,13 @@ export function isReady(issue: Issue): boolean {
  * Returns only dependencies that are actively blocking (not done/canceled)
  */
 export function getBlockingDependencies(issue: Issue): Issue[] {
-	if (!issue.dependencies || issue.dependencies.length === 0) {
-		return [];
-	}
+  if (!issue.dependencies || issue.dependencies.length === 0) {
+    return [];
+  }
 
-	return issue.dependencies
-		.map((dep) => dep.depends_on_issue)
-		.filter((dep) => dep.status !== 'done' && dep.status !== 'canceled');
+  return issue.dependencies
+    .map((dep) => dep.depends_on_issue)
+    .filter((dep) => dep.status !== 'done' && dep.status !== 'canceled');
 }
 
 /**
@@ -58,41 +58,41 @@ export function getBlockingDependencies(issue: Issue): Issue[] {
  * Returns dependencies that are done or canceled
  */
 export function getSatisfiedDependencies(issue: Issue): Issue[] {
-	if (!issue.dependencies || issue.dependencies.length === 0) {
-		return [];
-	}
+  if (!issue.dependencies || issue.dependencies.length === 0) {
+    return [];
+  }
 
-	return issue.dependencies
-		.map((dep) => dep.depends_on_issue)
-		.filter((dep) => dep.status === 'done' || dep.status === 'canceled');
+  return issue.dependencies
+    .map((dep) => dep.depends_on_issue)
+    .filter((dep) => dep.status === 'done' || dep.status === 'canceled');
 }
 
 /**
  * Check if an issue is in a terminal state
  */
 export function isTerminal(issue: Issue): boolean {
-	return issue.status === 'done' || issue.status === 'canceled';
+  return issue.status === 'done' || issue.status === 'canceled';
 }
 
 /**
  * Get status display color
  */
 export function getStatusColor(status: string): string {
-	const colors: Record<string, string> = {
-		todo: 'secondary',
-		doing: 'default',
-		in_review: 'outline',
-		done: 'success',
-		canceled: 'destructive'
-	};
-	return colors[status] || 'secondary';
+  const colors: Record<string, string> = {
+    todo: 'secondary',
+    doing: 'default',
+    in_review: 'outline',
+    done: 'success',
+    canceled: 'destructive',
+  };
+  return colors[status] || 'secondary';
 }
 
 /**
  * Get priority display label
  */
 export function getPriorityLabel(priority: number): string {
-	return `P${priority}`;
+  return `P${priority}`;
 }
 
 /**
@@ -101,8 +101,8 @@ export function getPriorityLabel(priority: number): string {
  * Story points must be in: 1, 2, 3, 5, 8, 13, 21
  */
 export function isValidStoryPoints(points: number | null): boolean {
-	if (points === null) return true;
-	return [1, 2, 3, 5, 8, 13, 21].includes(points);
+  if (points === null) return true;
+  return [1, 2, 3, 5, 8, 13, 21].includes(points);
 }
 
 /**
@@ -114,12 +114,12 @@ export const ALLOWED_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21] as const;
  * Get status transitions allowed from current status
  */
 export function getAllowedStatusTransitions(currentStatus: string): string[] {
-	const transitions: Record<string, string[]> = {
-		todo: ['doing', 'canceled'],
-		doing: ['in_review', 'todo', 'canceled'],
-		in_review: ['done', 'doing', 'canceled'],
-		done: [], // Terminal state
-		canceled: ['todo'] // Can reopen
-	};
-	return transitions[currentStatus] || [];
+  const transitions: Record<string, string[]> = {
+    todo: ['doing', 'canceled'],
+    doing: ['in_review', 'todo', 'canceled'],
+    in_review: ['done', 'doing', 'canceled'],
+    done: [], // Terminal state
+    canceled: ['todo'], // Can reopen
+  };
+  return transitions[currentStatus] || [];
 }

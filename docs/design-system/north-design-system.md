@@ -12,11 +12,13 @@ North is the design system for the Personal Issue Tracker application. It emphas
 ### Brand Positioning
 
 **This is:**
+
 - A personal clarity tool
 - A thinking workspace
 - A structured way to move forward
 
 **This is not:**
+
 - A team management suite
 - A productivity gamification app
 - A "hustle" tool
@@ -36,11 +38,11 @@ North is the design system for the Personal Issue Tracker application. It emphas
 
 **Examples:**
 
-| Instead of | Say |
-|------------|-----|
-| "Crush your goals!" | "What's next?" |
-| "You're blocked!" | "Blocked by 2 issues." |
-| Empty state | "Nothing ready.<br>Either everything is blocked — or you're done." |
+| Instead of          | Say                                                                |
+| ------------------- | ------------------------------------------------------------------ |
+| "Crush your goals!" | "What's next?"                                                     |
+| "You're blocked!"   | "Blocked by 2 issues."                                             |
+| Empty state         | "Nothing ready.<br>Either everything is blocked — or you're done." |
 
 ---
 
@@ -49,15 +51,18 @@ North is the design system for the Personal Issue Tracker application. It emphas
 ### Core Neutrals
 
 #### Background
+
 - **Base:** `#FAF9F6` - `hsl(42 17% 98%)` - `--background`
 - **Surface:** `#FFFFFF` - `hsl(0 0% 100%)` - `--surface`
 - **Subtle tint:** `#F3F1EC` - `hsl(40 18% 95%)` - `--surface-subtle`
 
 #### Borders
+
 - **Light border:** `#E7E2DA` - `hsl(35 17% 88%)` - `--border`
 - **Divider:** `#EAE6DF` - `hsl(38 16% 91%)` - `--border-divider`
 
 #### Text
+
 - **Primary:** `#1F2937` - `hsl(217 19% 15%)` - `--foreground` (deep navy)
 - **Secondary:** `#6B7280` - `hsl(215 14% 48%)` - `--foreground-secondary`
 - **Muted:** `#9CA3AF` - `hsl(214 11% 64%)` - `--foreground-muted`
@@ -66,11 +71,13 @@ North is the design system for the Personal Issue Tracker application. It emphas
 ### Primary Accent (Brand Accent)
 
 **Warm Burnt Orange**
+
 - **Default:** `#C2410C` - `hsl(17 91% 40%)` - `--primary`
 - **Hover:** `#9A3412` - `hsl(17 89% 33%)` - `--primary-hover`
 - **Tint:** `#FDE8DD` - `hsl(17 97% 93%)` - `--primary-tint`
 
 **Used for:**
+
 - Active tab indicator
 - Primary action button
 - Selected state
@@ -79,9 +86,11 @@ North is the design system for the Personal Issue Tracker application. It emphas
 ### Secondary Accent (Cool Anchor)
 
 **Deep Indigo**
+
 - **Color:** `#4F46E5` - `hsl(239 68% 60%)` - `--accent`
 
 **Used sparingly for:**
+
 - Focus indicators
 - Links
 - Optional highlights
@@ -90,14 +99,14 @@ North is the design system for the Personal Issue Tracker application. It emphas
 
 Muted, not loud.
 
-| Status | Color | Hex | HSL | Variable |
-|--------|-------|-----|-----|----------|
-| **Todo** | Neutral gray | `#D1D5DB` | `214 14% 82%` | `--status-todo` |
-| **Doing** | Blue | `#2563EB` | `221 83% 53%` | `--status-doing` |
+| Status        | Color        | Hex       | HSL           | Variable             |
+| ------------- | ------------ | --------- | ------------- | -------------------- |
+| **Todo**      | Neutral gray | `#D1D5DB` | `214 14% 82%` | `--status-todo`      |
+| **Doing**     | Blue         | `#2563EB` | `221 83% 53%` | `--status-doing`     |
 | **In Review** | Muted violet | `#7C3AED` | `258 70% 57%` | `--status-in-review` |
-| **Done** | Forest green | `#166534` | `150 78% 29%` | `--status-done` |
-| **Blocked** | Amber | `#D97706` | `36 87% 45%` | `--status-blocked` |
-| **Canceled** | Gray | `#9CA3AF` | `214 11% 64%` | `--status-canceled` |
+| **Done**      | Forest green | `#166534` | `150 78% 29%` | `--status-done`      |
+| **Blocked**   | Amber        | `#D97706` | `36 87% 45%`  | `--status-blocked`   |
+| **Canceled**  | Gray         | `#9CA3AF` | `214 11% 64%` | `--status-canceled`  |
 
 ### Semantic Background Tints
 
@@ -114,22 +123,24 @@ Very subtle — never loud.
 ### Font Pairing
 
 **Primary UI Font:** Inter
+
 - Used for: Body, labels, buttons, metadata
 - Weights: 400 (regular), 500 (medium), 600 (semibold)
 
 **Accent Serif:** Fraunces
+
 - Used for: Page titles, brand wordmark, empty states
 - Weight: 600 (semibold)
 
 ### Type Scale
 
-| Use Case | Size | Weight | Line Height | Letter Spacing | Class |
-|----------|------|--------|-------------|----------------|-------|
-| **Page Title** | 22px | 600 | 1.2 | -0.3px | `.text-page-title` |
-| **Section Header** | 16px | 600 | 1.3 | — | `.text-section-header` |
-| **Issue Title** | 16px | 500 | 1.3 | — | `.text-issue-title` |
-| **Body Text** | 15px | 400 | 1.5 | — | `.text-body` |
-| **Metadata** | 13px | 500 | 1.5 | — | `.text-metadata` |
+| Use Case           | Size | Weight | Line Height | Letter Spacing | Class                  |
+| ------------------ | ---- | ------ | ----------- | -------------- | ---------------------- |
+| **Page Title**     | 22px | 600    | 1.2         | -0.3px         | `.text-page-title`     |
+| **Section Header** | 16px | 600    | 1.3         | —              | `.text-section-header` |
+| **Issue Title**    | 16px | 500    | 1.3         | —              | `.text-issue-title`    |
+| **Body Text**      | 15px | 400    | 1.5         | —              | `.text-body`           |
+| **Metadata**       | 13px | 500    | 1.5         | —              | `.text-metadata`       |
 
 ### Usage
 
@@ -158,15 +169,15 @@ Very subtle — never loud.
 
 ### Spacing Scale
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `xs` | 4px | Tight gaps, icon spacing |
-| `sm` | 8px | Label-to-control spacing |
-| `md` | 12px | Compact sections |
-| `base` | 16px | Issue row vertical padding |
-| `lg` | 24px | Drawer section spacing |
-| `xl` | 32px | Large gaps |
-| `2xl` | 48px | Major section breaks |
+| Token  | Value | Usage                      |
+| ------ | ----- | -------------------------- |
+| `xs`   | 4px   | Tight gaps, icon spacing   |
+| `sm`   | 8px   | Label-to-control spacing   |
+| `md`   | 12px  | Compact sections           |
+| `base` | 16px  | Issue row vertical padding |
+| `lg`   | 24px  | Drawer section spacing     |
+| `xl`   | 32px  | Large gaps                 |
+| `2xl`  | 48px  | Major section breaks       |
 
 ### Rules
 
@@ -183,21 +194,23 @@ Very subtle — never loud.
 **Default: List-first**
 
 **Issue rows:**
+
 - No heavy cards
 - Light divider lines
 - Slight hover/active tint only
 
 **Cards only used for:**
+
 - Drawer (bottom sheet)
 - Project blocks (optional)
 
 ### Border Radius
 
-| Size | Value | Usage |
-|------|-------|-------|
-| **Small** | 6px | Badges, small elements |
-| **Medium** | 10px | Cards, buttons |
-| **Large** | 20px | Drawer top corners |
+| Size       | Value | Usage                  |
+| ---------- | ----- | ---------------------- |
+| **Small**  | 6px   | Badges, small elements |
+| **Medium** | 10px  | Cards, buttons         |
+| **Large**  | 20px  | Drawer top corners     |
 
 **Never over-round.**
 
@@ -217,6 +230,7 @@ No more.
 ### Issue Row
 
 **Structure:**
+
 - 16px vertical padding
 - Title: bold-ish (16px, weight 500)
 - Metadata below (13px, secondary color)
@@ -224,6 +238,7 @@ No more.
 - Status indicator: small colored dot (4-6px)
 
 **Implementation:**
+
 ```svelte
 <button class="w-full px-4 py-4 border-b border-border-divider hover:bg-surface-subtle">
   <!-- Status dot -->
@@ -245,27 +260,32 @@ No more.
 Never full-width color bars.
 
 **Use:**
+
 - Small left border accent (2-3px), OR
 - Subtle colored dot (4-6px diameter)
 
 **Examples:**
+
 - Doing → blue dot
 - Blocked → amber dot
 
 ### Buttons
 
 **Primary:**
+
 - Background: burnt orange (`--primary`)
 - Text: white
 - Radius: 8px
 - Padding: 12px horizontal, maintain vertical for touch
 
 **Secondary:**
+
 - Transparent background
 - Border: subtle neutral
 - Text: primary foreground
 
 **Destructive:**
+
 - Red text only (no filled red buttons in MVP)
 
 ```svelte
@@ -282,11 +302,13 @@ Never full-width color bars.
 ### Segmented Control (Home View)
 
 **Design:**
+
 - Underline indicator in burnt orange
 - Text: muted by default, primary when active
 - No background fills
 
 **Implementation:**
+
 ```svelte
 <Tabs>
   <TabsList>
@@ -300,12 +322,14 @@ Never full-width color bars.
 ### Issue Drawer (Sheet)
 
 **Design:**
+
 - White surface with level 2 shadow
 - Rounded top corners (20px)
 - Sections separated by 24px spacing (not heavy borders)
 - Labels: 12px uppercase, muted color
 
 **Section structure:**
+
 ```svelte
 <section>
   <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
@@ -324,30 +348,34 @@ Never full-width color bars.
 ### Motion Principles
 
 Motion should feel:
+
 - **Quick** - No waiting
 - **Quiet** - No bouncy animations
 - **Predictable** - Expected behavior
 
 ### Animation Durations
 
-| Action | Duration | Easing |
-|--------|----------|--------|
-| **Drawer open** | 200-250ms | Ease-out |
-| **Status change** | 150ms | Linear |
-| **Hover states** | 150ms | Linear |
+| Action            | Duration  | Easing   |
+| ----------------- | --------- | -------- |
+| **Drawer open**   | 200-250ms | Ease-out |
+| **Status change** | 150ms     | Linear   |
+| **Hover states**  | 150ms     | Linear   |
 
 ### Specific Behaviors
 
 **Drawer open:**
+
 - Slide up 200-250ms
 - Ease-out curve
 - No overshoot
 
 **Status change:**
+
 - Small fade + reorder animation
 - No celebration
 
 **Add dependency:**
+
 - Instant — no celebratory animation
 
 **No bouncy animations.**
@@ -359,15 +387,18 @@ Motion should feel:
 Short. Clear. No fluff.
 
 ### Buttons
+
 - "Add issue"
 - "Move"
 - "Mark done"
 
 ### Errors
+
 - "That creates a cycle."
 - "Story points must be 1–21."
 
 ### Empty States
+
 - "No issues yet."
 - "Nothing ready."
 - "Either everything is blocked — or you're done."
@@ -463,6 +494,7 @@ const label = getPriorityLabel(0); // 'P0'
 ## Changelog
 
 ### Version 1.0 (2026-02-11)
+
 - Initial North design system implementation
 - Complete color palette definition
 - Typography system with Inter + Fraunces

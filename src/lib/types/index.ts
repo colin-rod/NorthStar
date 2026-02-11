@@ -10,9 +10,9 @@
  * User type (from Supabase Auth)
  */
 export interface User {
-	id: string;
-	email: string;
-	created_at: string;
+  id: string;
+  email: string;
+  created_at: string;
 }
 
 /**
@@ -21,14 +21,14 @@ export interface User {
  * Top-level container for work
  */
 export interface Project {
-	id: string;
-	user_id: string;
-	name: string;
-	created_at: string;
-	archived_at: string | null;
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  archived_at: string | null;
 
-	// Relations (populated via joins)
-	epics?: Epic[];
+  // Relations (populated via joins)
+  epics?: Epic[];
 }
 
 /**
@@ -37,16 +37,16 @@ export interface Project {
  * Project-scoped thematic grouping
  */
 export interface Epic {
-	id: string;
-	project_id: string;
-	name: string;
-	status: EpicStatus;
-	is_default: boolean;
-	sort_order: number | null;
+  id: string;
+  project_id: string;
+  name: string;
+  status: EpicStatus;
+  is_default: boolean;
+  sort_order: number | null;
 
-	// Relations
-	project?: Project;
-	issues?: Issue[];
+  // Relations
+  project?: Project;
+  issues?: Issue[];
 }
 
 export type EpicStatus = 'active' | 'done' | 'canceled';
@@ -57,13 +57,13 @@ export type EpicStatus = 'active' | 'done' | 'canceled';
  * Global (cross-project) reusable label
  */
 export interface Milestone {
-	id: string;
-	user_id: string;
-	name: string;
-	due_date: string | null; // ISO date string
+  id: string;
+  user_id: string;
+  name: string;
+  due_date: string | null; // ISO date string
 
-	// Relations
-	issues?: Issue[];
+  // Relations
+  issues?: Issue[];
 }
 
 /**
@@ -72,27 +72,27 @@ export interface Milestone {
  * Primary unit of work
  */
 export interface Issue {
-	id: string;
-	project_id: string;
-	epic_id: string;
-	parent_issue_id: string | null;
-	milestone_id: string | null;
-	title: string;
-	status: IssueStatus;
-	priority: number; // 0-3 (P0-P3)
-	story_points: StoryPoints | null;
-	sort_order: number | null;
-	created_at: string;
+  id: string;
+  project_id: string;
+  epic_id: string;
+  parent_issue_id: string | null;
+  milestone_id: string | null;
+  title: string;
+  status: IssueStatus;
+  priority: number; // 0-3 (P0-P3)
+  story_points: StoryPoints | null;
+  sort_order: number | null;
+  created_at: string;
 
-	// Relations (populated via joins)
-	project?: Project;
-	epic?: Epic;
-	milestone?: Milestone;
-	parent_issue?: Issue;
-	sub_issues?: Issue[];
-	dependencies?: Dependency[]; // Issues this depends on
-	blocked_by?: Issue[]; // Issues blocking this one
-	blocking?: Issue[]; // Issues this one blocks
+  // Relations (populated via joins)
+  project?: Project;
+  epic?: Epic;
+  milestone?: Milestone;
+  parent_issue?: Issue;
+  sub_issues?: Issue[];
+  dependencies?: Dependency[]; // Issues this depends on
+  blocked_by?: Issue[]; // Issues blocking this one
+  blocking?: Issue[]; // Issues this one blocks
 }
 
 export type IssueStatus = 'todo' | 'doing' | 'in_review' | 'done' | 'canceled';
@@ -110,12 +110,12 @@ export type StoryPoints = 1 | 2 | 3 | 5 | 8 | 13 | 21;
  * Directed relationship: "Issue A depends on Issue B"
  */
 export interface Dependency {
-	issue_id: string;
-	depends_on_issue_id: string;
+  issue_id: string;
+  depends_on_issue_id: string;
 
-	// Relations (populated via joins)
-	issue?: Issue;
-	depends_on_issue?: Issue;
+  // Relations (populated via joins)
+  issue?: Issue;
+  depends_on_issue?: Issue;
 }
 
 /**
@@ -124,10 +124,10 @@ export interface Dependency {
  * These are derived, not stored in database
  */
 export interface ComputedIssueState {
-	isBlocked: boolean;
-	isReady: boolean;
-	blockingCount: number; // Number of issues this blocks
-	blockedByCount: number; // Number of dependencies
+  isBlocked: boolean;
+  isReady: boolean;
+  blockingCount: number; // Number of issues this blocks
+  blockedByCount: number; // Number of dependencies
 }
 
 /**
@@ -135,33 +135,33 @@ export interface ComputedIssueState {
  */
 
 export interface CreateIssueInput {
-	title: string;
-	project_id: string;
-	epic_id: string;
-	status?: IssueStatus;
-	priority?: number;
-	story_points?: StoryPoints | null;
-	parent_issue_id?: string | null;
-	milestone_id?: string | null;
+  title: string;
+  project_id: string;
+  epic_id: string;
+  status?: IssueStatus;
+  priority?: number;
+  story_points?: StoryPoints | null;
+  parent_issue_id?: string | null;
+  milestone_id?: string | null;
 }
 
 export interface UpdateIssueInput extends Partial<CreateIssueInput> {
-	id: string;
+  id: string;
 }
 
 export interface CreateProjectInput {
-	name: string;
+  name: string;
 }
 
 export interface CreateEpicInput {
-	name: string;
-	project_id: string;
-	status?: EpicStatus;
+  name: string;
+  project_id: string;
+  status?: EpicStatus;
 }
 
 export interface CreateDependencyInput {
-	issue_id: string;
-	depends_on_issue_id: string;
+  issue_id: string;
+  depends_on_issue_id: string;
 }
 
 /**
@@ -169,25 +169,25 @@ export interface CreateDependencyInput {
  */
 
 export interface HomePageData {
-	issues: Issue[];
-	readyCount: number;
-	blockedCount: number;
-	doingCount: number;
-	doneCount: number;
+  issues: Issue[];
+  readyCount: number;
+  blockedCount: number;
+  doingCount: number;
+  doneCount: number;
 }
 
 export interface ProjectPageData {
-	project: Project;
-	epics: Epic[];
+  project: Project;
+  epics: Epic[];
 }
 
 export interface EpicPageData {
-	epic: Epic;
-	issues: Issue[];
+  epic: Epic;
+  issues: Issue[];
 }
 
 export interface IssuePageData {
-	issue: Issue;
-	dependencies: Dependency[];
-	subIssues: Issue[];
+  issue: Issue;
+  dependencies: Dependency[];
+  subIssues: Issue[];
 }

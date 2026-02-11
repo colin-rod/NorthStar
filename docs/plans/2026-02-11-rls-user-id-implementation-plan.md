@@ -11,6 +11,7 @@
 **File:** `supabase/migrations/002_add_user_id_to_epics_and_issues.sql`
 
 Create the migration file with clear sections:
+
 - Schema changes (add columns)
 - Trigger functions
 - Triggers
@@ -20,6 +21,7 @@ Create the migration file with clear sections:
 - Add indexes
 
 **Acceptance:**
+
 - Migration file exists with proper header comments
 - Sections are clearly marked
 
@@ -34,6 +36,7 @@ ALTER TABLE issues ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE C
 ```
 
 **Acceptance:**
+
 - Columns added with proper foreign key constraints
 - ON DELETE CASCADE specified
 
@@ -42,6 +45,7 @@ ALTER TABLE issues ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE C
 Create two trigger functions to automatically populate user_id from parent project.
 
 **sync_epic_user_id():**
+
 ```sql
 CREATE OR REPLACE FUNCTION sync_epic_user_id()
 RETURNS TRIGGER AS $$
@@ -56,6 +60,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 **sync_issue_user_id():**
+
 ```sql
 CREATE OR REPLACE FUNCTION sync_issue_user_id()
 RETURNS TRIGGER AS $$
@@ -70,6 +75,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 **Acceptance:**
+
 - Both functions created with error handling
 - Functions validate that user_id is found (not NULL)
 
@@ -90,6 +96,7 @@ CREATE TRIGGER sync_issue_user_id_trigger
 ```
 
 **Acceptance:**
+
 - Triggers fire BEFORE INSERT OR UPDATE
 - Triggers attached to correct tables
 
@@ -106,6 +113,7 @@ UPDATE issues SET user_id = user_id WHERE user_id IS NULL;
 ```
 
 **Acceptance:**
+
 - All existing epics have user_id populated
 - All existing issues have user_id populated
 - No NULL values remain
@@ -120,6 +128,7 @@ ALTER TABLE issues ALTER COLUMN user_id SET NOT NULL;
 ```
 
 **Acceptance:**
+
 - Constraints added successfully
 - Future inserts without user_id will fail (triggers will populate)
 
@@ -128,6 +137,7 @@ ALTER TABLE issues ALTER COLUMN user_id SET NOT NULL;
 Drop old JOIN-based policies and create new direct policies.
 
 **Epics:**
+
 ```sql
 DROP POLICY "Users can access epics in their projects" ON epics;
 
@@ -137,6 +147,7 @@ CREATE POLICY "Users can access their own epics"
 ```
 
 **Issues:**
+
 ```sql
 DROP POLICY "Users can access issues in their projects" ON issues;
 
@@ -146,6 +157,7 @@ CREATE POLICY "Users can access their own issues"
 ```
 
 **Acceptance:**
+
 - Old policies removed
 - New policies created with correct names
 - Policies use `auth.uid() = user_id` pattern
@@ -160,6 +172,7 @@ CREATE INDEX idx_issues_user_id ON issues(user_id);
 ```
 
 **Acceptance:**
+
 - Indexes created successfully
 - Index names follow existing naming convention
 
@@ -168,6 +181,7 @@ CREATE INDEX idx_issues_user_id ON issues(user_id);
 **File:** `supabase/verify-rls.sql`
 
 Create comprehensive SQL test script with:
+
 1. Test setup (create test users and data)
 2. Unauthenticated tests
 3. Authenticated own-data tests
@@ -178,6 +192,7 @@ Create comprehensive SQL test script with:
 **Test sections:**
 
 **Setup:**
+
 ```sql
 -- Create test users
 CREATE ROLE test_user_1 LOGIN;
@@ -190,6 +205,7 @@ INSERT INTO auth.users (id, email) VALUES
 ```
 
 **Test 1 - Unauthenticated:**
+
 ```sql
 SET ROLE anonymous;
 -- Test SELECT returns 0 rows on all tables
@@ -197,6 +213,7 @@ SET ROLE anonymous;
 ```
 
 **Test 2 - Authenticated own data:**
+
 ```sql
 SET ROLE test_user_1;
 -- Test can SELECT own data
@@ -206,6 +223,7 @@ SET ROLE test_user_1;
 ```
 
 **Test 3 - Cross-user access:**
+
 ```sql
 SET ROLE test_user_2;
 -- Test cannot SELECT test_user_1 data
@@ -214,6 +232,7 @@ SET ROLE test_user_2;
 ```
 
 **Acceptance:**
+
 - All three test categories implemented
 - Each test outputs: check_name, expected, actual, status (PASS/FAIL)
 - Cleanup section removes all test data
@@ -224,12 +243,14 @@ SET ROLE test_user_2;
 **File:** `supabase/migrations/002_add_user_id_to_epics_and_issues_rollback.sql`
 
 Create rollback script that:
+
 1. Restores old RLS policies
 2. Drops triggers
 3. Drops trigger functions
 4. Drops user_id columns
 
 **Acceptance:**
+
 - Rollback script created
 - Script reverses all changes from main migration
 - Script tested on a separate database branch
@@ -250,6 +271,7 @@ psql postgresql://postgres:postgres@localhost:54322/postgres < supabase/verify.s
 ```
 
 **Acceptance:**
+
 - Migration applies without errors
 - verify-rls.sql shows all tests PASS
 - verify.sql shows all existing checks still PASS
@@ -272,10 +294,12 @@ ORDER BY tablename, policyname;
 ```
 
 **Expected output:**
+
 - epics: "Users can access their own epics"
 - issues: "Users can access their own issues"
 
 **Acceptance:**
+
 - verify.sql updated with new check
 - Check validates correct policy names
 
@@ -292,6 +316,7 @@ psql postgresql://postgres:postgres@localhost:54322/postgres < supabase/verify-s
 ```
 
 **Acceptance:**
+
 - Rollback completes without errors
 - Old JOIN-based policies restored
 - user_id columns removed
@@ -308,6 +333,7 @@ npx supabase db push
 ```
 
 **Acceptance:**
+
 - Migration applies successfully to remote
 - No errors in Supabase dashboard
 - Can verify policies in Supabase UI
@@ -326,6 +352,7 @@ psql <remote-connection-string> < supabase/verify.sql
 ```
 
 **Acceptance:**
+
 - All RLS tests PASS on remote
 - All schema tests PASS on remote
 - Remote database fully functional
@@ -333,17 +360,20 @@ psql <remote-connection-string> < supabase/verify.sql
 ## Testing Strategy
 
 ### Unit Tests (SQL-based)
+
 - verify-rls.sql covers all three acceptance criteria
 - Automated pass/fail output for each test
 - Can be run repeatedly without side effects (cleanup)
 
 ### Integration Tests (Manual)
+
 - Create actual user account in Supabase
 - Use Supabase client to perform CRUD operations
 - Verify RLS blocks unauthorized access
 - Test in both local and remote environments
 
 ### Regression Tests
+
 - Existing verify.sql ensures no functionality breaks
 - Existing seed.sql still works
 - All existing triggers still function
@@ -370,11 +400,13 @@ If issues are discovered after deployment:
 ## Files to Create/Modify
 
 **New files:**
+
 - `supabase/migrations/002_add_user_id_to_epics_and_issues.sql`
 - `supabase/migrations/002_add_user_id_to_epics_and_issues_rollback.sql`
 - `supabase/verify-rls.sql`
 
 **Modified files:**
+
 - `supabase/verify.sql` (add policy name check)
 
 ## Estimated Complexity

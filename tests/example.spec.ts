@@ -8,18 +8,18 @@
 import { expect, test } from '@playwright/test';
 
 test('home page redirects to login when not authenticated', async ({ page }) => {
-	await page.goto('/');
-	await expect(page).toHaveURL(/\/auth\/login/);
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/auth\/login/);
 });
 
 test('login page loads', async ({ page }) => {
-	await page.goto('/auth/login');
-	await expect(page.locator('h1')).toContainText('Sign In');
+  await page.goto('/auth/login');
+  await expect(page.locator('h1')).toContainText('Sign In');
 });
 
 test('signup page loads', async ({ page }) => {
-	await page.goto('/auth/signup');
-	await expect(page.locator('h1')).toContainText('Create Account');
+  await page.goto('/auth/signup');
+  await expect(page.locator('h1')).toContainText('Create Account');
 });
 
 // TODO: Add tests for authentication flow

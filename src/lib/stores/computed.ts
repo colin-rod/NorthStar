@@ -9,9 +9,11 @@
  */
 
 import { derived, type Readable } from 'svelte/store';
+
 import { issues } from './issues';
-import { isBlocked, isReady } from '$lib/utils/issue-helpers';
+
 import type { Issue } from '$lib/types';
+import { isBlocked, isReady } from '$lib/utils/issue-helpers';
 
 /**
  * Ready issues
@@ -21,7 +23,7 @@ import type { Issue } from '$lib/types';
  * - Not blocked by dependencies
  */
 export const readyIssues: Readable<Issue[]> = derived(issues, ($issues) => {
-	return $issues.filter(isReady);
+  return $issues.filter(isReady);
 });
 
 /**
@@ -30,7 +32,7 @@ export const readyIssues: Readable<Issue[]> = derived(issues, ($issues) => {
  * Issues that have at least one dependency not done/canceled
  */
 export const blockedIssues: Readable<Issue[]> = derived(issues, ($issues) => {
-	return $issues.filter(isBlocked);
+  return $issues.filter(isBlocked);
 });
 
 /**
@@ -39,35 +41,35 @@ export const blockedIssues: Readable<Issue[]> = derived(issues, ($issues) => {
  * Issues currently in progress
  */
 export const doingIssues: Readable<Issue[]> = derived(issues, ($issues) => {
-	return $issues.filter((issue) => issue.status === 'doing');
+  return $issues.filter((issue) => issue.status === 'doing');
 });
 
 /**
  * In review issues
  */
 export const inReviewIssues: Readable<Issue[]> = derived(issues, ($issues) => {
-	return $issues.filter((issue) => issue.status === 'in_review');
+  return $issues.filter((issue) => issue.status === 'in_review');
 });
 
 /**
  * Done issues
  */
 export const doneIssues: Readable<Issue[]> = derived(issues, ($issues) => {
-	return $issues.filter((issue) => issue.status === 'done');
+  return $issues.filter((issue) => issue.status === 'done');
 });
 
 /**
  * Canceled issues
  */
 export const canceledIssues: Readable<Issue[]> = derived(issues, ($issues) => {
-	return $issues.filter((issue) => issue.status === 'canceled');
+  return $issues.filter((issue) => issue.status === 'canceled');
 });
 
 /**
  * Todo issues (including blocked)
  */
 export const todoIssues: Readable<Issue[]> = derived(issues, ($issues) => {
-	return $issues.filter((issue) => issue.status === 'todo');
+  return $issues.filter((issue) => issue.status === 'todo');
 });
 
 /**
@@ -76,17 +78,17 @@ export const todoIssues: Readable<Issue[]> = derived(issues, ($issues) => {
  * Returns a map of priority -> issues, sorted by priority (P0 first)
  */
 export const issuesByPriority: Readable<Map<number, Issue[]>> = derived(issues, ($issues) => {
-	const map = new Map<number, Issue[]>();
+  const map = new Map<number, Issue[]>();
 
-	for (const issue of $issues) {
-		const priority = issue.priority;
-		const existing = map.get(priority) || [];
-		existing.push(issue);
-		map.set(priority, existing);
-	}
+  for (const issue of $issues) {
+    const priority = issue.priority;
+    const existing = map.get(priority) || [];
+    existing.push(issue);
+    map.set(priority, existing);
+  }
 
-	// Sort by priority (P0 first)
-	return new Map([...map.entries()].sort(([a], [b]) => a - b));
+  // Sort by priority (P0 first)
+  return new Map([...map.entries()].sort(([a], [b]) => a - b));
 });
 
 /**
@@ -95,22 +97,22 @@ export const issuesByPriority: Readable<Map<number, Issue[]>> = derived(issues, 
  * Useful for dashboard stats
  */
 export const issueCounts: Readable<{
-	ready: number;
-	blocked: number;
-	doing: number;
-	inReview: number;
-	done: number;
-	canceled: number;
-	total: number;
+  ready: number;
+  blocked: number;
+  doing: number;
+  inReview: number;
+  done: number;
+  canceled: number;
+  total: number;
 }> = derived(
-	[readyIssues, blockedIssues, doingIssues, inReviewIssues, doneIssues, canceledIssues, issues],
-	([$ready, $blocked, $doing, $inReview, $done, $canceled, $issues]) => ({
-		ready: $ready.length,
-		blocked: $blocked.length,
-		doing: $doing.length,
-		inReview: $inReview.length,
-		done: $done.length,
-		canceled: $canceled.length,
-		total: $issues.length
-	})
+  [readyIssues, blockedIssues, doingIssues, inReviewIssues, doneIssues, canceledIssues, issues],
+  ([$ready, $blocked, $doing, $inReview, $done, $canceled, $issues]) => ({
+    ready: $ready.length,
+    blocked: $blocked.length,
+    doing: $doing.length,
+    inReview: $inReview.length,
+    done: $done.length,
+    canceled: $canceled.length,
+    total: $issues.length,
+  }),
 );
