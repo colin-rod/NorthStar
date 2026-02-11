@@ -152,7 +152,7 @@ jobs:
 
       - name: Verify build output
         run: |
-          if [ ! -d "build" ]; then
-            echo "Build directory not found!"
+          if [ ! -d ".svelte-kit" ]; then
+            echo "Build directory (.svelte-kit) not found!"
             exit 1
           fi
