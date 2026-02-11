@@ -19,7 +19,7 @@
   <Card class="w-full max-w-md">
     <CardHeader>
       <h1 class="text-2xl font-bold">Create Account</h1>
-      <p class="text-muted-foreground">Sign up for Personal Issue Tracker</p>
+      <p class="text-muted-foreground">Sign up for NorthStar</p>
     </CardHeader>
     <CardContent>
       <form method="POST" action="?/signup" class="space-y-4">

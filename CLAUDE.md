@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Personal Issue Tracker** is a single-user project management application designed to manage multiple personal projects without team collaboration overhead. It provides hierarchical work breakdown (Projects → Epics → Issues → Sub-issues) with explicit dependency tracking and mobile-first editing.
+**NorthStar** is a single-user project management application designed to manage multiple personal projects without team collaboration overhead. It provides hierarchical work breakdown (Projects → Epics → Issues → Sub-issues) with explicit dependency tracking and mobile-first editing.
 
 **Core Purpose**: Clearly identify what to work on next, with dependencies never forgotten or implicit.
 

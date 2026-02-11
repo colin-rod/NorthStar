@@ -1,6 +1,6 @@
 # Supabase Database Setup
 
-This directory contains the database schema, migrations, and seed data for the Personal Issue Tracker.
+This directory contains the database schema, migrations, and seed data for NorthStar.
 
 ## Files
 

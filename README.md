@@ -1,4 +1,4 @@
-# Personal Issue Tracker
+# NorthStar
 
 A single-user project management application designed to manage multiple personal projects without team collaboration overhead. Built with SvelteKit, Supabase, and Tailwind CSS.
 

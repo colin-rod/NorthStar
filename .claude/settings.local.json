@@ -42,7 +42,8 @@
       "Bash(pnpm run lint:fix:*)",
       "Bash(pnpm list:*)",
       "Bash(pnpm exec playwright:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git push:*)"
     ]
   }
 }

@@ -1,7 +1,7 @@
 /**
  * TypeScript Type Definitions
  *
- * All entity types for the Issue Tracker application.
+ * All entity types for the NorthStar application.
  *
  * Based on CLAUDE.md database schema.
  */
