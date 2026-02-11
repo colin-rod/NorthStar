@@ -115,6 +115,233 @@ These states are computed dynamically, not stored in database.
 
 ## Architecture Principles
 
+### Test-Driven Development (TDD)
+
+**This project follows strict Test-Driven Development practices.**
+
+#### Red-Green-Refactor Cycle
+
+**MANDATORY: All code changes MUST follow the TDD cycle:**
+
+1. **RED**: Write a failing test first
+   - Test must fail for the right reason (feature doesn't exist yet)
+   - Test should be minimal and focused on one behavior
+   - Run test to confirm it fails
+
+2. **GREEN**: Write minimal code to make the test pass
+   - Only write code needed to pass the current test
+   - Resist the urge to add extra features or abstractions
+   - Run test to confirm it passes
+
+3. **REFACTOR**: Improve code quality without changing behavior
+   - Remove duplication
+   - Improve naming and structure
+   - Extract reusable functions/components
+   - Run tests to ensure they still pass
+
+**Process Enforcement:**
+
+- NEVER write implementation code before writing a failing test
+- NEVER commit code without corresponding tests
+- NEVER skip the refactor step
+- Tests must be run and verified at each step
+
+#### Testing Strategy
+
+**Unit Tests** (Primary focus):
+
+- Test business logic in isolation
+- Test utility functions (dependency-graph.ts, issue-helpers.ts)
+- Test computed state logic (blocked, ready calculations)
+- Test validation functions (story points, status transitions)
+- Test database functions (cycle detection, triggers)
+
+**Integration Tests**:
+
+- Test SvelteKit server load functions
+- Test form actions with database interactions
+- Test RLS policies enforcement
+- Test Supabase client operations
+
+**Component Tests**:
+
+- Test Svelte component behavior and interactions
+- Test form validation and user input handling
+- Test conditional rendering based on props/state
+- Use Vitest + @testing-library/svelte
+
+**E2E Tests** (Minimal - use sparingly):
+
+- Test critical user flows only
+- Example: Create project → Create issue → Add dependency
+- Use Playwright for E2E testing
+
+#### Test Organization
+
+```
+tests/
+├── unit/
+│   ├── utils/
+│   │   ├── dependency-graph.test.ts
+│   │   └── issue-helpers.test.ts
+│   ├── stores/
+│   │   └── computed.test.ts
+│   └── validation/
+│       └── story-points.test.ts
+├── integration/
+│   ├── server/
+│   │   ├── load-functions.test.ts
+│   │   └── form-actions.test.ts
+│   └── database/
+│       ├── rls-policies.test.ts
+│       └── triggers.test.ts
+├── component/
+│   ├── IssueRow.test.ts
+│   ├── IssueSheet.test.ts
+│   └── DependencyGraph.test.ts
+└── e2e/
+    └── critical-flows.test.ts
+```
+
+#### Test Coverage Requirements
+
+- **Minimum 80% code coverage** for business logic
+- **100% coverage** for critical paths:
+  - Dependency cycle detection
+  - Data integrity rules
+  - Status computation (blocked, ready)
+  - RLS policies
+
+#### Testing Tools
+
+**Framework**: Vitest (fast, Vite-native)
+**Component Testing**: @testing-library/svelte
+**Mocking**: vi.mock() from Vitest
+**E2E**: Playwright (minimal use)
+**Database Testing**: Test against remote Supabase with test data cleanup
+
+#### Example TDD Workflow
+
+**Scenario: Add story point validation**
+
+1. **RED - Write failing test**:
+
+```typescript
+// tests/unit/validation/story-points.test.ts
+import { describe, it, expect } from 'vitest';
+import { validateStoryPoints } from '$lib/utils/validation';
+
+describe('validateStoryPoints', () => {
+  it('should accept valid story point values', () => {
+    expect(validateStoryPoints(1)).toBe(true);
+    expect(validateStoryPoints(5)).toBe(true);
+    expect(validateStoryPoints(null)).toBe(true);
+  });
+
+  it('should reject invalid story point values', () => {
+    expect(validateStoryPoints(4)).toBe(false);
+    expect(validateStoryPoints(10)).toBe(false);
+    expect(validateStoryPoints(-1)).toBe(false);
+  });
+});
+```
+
+Run: `npm run test` → Test fails (function doesn't exist)
+
+2. **GREEN - Implement minimal solution**:
+
+```typescript
+// src/lib/utils/validation.ts
+const VALID_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
+
+export function validateStoryPoints(value: number | null): boolean {
+  if (value === null) return true;
+  return VALID_STORY_POINTS.includes(value);
+}
+```
+
+Run: `npm run test` → Test passes
+
+3. **REFACTOR - Improve if needed**:
+
+```typescript
+// src/lib/utils/validation.ts
+const VALID_STORY_POINTS = new Set([1, 2, 3, 5, 8, 13, 21]);
+
+export function validateStoryPoints(value: number | null): boolean {
+  return value === null || VALID_STORY_POINTS.has(value);
+}
+```
+
+Run: `npm run test` → Test still passes
+
+#### TDD Anti-Patterns to Avoid
+
+**DON'T:**
+
+- Write implementation before tests
+- Write tests after implementation is complete
+- Skip tests for "simple" code
+- Write tests that just call the implementation
+- Mock everything (prefer real objects when possible)
+- Write tests that test implementation details
+
+**DO:**
+
+- Test behavior, not implementation
+- Write tests that describe requirements
+- Use descriptive test names that explain intent
+- Keep tests simple and focused
+- Prefer integration tests over heavy mocking
+- Run tests frequently (every few minutes)
+
+#### Database Testing Strategy
+
+**Challenge**: No local Supabase (remote-only development)
+
+**Approach**:
+
+1. Use a dedicated test database in Supabase (separate project or schema)
+2. Set test environment variables in `.env.test.local`
+3. Clean up test data after each test run
+4. Use transactions and rollbacks where possible
+5. Seed minimal test data before test suites
+
+**Example**:
+
+```typescript
+// tests/setup.ts
+import { createClient } from '@supabase/supabase-js';
+
+export async function setupTestDatabase() {
+  const supabase = createClient(process.env.TEST_SUPABASE_URL!, process.env.TEST_SUPABASE_KEY!);
+  // Seed test data
+  await supabase.from('projects').insert({ name: 'Test Project' });
+}
+
+export async function cleanupTestDatabase() {
+  // Delete test data
+}
+```
+
+#### When to Write Tests
+
+**Always write tests FIRST for:**
+
+- New features
+- Bug fixes (write test that reproduces bug, then fix)
+- Refactoring existing code
+- Complex business logic
+- Data validation rules
+- Security-critical code (RLS, auth)
+
+**Can skip tests for:**
+
+- Prototyping / spike work (must add tests before committing)
+- Pure UI styling changes (visual-only, no logic)
+- Configuration files
+- Build scripts
+
 ### Mobile-First
 
 - Responsive UI optimized for phone usage

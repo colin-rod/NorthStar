@@ -138,20 +138,28 @@ export function findDependencyPath(
  * - Visualizing dependency graph
  */
 export function topologicalSort(issues: Issue[], dependencies: Dependency[]): Issue[] | null {
-  const graph = buildAdjacencyList(dependencies);
   const inDegree = new Map<string, number>();
   const issueMap = new Map<string, Issue>();
+
+  // Build reverse graph: maps each issue to the list of issues that depend on it
+  const reverseGraph = new Map<string, string[]>();
 
   // Initialize
   for (const issue of issues) {
     issueMap.set(issue.id, issue);
     inDegree.set(issue.id, 0);
+    reverseGraph.set(issue.id, []);
   }
 
-  // Calculate in-degrees
+  // Calculate in-degrees and build reverse graph
   for (const dep of dependencies) {
     const current = inDegree.get(dep.issue_id) || 0;
     inDegree.set(dep.issue_id, current + 1);
+
+    // Build reverse edge: depends_on_issue -> issue
+    const blockedIssues = reverseGraph.get(dep.depends_on_issue_id) || [];
+    blockedIssues.push(dep.issue_id);
+    reverseGraph.set(dep.depends_on_issue_id, blockedIssues);
   }
 
   // Queue of issues with no dependencies
@@ -165,19 +173,24 @@ export function topologicalSort(issues: Issue[], dependencies: Dependency[]): Is
   const sorted: Issue[] = [];
 
   while (queue.length > 0) {
-    const issueId = queue.shift()!;
+    const issueId = queue.shift();
+    if (!issueId) continue;
+
     const issue = issueMap.get(issueId);
     if (issue) {
       sorted.push(issue);
     }
 
-    // Reduce in-degree for neighbors
-    const neighbors = graph.get(issueId) || [];
-    for (const neighborId of neighbors) {
-      const degree = inDegree.get(neighborId)! - 1;
-      inDegree.set(neighborId, degree);
+    // Reduce in-degree for issues that depend on this one
+    const blockedIssues = reverseGraph.get(issueId) || [];
+    for (const blockedIssueId of blockedIssues) {
+      const currentDegree = inDegree.get(blockedIssueId);
+      if (currentDegree === undefined) continue;
+
+      const degree = currentDegree - 1;
+      inDegree.set(blockedIssueId, degree);
       if (degree === 0) {
-        queue.push(neighborId);
+        queue.push(blockedIssueId);
       }
     }
   }
