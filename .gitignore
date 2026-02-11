@@ -36,3 +36,4 @@ test-results/
 # Claude settings (security)
 .claude/settings.local.json
 .claude/*.local.json
+.claude/settings.local.json
