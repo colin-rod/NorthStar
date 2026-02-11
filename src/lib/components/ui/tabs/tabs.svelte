@@ -23,9 +23,7 @@
   });
 
   setContext('tabs', {
-    get activeTab() {
-      return activeTab;
-    },
+    activeTab: () => activeTab,
     setTab: (tab: string) => (activeTab = tab),
   });
 </script>
