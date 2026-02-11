@@ -257,14 +257,18 @@ BEGIN
             RAISE NOTICE '✓ Status enum constraint working';
     END;
 
-    -- Test 3: Self-dependency
+    -- Test 3: Self-dependency (caught by either CHECK constraint or cycle prevention trigger)
     BEGIN
         INSERT INTO dependencies (issue_id, depends_on_issue_id)
         VALUES (issue1_id, issue1_id);
         RAISE EXCEPTION 'Self-dependency constraint FAILED - self-dep allowed!';
     EXCEPTION
-        WHEN check_violation THEN
-            RAISE NOTICE '✓ Self-dependency prevention working';
+        WHEN OTHERS THEN
+            IF SQLERRM LIKE '%cycle%' OR SQLERRM LIKE '%check%' THEN
+                RAISE NOTICE '✓ Self-dependency prevention working';
+            ELSE
+                RAISE;
+            END IF;
     END;
 
     -- Test 4: Sub-issue in different project (should fail)
