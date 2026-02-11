@@ -9,7 +9,7 @@
   import { onMount } from 'svelte';
   import ProjectCard from '$lib/components/ProjectCard.svelte';
   import ProjectSheet from '$lib/components/ProjectSheet.svelte';
-  import Button from '$lib/components/ui/button.svelte';
+  import { Button } from '$lib/components/ui/button';
   import type { PageData } from './$types';
   import type { Project } from '$lib/types';
 

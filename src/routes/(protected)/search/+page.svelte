@@ -7,8 +7,8 @@
 
   import IssueRow from '$lib/components/IssueRow.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
-  import Input from '$lib/components/ui/input.svelte';
-  import Label from '$lib/components/ui/label.svelte';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
   import { Search } from '@lucide/svelte';
   import { openIssueSheet } from '$lib/stores/issues';
   import type { PageData } from './$types';

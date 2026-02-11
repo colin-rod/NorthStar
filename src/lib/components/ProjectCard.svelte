@@ -22,7 +22,7 @@
   import type { Project } from '$lib/types';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
-  import Button from '$lib/components/ui/button.svelte';
+  import { Button } from '$lib/components/ui/button';
   import { Pencil, Archive } from '@lucide/svelte';
 
   interface Props {

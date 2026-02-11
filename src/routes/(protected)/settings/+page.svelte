@@ -6,7 +6,7 @@
    */
 
   import { enhance } from '$app/forms';
-  import Button from '$lib/components/ui/button.svelte';
+  import { Button } from '$lib/components/ui/button';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import type { PageData } from './$types';
 

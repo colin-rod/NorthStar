@@ -9,7 +9,7 @@
    * - Subtle borders
    */
   import { enhance } from '$app/forms';
-  import Button from '$lib/components/ui/button.svelte';
+  import { Button } from '$lib/components/ui/button';
   import type { Session } from '@supabase/supabase-js';
 
   let { session }: { session: Session | null } = $props();

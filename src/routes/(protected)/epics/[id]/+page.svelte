@@ -15,14 +15,11 @@
   import type { PageData } from './$types';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import Tabs from '$lib/components/ui/tabs.svelte';
-  import TabsList from '$lib/components/ui/tabs-list.svelte';
-  import TabsTrigger from '$lib/components/ui/tabs-trigger.svelte';
-  import TabsContent from '$lib/components/ui/tabs-content.svelte';
+  import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
   import IssueRow from '$lib/components/IssueRow.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import InlineIssueForm from '$lib/components/InlineIssueForm.svelte';
-  import Button from '$lib/components/ui/button.svelte';
+  import { Button } from '$lib/components/ui/button';
   import { openIssueSheet } from '$lib/stores/issues';
   import { isBlocked } from '$lib/utils/issue-helpers';
   import { calculateNewSortOrders, moveIssueUp, moveIssueDown } from '$lib/utils/reorder';

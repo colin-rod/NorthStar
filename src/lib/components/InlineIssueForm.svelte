@@ -17,8 +17,8 @@
    */
 
   import { enhance } from '$app/forms';
-  import Input from '$lib/components/ui/input.svelte';
-  import Button from '$lib/components/ui/button.svelte';
+  import { Input } from '$lib/components/ui/input';
+  import { Button } from '$lib/components/ui/button';
   import { invalidateAll } from '$app/navigation';
 
   interface Props {

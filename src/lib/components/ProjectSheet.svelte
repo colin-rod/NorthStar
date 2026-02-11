@@ -26,9 +26,9 @@
     SheetFooter,
     SheetTitle,
   } from '$lib/components/ui/sheet';
-  import Button from '$lib/components/ui/button.svelte';
-  import Input from '$lib/components/ui/input.svelte';
-  import Label from '$lib/components/ui/label.svelte';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
 
   interface Props {
     open: boolean;
