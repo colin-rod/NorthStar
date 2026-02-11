@@ -15,7 +15,13 @@
     children?: Snippet;
   } & HTMLAttributes<HTMLDivElement> = $props();
 
-  let activeTab = $state(defaultValue || '');
+  let activeTab = $state('');
+
+  // Sync activeTab with defaultValue prop changes
+  $effect(() => {
+    activeTab = defaultValue || '';
+  });
+
   setContext('tabs', {
     get activeTab() {
       return activeTab;

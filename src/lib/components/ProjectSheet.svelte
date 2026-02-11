@@ -38,9 +38,10 @@
 
   let { open = $bindable(false), mode, project }: Props = $props();
 
-  const action = mode === 'create' ? '?/createProject' : '?/updateProject';
-  const title = mode === 'create' ? 'New Project' : 'Edit Project';
-  const submitLabel = mode === 'create' ? 'Create Project' : 'Save Changes';
+  // Use $derived to make these reactive to mode changes
+  const action = $derived(mode === 'create' ? '?/createProject' : '?/updateProject');
+  const title = $derived(mode === 'create' ? 'New Project' : 'Edit Project');
+  const submitLabel = $derived(mode === 'create' ? 'Create Project' : 'Save Changes');
 </script>
 
 <Sheet bind:open>

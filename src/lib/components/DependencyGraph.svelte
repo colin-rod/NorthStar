@@ -10,16 +10,15 @@
    * - Show dependency paths
    * - Highlight cycles (if any exist)
    * - Optional: Use topological sort for layout
+   *
+   * NOTE: This is a placeholder component. Props (issue, dependencies) will be
+   * added when implementation is ready.
    */
-
-  import type { Issue, Dependency } from '$lib/types';
-
-  export let issue: Issue;
-  export let dependencies: Dependency[] = [];
 
   // TODO: Implement graph visualization
   // Options: D3.js, Cytoscape.js, or simple SVG
   // TODO: Use topological sort from lib/utils/dependency-graph.ts
+  // TODO: Add props: issue: Issue, dependencies: Dependency[]
 </script>
 
 <div class="border rounded-lg p-4">
