@@ -1,8 +1,8 @@
 -- Initial Database Schema for Personal Issue Tracker
 -- Based on CLAUDE.md specification
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Enable UUID extension (pgcrypto provides gen_random_uuid)
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================================
 -- TABLES
@@ -10,7 +10,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Projects Table
 CREATE TABLE projects (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -19,7 +19,7 @@ CREATE TABLE projects (
 
 -- Epics Table
 CREATE TABLE epics (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('active', 'done', 'canceled')),
@@ -30,7 +30,7 @@ CREATE TABLE epics (
 
 -- Milestones Table
 CREATE TABLE milestones (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     due_date DATE,
@@ -39,7 +39,7 @@ CREATE TABLE milestones (
 
 -- Issues Table
 CREATE TABLE issues (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     epic_id UUID NOT NULL REFERENCES epics(id) ON DELETE RESTRICT,
     parent_issue_id UUID REFERENCES issues(id) ON DELETE CASCADE,
