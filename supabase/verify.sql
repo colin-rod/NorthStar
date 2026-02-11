@@ -42,6 +42,12 @@ WHERE schemaname = 'public'
 ORDER BY tablename, policyname;
 
 -- Expected: Policies for all 5 tables
+-- After migration 002:
+--   epics: "Users can access their own epics"
+--   issues: "Users can access their own issues"
+--   dependencies: "Users can access dependencies for their issues"
+--   milestones: "Users can access their own milestones"
+--   projects: "Users can access their own projects"
 
 -- ============================================================================
 -- 4. Test Blocked/Ready Logic

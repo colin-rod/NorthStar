@@ -364,12 +364,18 @@ npm install
 # 1. Create project at supabase.com
 # 2. Copy .env.example to .env.local
 # 3. Add SUPABASE_URL and SUPABASE_ANON_KEY
-
-# Optional: Local Supabase development
-npx supabase init
-npx supabase start
-npx supabase db reset  # Apply migrations
 ```
+
+### Important: No Docker / Remote-Only Supabase
+
+**This project does NOT use Docker or local Supabase development.**
+
+- All database work is done directly against the remote Supabase instance
+- Do NOT run `npx supabase start` or any local Supabase commands
+- Database migrations are applied directly to remote using `npx supabase db push`
+- Testing and development use the remote Supabase database
+
+**Rationale**: Simpler setup, no Docker dependencies, and ensures development environment matches production.
 
 ### Commands
 
