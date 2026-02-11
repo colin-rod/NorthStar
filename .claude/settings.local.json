@@ -34,7 +34,15 @@
       "Bash(git commit:*)",
       "Bash(npx supabase db reset:*)",
       "Bash(npx supabase db push:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(chmod:*)",
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(npx husky init:*)",
+      "Bash(pnpm run lint:fix:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm exec playwright:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
