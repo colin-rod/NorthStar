@@ -72,6 +72,7 @@
     "@supabase/supabase-js": "^2.95.3",
     "bits-ui": "^2.15.5",
     "clsx": "^2.1.1",
+    "svelte-dnd-action": "^0.9.69",
     "tailwind-merge": "^3.4.0",
     "tailwind-variants": "^3.2.2"
   }
