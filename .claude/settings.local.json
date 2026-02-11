@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm create:*)",
+      "Bash(npx sv create:*)",
+      "Bash(npx sv add:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm dlx tailwindcss:*)",
+      "Bash(pnpm run check:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm run format:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(timeout 5 pnpm dev:*)",
+      "Bash(pnpm dev:*)",
+      "WebFetch(domain:www.shadcn-svelte.com)",
+      "WebFetch(domain:supabase.com)",
+      "Bash(pnpm dlx:*)",
+      "Bash(pnpm svelte-kit sync:*)",
+      "Bash(pnpm check:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(ls:*)",
+      "Bash(xargs basename:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run check:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

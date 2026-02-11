@@ -1,0 +1,511 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**Personal Issue Tracker** is a single-user project management application designed to manage multiple personal projects without team collaboration overhead. It provides hierarchical work breakdown (Projects → Epics → Issues → Sub-issues) with explicit dependency tracking and mobile-first editing.
+
+**Core Purpose**: Clearly identify what to work on next, with dependencies never forgotten or implicit.
+
+## Tech Stack
+
+**Frontend:**
+
+- **SvelteKit** - Fast, lightweight framework chosen for minimal JavaScript payload and mobile-first performance
+- **shadcn/svelte** - Accessible, customizable component library built on Melt UI primitives
+- **Tailwind CSS** - Utility-first styling for rapid mobile-first development
+
+**Backend/Database:**
+
+- **Supabase** - PostgreSQL database with built-in Auth, real-time capabilities, and REST API
+- **Supabase Auth** - Email/password authentication with magic links and OAuth support
+
+**Deployment:**
+
+- **Vercel** - Optimized for SvelteKit with automatic deployments and edge functions
+
+**Rationale**: This stack prioritizes speed, lightweight bundle size, and mobile performance while providing a complete backend solution with minimal configuration.
+
+## Core Data Model
+
+### Hierarchy
+
+```
+Projects (top-level containers)
+  └─ Epics (thematic groupings)
+       └─ Issues (primary unit of work)
+            └─ Sub-issues (child issues)
+```
+
+### Entities
+
+**Project**
+
+- Top-level container for work
+- Contains multiple epics
+- Auto-creates one "Unassigned" epic
+
+**Epic**
+
+- Project-scoped thematic grouping
+- Status: `active`, `done`, `canceled`
+- Each project has exactly one default "Unassigned" epic
+
+**Issue**
+
+- Primary unit of work
+- Required fields: title, project, epic, status, priority, sort_order
+- Optional fields: parent_issue_id (for sub-issues), milestone, story_points, dependencies
+- Status: `todo`, `doing`, `in_review`, `done`, `canceled`
+- Priority: Integer scale (P0-P3)
+- Story Points: Restricted to: 1, 2, 3, 5, 8, 13, 21 (nullable)
+
+**Sub-Issue**
+
+- An issue with a `parent_issue_id`
+- Must be in same project as parent
+- Inherits parent's epic
+
+**Milestone**
+
+- Global (cross-project) reusable label
+- Optional due date
+- Each issue can have at most one milestone
+
+**Dependency**
+
+- Directed relationship: "Issue A depends on Issue B"
+- Stored as: `(issue_id, depends_on_issue_id)`
+- Can span across epics and projects
+
+## Business Logic
+
+### Computed States
+
+**Blocked**: An issue has ≥1 dependency with status NOT in (`done`, `canceled`)
+
+- Note: `in_review` counts as NOT done (still blocks)
+
+**Ready**: An issue that is:
+
+- Status = `todo`
+- NOT Blocked
+
+These states are computed dynamically, not stored in database.
+
+### Dependency Semantics
+
+1. Dependencies create blocking relationships
+2. `canceled` dependencies are treated as satisfied but surfaced visually
+3. **Cycle prevention is critical**: System must prevent circular dependencies
+4. Dependency creation must fail if it would introduce a cycle
+5. No self-dependencies allowed
+
+### Data Integrity Rules
+
+**Enforce these constraints:**
+
+- Every issue MUST belong to an epic (non-null)
+- Sub-issues MUST belong to same project as parent
+- Exactly one "Unassigned" epic per project
+- No circular dependencies in dependency graph
+- Story points restricted to allowed set: 1, 2, 3, 5, 8, 13, 21
+- No self-dependencies
+
+## Architecture Principles
+
+### Mobile-First
+
+- Responsive UI optimized for phone usage
+- Fast list rendering (target: ≤500 issues total)
+- Bottom sheet / drawer for issue detail editing
+- Simple, predictable navigation
+
+### Single-User Focus
+
+- No multi-user collaboration
+- No permissions or roles
+- No real-time sync requirements
+- No notifications (MVP)
+
+### Dependency Graph Management
+
+- **Cycle detection**: Use PostgreSQL recursive CTE to detect cycles before adding dependencies
+- **Implementation**: Create `check_dependency_cycle()` function in Supabase
+- **Client-side**: Optionally use topological sort for visualization
+- Display blocked/blocking relationships inline in issue detail
+
+### View Requirements
+
+**Home View** (default):
+
+- Primary list showing "Ready" issues
+- Segmented filters: Ready, Doing, Blocked, Done
+- Each row: title, project/epic, priority, blocked indicator
+
+**Project View**:
+
+- Epics list with counts (Ready, Blocked, Doing)
+
+**Epic View**:
+
+- Flat issue list with filters (All, Todo, Doing, In Review, Blocked, Done, Canceled)
+- Inline "Add issue" functionality
+
+**Issue Detail**:
+
+- Editable fields in bottom sheet/drawer
+- Inline dependency display (Blocked by / Blocking)
+- Collapsible sub-issues list
+
+## Database Schema (Supabase/PostgreSQL)
+
+### Tables
+
+**projects**
+
+```sql
+id uuid PRIMARY KEY
+user_id uuid REFERENCES auth.users NOT NULL
+name text NOT NULL
+created_at timestamptz DEFAULT now()
+archived_at timestamptz
+```
+
+**epics**
+
+```sql
+id uuid PRIMARY KEY
+project_id uuid REFERENCES projects NOT NULL
+name text NOT NULL
+status text CHECK (status IN ('active', 'done', 'canceled'))
+is_default boolean DEFAULT false
+sort_order integer
+```
+
+**milestones**
+
+```sql
+id uuid PRIMARY KEY
+user_id uuid REFERENCES auth.users NOT NULL
+name text NOT NULL
+due_date date
+```
+
+**issues**
+
+```sql
+id uuid PRIMARY KEY
+project_id uuid REFERENCES projects NOT NULL
+epic_id uuid REFERENCES epics NOT NULL
+parent_issue_id uuid REFERENCES issues
+milestone_id uuid REFERENCES milestones
+title text NOT NULL
+status text CHECK (status IN ('todo', 'doing', 'in_review', 'done', 'canceled'))
+priority integer CHECK (priority BETWEEN 0 AND 3)
+story_points integer CHECK (story_points IN (1, 2, 3, 5, 8, 13, 21))
+sort_order integer
+created_at timestamptz DEFAULT now()
+```
+
+**dependencies**
+
+```sql
+issue_id uuid REFERENCES issues ON DELETE CASCADE
+depends_on_issue_id uuid REFERENCES issues ON DELETE CASCADE
+PRIMARY KEY (issue_id, depends_on_issue_id)
+CHECK (issue_id != depends_on_issue_id)
+```
+
+### Critical Database Functions
+
+**Cycle Detection Function**
+
+```sql
+-- Create function to check for dependency cycles
+-- Called before INSERT on dependencies table
+-- Returns true if adding dependency would create cycle
+CREATE OR REPLACE FUNCTION check_dependency_cycle(
+  new_issue_id uuid,
+  new_depends_on_id uuid
+) RETURNS boolean
+```
+
+**Auto-Create Unassigned Epic Trigger**
+
+```sql
+-- Trigger on projects INSERT
+-- Automatically creates "Unassigned" epic with is_default = true
+```
+
+### Row Level Security (RLS)
+
+All tables must have RLS enabled with policies:
+
+```sql
+-- Users can only access their own data
+CREATE POLICY "Users access own data" ON projects
+  FOR ALL USING (auth.uid() = user_id);
+```
+
+Apply similar policies to all tables, joining through project_id → user_id.
+
+## SvelteKit Architecture
+
+### Project Structure
+
+```
+src/
+├── routes/
+│   ├── +layout.svelte           # Root layout with auth check
+│   ├── +layout.server.ts         # Load user session
+│   ├── +page.svelte              # Home view (Ready issues)
+│   ├── +page.server.ts           # Load ready/doing/blocked issues
+│   ├── projects/
+│   │   ├── [id]/
+│   │   │   ├── +page.svelte      # Project detail view
+│   │   │   └── +page.server.ts   # Load project + epics
+│   ├── epics/
+│   │   ├── [id]/
+│   │   │   ├── +page.svelte      # Epic detail view
+│   │   │   └── +page.server.ts   # Load issues in epic
+│   └── auth/
+│       ├── login/+page.svelte
+│       └── signup/+page.svelte
+├── lib/
+│   ├── components/
+│   │   ├── ui/                   # shadcn/svelte components
+│   │   ├── IssueRow.svelte       # Issue list item
+│   │   ├── IssueSheet.svelte     # Issue detail drawer
+│   │   ├── DependencyGraph.svelte
+│   │   └── ProjectCard.svelte
+│   ├── stores/
+│   │   ├── issues.ts             # Writable stores for issues
+│   │   └── computed.ts           # Derived stores for Ready/Blocked
+│   ├── supabase.ts               # Supabase client initialization
+│   └── utils/
+│       ├── dependency-graph.ts   # Cycle detection, topological sort
+│       └── issue-helpers.ts      # Status checks, blocking logic
+└── app.d.ts                      # TypeScript definitions
+```
+
+### Key Patterns
+
+**Server-side Data Loading**
+
+```typescript
+// +page.server.ts
+export const load = async ({ locals: { supabase } }) => {
+	const { data: issues } = await supabase
+		.from('issues')
+		.select('*, epic:epics(*), project:projects(*)')
+		.eq('status', 'todo');
+
+	return { issues };
+};
+```
+
+**Form Actions for Mutations**
+
+```typescript
+// +page.server.ts
+export const actions = {
+	createIssue: async ({ request, locals: { supabase } }) => {
+		const data = await request.formData();
+		// Validate, insert, redirect
+	}
+};
+```
+
+**Computed States with Stores**
+
+```typescript
+// lib/stores/computed.ts
+import { derived } from 'svelte/store';
+
+export const readyIssues = derived(issues, ($issues) =>
+	$issues.filter((issue) => issue.status === 'todo' && !isBlocked(issue))
+);
+```
+
+**Bottom Sheet Component Usage**
+
+```svelte
+<script>
+	import { Sheet, SheetContent } from '$lib/components/ui/sheet';
+	let open = false;
+</script>
+
+<Sheet bind:open>
+	<SheetContent>
+		<!-- Issue detail form -->
+	</SheetContent>
+</Sheet>
+```
+
+### Authentication Flow
+
+1. User signs in via Supabase Auth (email/password or magic link)
+2. Session stored in cookie via `@supabase/ssr`
+3. `+layout.server.ts` loads session into `locals`
+4. Protected routes check `locals.session` and redirect if null
+5. RLS policies enforce user_id checks on all queries
+
+## Development Setup
+
+### Prerequisites
+
+```bash
+# Install dependencies
+npm install
+
+# Set up Supabase
+# 1. Create project at supabase.com
+# 2. Copy .env.example to .env.local
+# 3. Add SUPABASE_URL and SUPABASE_ANON_KEY
+
+# Optional: Local Supabase development
+npx supabase init
+npx supabase start
+npx supabase db reset  # Apply migrations
+```
+
+### Commands
+
+```bash
+# Development server (localhost:5173)
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Run tests
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run single test file
+npm run test path/to/test.spec.ts
+
+# Type checking
+npm run check
+
+# Lint
+npm run lint
+
+# Format code
+npm run format
+
+# Database migrations
+npx supabase migration new <migration_name>
+npx supabase db push  # Push to remote
+```
+
+## shadcn/svelte Components
+
+Key components from shadcn/svelte to use:
+
+**Layout & Navigation:**
+
+- `Sheet` / `Drawer` - Bottom sheet for issue detail editing (mobile-first)
+- `Tabs` - Segmented filters (Ready/Doing/Blocked/Done)
+- `Command` - Command palette for quick navigation (⌘K)
+
+**Forms & Inputs:**
+
+- `Select` / `Combobox` - Epic and milestone selection
+- `Input` - Issue title, story points
+- `Textarea` - Issue description (if added later)
+- `Button` - Primary actions
+- `Form` - Form validation with SvelteKit actions
+
+**Display:**
+
+- `Badge` - Priority (P0-P3), blocked indicator, status
+- `Card` - Project cards, epic cards
+- `Separator` - Visual dividers
+- `Collapsible` - Sub-issues list, dependency lists
+
+**Feedback:**
+
+- `Toast` - Success/error messages
+- `Dialog` - Confirmation dialogs (delete, bulk actions)
+- `Popover` - Context menus, quick actions
+
+**Installation:**
+
+```bash
+npx shadcn-svelte@latest init
+npx shadcn-svelte@latest add sheet tabs command select badge card
+```
+
+## Critical Implementation Notes
+
+### Dependency Cycle Prevention
+
+**PostgreSQL Implementation:**
+
+```sql
+-- Use recursive CTE to detect cycles
+WITH RECURSIVE dependency_path AS (
+  SELECT issue_id, depends_on_issue_id, ARRAY[issue_id] as path
+  FROM dependencies
+  WHERE issue_id = $new_issue_id
+
+  UNION ALL
+
+  SELECT d.issue_id, d.depends_on_issue_id, path || d.issue_id
+  FROM dependencies d
+  JOIN dependency_path dp ON d.issue_id = dp.depends_on_issue_id
+  WHERE NOT (d.issue_id = ANY(path))  -- Prevent infinite recursion
+)
+SELECT EXISTS (
+  SELECT 1 FROM dependency_path
+  WHERE depends_on_issue_id = $new_depends_on_id
+) AS would_create_cycle;
+```
+
+**Client-side validation:**
+
+1. Call `check_dependency_cycle()` RPC before inserting dependency
+2. Show error if cycle detected
+3. Optionally visualize dependency path that would create cycle
+
+### Story Point Validation
+
+Story points must be validated at input layer:
+
+- Only allow: 1, 2, 3, 5, 8, 13, 21, or null
+- Reject any other values
+
+### Status Transition Logic
+
+When computing "Blocked" state:
+
+- `done` and `canceled` dependencies do NOT block
+- `todo`, `doing`, and `in_review` dependencies DO block
+- This affects what appears in "Ready" view
+
+### Epic Assignment
+
+- Every issue creation/update must ensure epic is non-null
+- When creating sub-issue, inherit parent's epic
+- When moving issue to different project, reassign to valid epic in target project
+
+## Out of Scope (MVP)
+
+These features are explicitly NOT included:
+
+- Multi-user support / collaboration
+- Notifications
+- Templates
+- Reporting / velocity charts
+- Time tracking
+- Kanban boards
+- Gantt charts
+- Offline mode
