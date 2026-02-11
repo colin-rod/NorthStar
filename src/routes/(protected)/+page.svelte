@@ -29,7 +29,7 @@
   </div>
 
   <!-- Segmented Filters -->
-  <Tabs value="ready" class="w-full">
+  <Tabs defaultValue="ready" class="w-full">
     <TabsList class="grid w-full grid-cols-4">
       <TabsTrigger value="ready">
         Ready ({$readyIssues.length})

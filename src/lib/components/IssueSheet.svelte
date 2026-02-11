@@ -25,9 +25,35 @@
   import { Label } from '$lib/components/ui/label';
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
+  import type { IssueStatus } from '$lib/types';
 
   export let open = false;
   export let issue: Issue | null = null;
+
+  // Helper to get status badge variant
+  function getStatusVariant(
+    status: IssueStatus,
+  ):
+    | 'secondary'
+    | 'default'
+    | 'outline'
+    | 'destructive'
+    | 'status-todo'
+    | 'status-doing'
+    | 'status-in-review'
+    | 'status-done'
+    | 'status-blocked'
+    | 'status-canceled'
+    | undefined {
+    const variantMap: Record<IssueStatus, any> = {
+      todo: 'status-todo',
+      doing: 'status-doing',
+      in_review: 'status-in-review',
+      done: 'status-done',
+      canceled: 'status-canceled',
+    };
+    return variantMap[status];
+  }
 
   // TODO: Add Select components for epic, status, priority
   // TODO: Add dependency management UI
@@ -61,7 +87,7 @@
             <div class="flex gap-4">
               <div class="flex-1">
                 <Label for="status" class="text-metadata mb-2 block">Status</Label>
-                <Badge variant={`status-${issue.status}`} class="w-full justify-center py-2">
+                <Badge variant={getStatusVariant(issue.status)} class="w-full justify-center py-2">
                   {issue.status}
                 </Badge>
               </div>

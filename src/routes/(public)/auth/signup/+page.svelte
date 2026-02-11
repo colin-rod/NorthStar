@@ -50,7 +50,7 @@
             type="password"
             placeholder="••••••••"
             required
-            minlength="6"
+            minlength={6}
           />
           <p class="text-xs text-muted-foreground">Minimum 6 characters</p>
         </div>

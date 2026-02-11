@@ -17,7 +17,6 @@
    */
 
   import { enhance } from '$app/forms';
-  import { Input } from '$lib/components/ui/input';
   import { Button } from '$lib/components/ui/button';
   import { invalidateAll } from '$app/navigation';
 
@@ -31,7 +30,7 @@
   let { epicId, projectId, onCancel, onSuccess }: Props = $props();
 
   let loading = $state(false);
-  let inputElement: HTMLInputElement | undefined = $state(undefined);
+  let inputElement: HTMLInputElement | undefined = undefined;
 
   // Auto-focus on mount
   $effect(() => {
@@ -72,15 +71,15 @@
 
   <div class="flex gap-2">
     <div class="flex-1">
-      <Input
-        bind:ref={inputElement}
+      <input
+        bind:this={inputElement}
         id="title"
         name="title"
         placeholder="Issue title..."
         required
         maxlength={500}
         disabled={loading}
-        class="text-body"
+        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-body"
       />
     </div>
 

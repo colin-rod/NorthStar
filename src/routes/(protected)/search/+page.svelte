@@ -40,7 +40,8 @@
           id="search-input"
           type="search"
           placeholder="Search for issues by title..."
-          bind:value={searchQuery}
+          value={searchQuery}
+          oninput={(e) => (searchQuery = e.currentTarget.value)}
           class="pl-10"
         />
       </div>

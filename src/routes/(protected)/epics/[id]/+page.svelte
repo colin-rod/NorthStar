@@ -249,7 +249,7 @@
   {/if}
 
   <!-- Issue Filters -->
-  <Tabs value={filter} class="w-full">
+  <Tabs defaultValue={filter} class="w-full">
     <TabsList class="grid w-full grid-cols-7">
       <TabsTrigger value="all" onclick={() => setFilter('all')}
         >All ({allIssues.length})</TabsTrigger
