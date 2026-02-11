@@ -43,14 +43,17 @@ BEGIN
     -- ============================================================================
     RAISE NOTICE 'Creating projects...';
 
-    INSERT INTO projects (id, user_id, name)
-    VALUES
-        (gen_random_uuid(), test_user_id, 'Personal Tasks'),
-        (gen_random_uuid(), test_user_id, 'Work Projects')
+    -- Delete existing seed data if any (for clean re-runs)
+    DELETE FROM projects WHERE user_id = test_user_id AND name IN ('Personal Tasks', 'Work Projects');
+
+    -- Insert projects and capture IDs
+    INSERT INTO projects (user_id, name)
+    VALUES (test_user_id, 'Personal Tasks')
     RETURNING id INTO project1_id;
 
-    -- Get the second project ID
-    SELECT id INTO project2_id FROM projects WHERE name = 'Work Projects';
+    INSERT INTO projects (user_id, name)
+    VALUES (test_user_id, 'Work Projects')
+    RETURNING id INTO project2_id;
 
     RAISE NOTICE 'Created projects: % and %', project1_id, project2_id;
 
@@ -74,18 +77,24 @@ BEGIN
     -- ============================================================================
     RAISE NOTICE 'Creating custom epics...';
 
-    INSERT INTO epics (id, project_id, name, status, is_default, sort_order)
-    VALUES
-        (gen_random_uuid(), project1_id, 'Backend', 'active', FALSE, 1),
-        (gen_random_uuid(), project1_id, 'Frontend', 'active', FALSE, 2),
-        (gen_random_uuid(), project1_id, 'DevOps', 'active', FALSE, 3),
-        (gen_random_uuid(), project2_id, 'Design', 'active', FALSE, 1),
-        (gen_random_uuid(), project2_id, 'Research', 'done', FALSE, 2)
+    -- Insert epics and capture IDs
+    INSERT INTO epics (project_id, name, status, is_default, sort_order)
+    VALUES (project1_id, 'Backend', 'active', FALSE, 1)
     RETURNING id INTO epic_backend_id;
 
-    -- Get other epic IDs
-    SELECT id INTO epic_frontend_id FROM epics WHERE name = 'Frontend';
-    SELECT id INTO epic_devops_id FROM epics WHERE name = 'DevOps';
+    INSERT INTO epics (project_id, name, status, is_default, sort_order)
+    VALUES (project1_id, 'Frontend', 'active', FALSE, 2)
+    RETURNING id INTO epic_frontend_id;
+
+    INSERT INTO epics (project_id, name, status, is_default, sort_order)
+    VALUES (project1_id, 'DevOps', 'active', FALSE, 3)
+    RETURNING id INTO epic_devops_id;
+
+    -- Add epics for project2 (we don't need their IDs)
+    INSERT INTO epics (project_id, name, status, is_default, sort_order)
+    VALUES
+        (project2_id, 'Design', 'active', FALSE, 1),
+        (project2_id, 'Research', 'done', FALSE, 2);
 
     RAISE NOTICE '✓ Created custom epics';
 
@@ -94,14 +103,21 @@ BEGIN
     -- ============================================================================
     RAISE NOTICE 'Creating milestones...';
 
-    INSERT INTO milestones (id, user_id, name, due_date)
-    VALUES
-        (gen_random_uuid(), test_user_id, 'Q1 2026', '2026-03-31'),
-        (gen_random_uuid(), test_user_id, 'v1.0 Release', '2026-06-30'),
-        (gen_random_uuid(), test_user_id, 'Beta Launch', NULL)
+    -- Delete existing milestones for clean re-runs
+    DELETE FROM milestones WHERE user_id = test_user_id AND name IN ('Q1 2026', 'v1.0 Release', 'Beta Launch');
+
+    -- Insert milestones and capture IDs
+    INSERT INTO milestones (user_id, name, due_date)
+    VALUES (test_user_id, 'Q1 2026', '2026-03-31')
     RETURNING id INTO milestone_q1_id;
 
-    SELECT id INTO milestone_v1_id FROM milestones WHERE name = 'v1.0 Release';
+    INSERT INTO milestones (user_id, name, due_date)
+    VALUES (test_user_id, 'v1.0 Release', '2026-06-30')
+    RETURNING id INTO milestone_v1_id;
+
+    -- Beta Launch milestone (no ID needed)
+    INSERT INTO milestones (user_id, name, due_date)
+    VALUES (test_user_id, 'Beta Launch', NULL);
 
     RAISE NOTICE '✓ Created milestones';
 
