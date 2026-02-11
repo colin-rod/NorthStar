@@ -16,26 +16,41 @@
 		children?: Snippet;
 	} & HTMLButtonAttributes = $props();
 
+	/* North Design System Button Variants */
 	const variantClasses = {
-		default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-		destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-		outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-		secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-		ghost: 'hover:bg-accent hover:text-accent-foreground',
+		/* Primary: Burnt orange background, white text, 8px radius */
+		default:
+			'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-hover shadow-level-1',
+		/* Destructive: Red text only (no filled background per North spec) */
+		destructive:
+			'text-destructive hover:bg-destructive/10 active:bg-destructive/15 border border-transparent',
+		/* Secondary: Transparent with subtle border */
+		secondary:
+			'border border-border bg-transparent hover:bg-surface-subtle active:bg-muted text-foreground',
+		/* Outline: Similar to secondary but with more emphasis */
+		outline:
+			'border border-input bg-transparent hover:bg-surface-subtle hover:text-foreground text-foreground',
+		/* Ghost: No border, subtle hover */
+		ghost: 'hover:bg-surface-subtle hover:text-foreground text-foreground',
+		/* Link: Text-only with underline on hover */
 		link: 'text-primary underline-offset-4 hover:underline'
 	};
 
 	const sizeClasses = {
+		/* Default: 12px horizontal padding per spec, maintain vertical for touch targets */
 		default: 'h-10 px-4 py-2',
-		sm: 'h-9 rounded-md px-3',
-		lg: 'h-11 rounded-md px-8',
-		icon: 'h-10 w-10'
+		sm: 'h-9 px-3 py-1.5 text-sm',
+		lg: 'h-11 px-4 py-2.5',
+		icon: 'h-10 w-10 p-0'
 	};
 </script>
 
 <button
 	class={cn(
-		'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+		/* Base styles - 8px border radius per North spec */
+		'inline-flex items-center justify-center rounded-[8px] text-[15px] font-medium transition-colors',
+		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+		'disabled:pointer-events-none disabled:opacity-50',
 		variantClasses[variant],
 		sizeClasses[size],
 		className

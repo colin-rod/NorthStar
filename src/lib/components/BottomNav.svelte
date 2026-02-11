@@ -1,4 +1,13 @@
 <script lang="ts">
+	/**
+	 * BottomNav Component - North Design System (Mobile)
+	 *
+	 * North Design Principles:
+	 * - Burnt orange accent for active nav items
+	 * - Muted text for inactive items
+	 * - Minimal, clean appearance
+	 * - Mobile-first touch targets
+	 */
 	import { page } from '$app/stores';
 	import { Home, Folder, Search, Settings } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
@@ -11,7 +20,8 @@
 	$: isSettings = pathname === '/settings';
 </script>
 
-<nav class="fixed bottom-0 inset-x-0 z-40 border-t bg-background md:hidden">
+<!-- North Design: Minimal mobile nav with burnt orange active state -->
+<nav class="fixed bottom-0 inset-x-0 z-40 border-t border-border-divider bg-surface md:hidden">
 	<div class="flex justify-around items-center h-16">
 		<a
 			href="/"
@@ -19,11 +29,11 @@
 			aria-current={isHome ? 'page' : undefined}
 			class={cn(
 				'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
-				isHome ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+				isHome ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary'
 			)}
 		>
 			<Home class="w-6 h-6" />
-			<span class="text-xs">Home</span>
+			<span class="text-xs font-medium">Home</span>
 		</a>
 
 		<a
@@ -32,11 +42,11 @@
 			aria-current={isProjects ? 'page' : undefined}
 			class={cn(
 				'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
-				isProjects ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+				isProjects ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary'
 			)}
 		>
 			<Folder class="w-6 h-6" />
-			<span class="text-xs">Projects</span>
+			<span class="text-xs font-medium">Projects</span>
 		</a>
 
 		<a
@@ -45,11 +55,11 @@
 			aria-current={isSearch ? 'page' : undefined}
 			class={cn(
 				'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
-				isSearch ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+				isSearch ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary'
 			)}
 		>
 			<Search class="w-6 h-6" />
-			<span class="text-xs">Search</span>
+			<span class="text-xs font-medium">Search</span>
 		</a>
 
 		<a
@@ -58,11 +68,11 @@
 			aria-current={isSettings ? 'page' : undefined}
 			class={cn(
 				'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
-				isSettings ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+				isSettings ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary'
 			)}
 		>
 			<Settings class="w-6 h-6" />
-			<span class="text-xs">Settings</span>
+			<span class="text-xs font-medium">Settings</span>
 		</a>
 	</div>
 </nav>

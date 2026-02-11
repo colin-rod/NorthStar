@@ -45,6 +45,8 @@
 		"vitest": "^4.0.18"
 	},
 	"dependencies": {
+		"@fontsource/fraunces": "^5.2.9",
+		"@fontsource/inter": "^5.2.8",
 		"@supabase/ssr": "^0.8.0",
 		"@supabase/supabase-js": "^2.95.3",
 		"bits-ui": "^2.15.5",

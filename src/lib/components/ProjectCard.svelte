@@ -1,9 +1,15 @@
 <script lang="ts">
 	/**
-	 * ProjectCard Component
+	 * ProjectCard Component - North Design System
 	 *
 	 * Displays a project card with epic counts.
 	 * Used in: Projects list view
+	 *
+	 * North Design Principles:
+	 * - 10px border radius for cards
+	 * - Subtle border, no heavy shadows
+	 * - Minimal hover states
+	 * - Clean typography hierarchy
 	 *
 	 * Requirements from CLAUDE.md:
 	 * - Show project name
@@ -23,24 +29,29 @@
 	const doingCount = 0;
 </script>
 
-<a href="/projects/{project.id}">
-	<Card class="hover:shadow-md transition-shadow cursor-pointer">
-		<CardHeader>
-			<h3 class="text-lg font-semibold">{project.name}</h3>
+<!-- North Design: Card with 10px radius, subtle border, minimal hover -->
+<a href="/projects/{project.id}" class="block">
+	<Card
+		class="hover:shadow-level-1 transition-shadow duration-150 cursor-pointer border-border rounded-md"
+	>
+		<CardHeader class="pb-4">
+			<!-- Project name: section header weight -->
+			<h3 class="text-section-header font-ui">{project.name}</h3>
 		</CardHeader>
 		<CardContent>
-			<div class="flex gap-4 text-sm">
-				<div class="flex items-center gap-1">
-					<Badge variant="default">{readyCount}</Badge>
-					<span class="text-muted-foreground">Ready</span>
+			<!-- Counts with subtle badges -->
+			<div class="flex gap-4 text-metadata">
+				<div class="flex items-center gap-2">
+					<Badge variant="default" class="text-xs">{readyCount}</Badge>
+					<span class="text-foreground-secondary">Ready</span>
 				</div>
-				<div class="flex items-center gap-1">
-					<Badge variant="secondary">{doingCount}</Badge>
-					<span class="text-muted-foreground">Doing</span>
+				<div class="flex items-center gap-2">
+					<Badge variant="status-doing" class="text-xs">{doingCount}</Badge>
+					<span class="text-foreground-secondary">Doing</span>
 				</div>
-				<div class="flex items-center gap-1">
-					<Badge variant="destructive">{blockedCount}</Badge>
-					<span class="text-muted-foreground">Blocked</span>
+				<div class="flex items-center gap-2">
+					<Badge variant="status-blocked" class="text-xs">{blockedCount}</Badge>
+					<span class="text-foreground-secondary">Blocked</span>
 				</div>
 			</div>
 		</CardContent>

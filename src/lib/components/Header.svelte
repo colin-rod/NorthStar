@@ -1,4 +1,13 @@
 <script lang="ts">
+	/**
+	 * Header Component - North Design System
+	 *
+	 * North Design Principles:
+	 * - Clean, minimal chrome
+	 * - Use serif font (Fraunces) for "North" wordmark
+	 * - Burnt orange accent for active states
+	 * - Subtle borders
+	 */
 	import { enhance } from '$app/forms';
 	import Button from '$lib/components/ui/button.svelte';
 	import type { Session } from '@supabase/supabase-js';
@@ -8,16 +17,22 @@
 	let loggingOut = $state(false);
 </script>
 
-<header class="border-b">
-	<div class="container mx-auto flex items-center justify-between px-4 py-3">
-		<a href="/" class="text-xl font-bold">Issue Tracker</a>
+<!-- North Design: Minimal header with subtle border -->
+<header class="border-b border-border-divider bg-surface">
+	<div class="container mx-auto flex items-center justify-between px-4 py-4">
+		<!-- North wordmark with serif font per design spec -->
+		<a href="/" class="font-accent text-page-title text-foreground hover:text-primary transition-colors">
+			North
+		</a>
 
 		{#if session}
 			<div class="flex items-center gap-4">
-				<span class="text-sm text-muted-foreground hidden sm:inline">
+				<!-- Email (hidden on mobile) -->
+				<span class="text-metadata hidden sm:inline">
 					{session.user.email}
 				</span>
 
+				<!-- Logout button with North microcopy -->
 				<form
 					method="POST"
 					action="/?/logout"
@@ -29,7 +44,7 @@
 						};
 					}}
 				>
-					<Button type="submit" variant="outline" size="sm" disabled={loggingOut}>
+					<Button type="submit" variant="secondary" size="sm" disabled={loggingOut}>
 						{loggingOut ? 'Logging out...' : 'Logout'}
 					</Button>
 				</form>

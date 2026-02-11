@@ -1,4 +1,14 @@
 <script lang="ts">
+	/**
+	 * SideNav Component - North Design System (Desktop)
+	 *
+	 * North Design Principles:
+	 * - Clean sidebar with subtle border
+	 * - Burnt orange accent for active nav items
+	 * - Muted text for inactive items
+	 * - Serif font for app wordmark
+	 * - Minimal, clean appearance
+	 */
 	import { page } from '$app/stores';
 	import { Home, Folder, Search, Settings } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
@@ -11,11 +21,12 @@
 	$: isSettings = pathname === '/settings';
 </script>
 
-<nav class="fixed left-0 top-0 h-screen w-64 border-r bg-background hidden md:block">
+<!-- North Design: Clean sidebar with subtle styling -->
+<nav class="fixed left-0 top-0 h-screen w-64 border-r border-border-divider bg-surface hidden md:block">
 	<div class="flex flex-col h-full">
-		<!-- Logo/App title -->
-		<div class="p-6 border-b">
-			<h1 class="text-xl font-bold">Issue Tracker</h1>
+		<!-- Logo/App title with serif font per North spec -->
+		<div class="p-6 border-b border-border-divider">
+			<h1 class="font-accent text-page-title">North</h1>
 		</div>
 
 		<!-- Navigation items -->
@@ -25,14 +36,14 @@
 				aria-label="Home"
 				aria-current={isHome ? 'page' : undefined}
 				class={cn(
-					'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+					'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
 					isHome
-						? 'bg-muted text-foreground font-medium'
-						: 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+						? 'bg-primary-tint text-primary font-medium'
+						: 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground'
 				)}
 			>
 				<Home class="w-5 h-5" />
-				<span>Home</span>
+				<span class="text-body">Home</span>
 			</a>
 
 			<a
@@ -40,14 +51,14 @@
 				aria-label="Projects"
 				aria-current={isProjects ? 'page' : undefined}
 				class={cn(
-					'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+					'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
 					isProjects
-						? 'bg-muted text-foreground font-medium'
-						: 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+						? 'bg-primary-tint text-primary font-medium'
+						: 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground'
 				)}
 			>
 				<Folder class="w-5 h-5" />
-				<span>Projects</span>
+				<span class="text-body">Projects</span>
 			</a>
 
 			<a
@@ -55,14 +66,14 @@
 				aria-label="Search"
 				aria-current={isSearch ? 'page' : undefined}
 				class={cn(
-					'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+					'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
 					isSearch
-						? 'bg-muted text-foreground font-medium'
-						: 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+						? 'bg-primary-tint text-primary font-medium'
+						: 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground'
 				)}
 			>
 				<Search class="w-5 h-5" />
-				<span>Search</span>
+				<span class="text-body">Search</span>
 			</a>
 
 			<a
@@ -70,14 +81,14 @@
 				aria-label="Settings"
 				aria-current={isSettings ? 'page' : undefined}
 				class={cn(
-					'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+					'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
 					isSettings
-						? 'bg-muted text-foreground font-medium'
-						: 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+						? 'bg-primary-tint text-primary font-medium'
+						: 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground'
 				)}
 			>
 				<Settings class="w-5 h-5" />
-				<span>Settings</span>
+				<span class="text-body">Settings</span>
 			</a>
 		</div>
 	</div>

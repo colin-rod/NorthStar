@@ -1,36 +1,46 @@
 <script lang="ts" module>
-	import { type VariantProps, tv } from "tailwind-variants";
+	import { type VariantProps, tv } from 'tailwind-variants';
 
+	/* North Design System Badge Variants */
 	export const badgeVariants = tv({
-		base: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] [&>svg]:pointer-events-none [&>svg]:size-3",
+		base: 'inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-[6px] border px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-colors [&>svg]:pointer-events-none [&>svg]:size-3',
 		variants: {
 			variant: {
-				default:
-					"bg-primary text-primary-foreground [a&]:hover:bg-primary/90 border-transparent",
-				secondary:
-					"bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90 border-transparent",
+				/* Default: Primary burnt orange tint */
+				default: 'bg-primary-tint text-primary border-transparent',
+				/* Secondary: Subtle neutral */
+				secondary: 'bg-surface-subtle text-foreground-secondary border-transparent',
+				/* Destructive: Red text only, no filled background per North spec */
 				destructive:
-					"bg-destructive [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/70 border-transparent text-white",
-				outline: "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-			},
+					'bg-transparent text-destructive border-transparent hover:bg-destructive/10',
+				/* Outline: Subtle border with no background */
+				outline: 'text-foreground border-border bg-transparent hover:bg-surface-subtle',
+				/* Status variants - muted, not loud per North spec */
+				'status-todo': 'bg-surface-subtle text-foreground-muted border-transparent',
+				'status-doing': 'bg-status-doing/10 text-status-doing border-transparent',
+				'status-in-review': 'bg-status-in-review/10 text-status-in-review border-transparent',
+				'status-done': 'bg-bg-done text-status-done border-transparent',
+				'status-blocked': 'bg-bg-blocked text-status-blocked border-transparent',
+				'status-canceled': 'bg-surface-subtle text-foreground-muted border-transparent'
+			}
 		},
 		defaultVariants: {
-			variant: "default",
-		},
+			variant: 'default'
+		}
 	});
 
-	export type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+	export type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 </script>
 
 <script lang="ts">
-	import type { HTMLAnchorAttributes } from "svelte/elements";
-	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAnchorAttributes } from 'svelte/elements';
+	import { cn, type WithElementRef } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
 		href,
 		class: className,
-		variant = "default",
+		variant = 'default',
 		children,
 		...restProps
 	}: WithElementRef<HTMLAnchorAttributes> & {
@@ -39,7 +49,7 @@
 </script>
 
 <svelte:element
-	this={href ? "a" : "span"}
+	this={href ? 'a' : 'span'}
 	bind:this={ref}
 	data-slot="badge"
 	{href}

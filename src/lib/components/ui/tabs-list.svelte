@@ -10,9 +10,10 @@
 	}: { class?: string; children?: Snippet } & HTMLAttributes<HTMLDivElement> = $props();
 </script>
 
+<!-- North Design: Segmented control with underline indicator, no background fills -->
 <div
 	class={cn(
-		'inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground',
+		'inline-flex items-center justify-start gap-4 border-b border-border-divider',
 		className
 	)}
 	{...props}

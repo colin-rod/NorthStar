@@ -15,11 +15,17 @@
 	const isActive = $derived(ctx.activeTab() === value);
 </script>
 
+<!-- North Design: Underline indicator in burnt orange, text muted by default, primary when active -->
 <button
 	type="button"
 	class={cn(
-		'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-		isActive && 'bg-background text-foreground shadow-sm',
+		'relative inline-flex items-center justify-center whitespace-nowrap px-0 pb-3 text-[15px] font-medium transition-colors',
+		'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+		'disabled:pointer-events-none disabled:opacity-50',
+		/* Text color: muted by default, primary when active */
+		isActive ? 'text-foreground' : 'text-foreground-muted hover:text-foreground-secondary',
+		/* Underline indicator via border-bottom */
+		isActive && 'border-b-2 border-primary',
 		className
 	)}
 	onclick={() => ctx.setTab(value)}
