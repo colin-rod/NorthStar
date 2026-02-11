@@ -5,7 +5,7 @@
    * Shows a project with its epics and counts.
    *
    * Requirements from CLAUDE.md:
-   * - Epics list with counts (Ready, Blocked, Doing)
+   * - Epics list with counts (Ready, Blocked, Doing, In Review, Done, Canceled)
    */
 
   import type { PageData } from './$types';
@@ -30,7 +30,7 @@
   <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
     {#if data.epics && data.epics.length > 0}
       {#each data.epics as epic (epic.id)}
-        <EpicCard {epic} />
+        <EpicCard {epic} counts={epic.counts} />
       {/each}
     {:else}
       <p class="col-span-full text-center text-muted-foreground py-8">No epics in this project</p>

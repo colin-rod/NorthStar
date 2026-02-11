@@ -13,21 +13,17 @@
    *
    * Requirements from CLAUDE.md:
    * - Show epic name and status
-   * - Show issue counts (Ready, Blocked, Doing)
+   * - Show 6 issue counts: Ready, Blocked, Doing, In Review, Done, Canceled
    * - Clickable to navigate to epic detail
    */
 
   import type { Epic } from '$lib/types';
+  import type { IssueCounts } from '$lib/utils/issue-counts';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
 
   export let epic: Epic;
-
-  // TODO: Calculate counts from epic.issues
-  const todoCount = 0;
-  const doingCount = 0;
-  const blockedCount = 0;
-  const doneCount = 0;
+  export let counts: IssueCounts;
 
   // Status badge variant mapping
   const getStatusVariant = (status: string) => {
@@ -53,28 +49,36 @@
       </div>
     </CardHeader>
     <CardContent>
-      <!-- Counts with subtle badges in 2x2 grid -->
-      <div class="grid grid-cols-2 gap-3 text-metadata">
+      <!-- Counts with subtle badges in 3x2 grid -->
+      <div class="grid grid-cols-3 gap-3 text-metadata">
+        <!-- Row 1: Active work states -->
         <div class="flex items-center gap-2">
-          <Badge variant="status-todo" class="text-xs">{todoCount}</Badge>
-          <span class="text-foreground-secondary">Todo</span>
+          <Badge variant="default" class="text-xs">{counts.ready}</Badge>
+          <span class="text-foreground-secondary">Ready</span>
         </div>
         <div class="flex items-center gap-2">
-          <Badge variant="status-doing" class="text-xs">{doingCount}</Badge>
+          <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
           <span class="text-foreground-secondary">Doing</span>
         </div>
         <div class="flex items-center gap-2">
-          <Badge variant="status-blocked" class="text-xs">{blockedCount}</Badge>
+          <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
+          <span class="text-foreground-secondary">In Review</span>
+        </div>
+
+        <!-- Row 2: Problem/terminal states -->
+        <div class="flex items-center gap-2">
+          <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
           <span class="text-foreground-secondary">Blocked</span>
         </div>
         <div class="flex items-center gap-2">
-          <Badge variant="status-done" class="text-xs">{doneCount}</Badge>
+          <Badge variant="status-done" class="text-xs">{counts.done}</Badge>
           <span class="text-foreground-secondary">Done</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <Badge variant="status-canceled" class="text-xs">{counts.canceled}</Badge>
+          <span class="text-foreground-secondary">Canceled</span>
         </div>
       </div>
     </CardContent>
   </Card>
 </a>
-
-<!-- TODO: Implement count calculations from loaded data -->
-<!-- TODO: Handle "Unassigned" epic display differently -->
