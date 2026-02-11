@@ -84,4 +84,38 @@
 			<p class="text-muted-foreground">Coming soon</p>
 		</CardContent>
 	</Card>
+
+	<!-- Archived Projects Section -->
+	<Card>
+		<CardHeader>
+			<h2 class="text-xl font-semibold">Archived Projects</h2>
+			<p class="text-sm text-foreground-secondary mt-1">
+				Restore archived projects to make them active again.
+			</p>
+		</CardHeader>
+		<CardContent>
+			{#if data.archivedProjects && data.archivedProjects.length === 0}
+				<p class="text-foreground-muted">No archived projects.</p>
+			{:else if data.archivedProjects}
+				<div class="space-y-2">
+					{#each data.archivedProjects as project}
+						<div class="flex items-center justify-between p-4 border border-border rounded-md bg-surface">
+							<div>
+								<p class="font-medium">{project.name}</p>
+								<p class="text-sm text-foreground-muted">
+									Archived {new Date(project.archived_at).toLocaleDateString()}
+								</p>
+							</div>
+							<form method="POST" action="?/unarchiveProject" use:enhance>
+								<input type="hidden" name="id" value={project.id} />
+								<Button type="submit" variant="outline" size="sm">Restore</Button>
+							</form>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="text-foreground-muted">Loading archived projects...</p>
+			{/if}
+		</CardContent>
+	</Card>
 </div>
