@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     throw error(404, 'Epic not found');
   }
 
-  // Load issues in this epic
+  // Load issues in this epic with full dependency relations
   const { data: issues, error: issuesError } = await locals.supabase
     .from('issues')
     .select(
@@ -34,9 +34,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
       project:projects(*),
       epic:epics(*),
       milestone:milestones(*),
-      dependencies:dependencies(
+      dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
-        depends_on_issue:issues(*)
+        depends_on_issue:issues(*, epic:epics(*), project:projects(*))
       )
     `,
     )
@@ -47,9 +47,41 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     console.error('Error loading issues:', issuesError);
   }
 
+  // Load all epics in the same project (for epic picker in IssueSheet)
+  const { data: epics } = await locals.supabase
+    .from('epics')
+    .select('*')
+    .eq('project_id', epic.project_id)
+    .order('sort_order', { ascending: true });
+
+  // Load all milestones for the user (global, cross-project)
+  const { data: milestones } = await locals.supabase
+    .from('milestones')
+    .select('*')
+    .order('name', { ascending: true });
+
+  // Load ALL issues for dependency checking (needed for "blocking" calculation)
+  const { data: allIssues } = await locals.supabase.from('issues').select(
+    `
+      id,
+      title,
+      status,
+      epic_id,
+      project_id,
+      epic:epics(id, name),
+      dependencies!dependencies_issue_id_fkey(
+        issue_id,
+        depends_on_issue_id
+      )
+    `,
+  );
+
   return {
     epic,
     issues: issues || [],
+    epics: epics || [],
+    milestones: milestones || [],
+    allIssues: allIssues || [],
   };
 };
 

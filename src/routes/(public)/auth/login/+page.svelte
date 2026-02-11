@@ -36,7 +36,7 @@
       {/if}
 
       <Tabs defaultValue="login">
-        <TabsList class="grid w-full grid-cols-3">
+        <TabsList class="grid grid-cols-3 mx-auto">
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="signup">Sign Up</TabsTrigger>
           <TabsTrigger value="magic">Magic Link</TabsTrigger>

@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
       *,
       issues(
         *,
-        dependencies:dependencies(
+        dependencies!dependencies_issue_id_fkey(
           depends_on_issue_id,
           depends_on_issue:issues(*)
         )

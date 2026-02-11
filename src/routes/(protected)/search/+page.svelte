@@ -74,4 +74,4 @@
 </div>
 
 <!-- Issue detail sheet -->
-<IssueSheet />
+<IssueSheet open={false} issue={null} epics={[]} milestones={[]} allIssues={[]} />

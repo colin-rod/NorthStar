@@ -100,7 +100,13 @@
 </div>
 
 <!-- Issue Detail Sheet -->
-<IssueSheet bind:open={$isIssueSheetOpen} issue={$selectedIssue} />
+<IssueSheet
+  bind:open={$isIssueSheetOpen}
+  issue={$selectedIssue}
+  epics={data.epics || []}
+  milestones={data.milestones || []}
+  allIssues={data.issues || []}
+/>
 
 <!-- TODO: Add search/filter functionality -->
 <!-- TODO: Add sorting options -->

@@ -312,7 +312,13 @@
 </div>
 
 <!-- Issue Detail Sheet -->
-<IssueSheet bind:open={sheetOpen} issue={selectedIssue} />
+<IssueSheet
+  bind:open={sheetOpen}
+  issue={selectedIssue}
+  epics={data.epics || []}
+  milestones={data.milestones || []}
+  allIssues={(data.allIssues as any) || []}
+/>
 
 <!-- Toast Feedback -->
 {#if showFeedback}
