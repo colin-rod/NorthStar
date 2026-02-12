@@ -66,7 +66,6 @@
     };
   }}
   class="border rounded-md p-4 bg-surface-subtle mb-4"
-  onkeydown={handleKeydown}
 >
   <!-- Hidden fields -->
   <input type="hidden" name="parent_issue_id" value={parentIssueId} />
@@ -83,6 +82,7 @@
         required
         maxlength={500}
         disabled={loading}
+        onkeydown={handleKeydown}
         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-body"
       />
     </div>

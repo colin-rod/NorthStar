@@ -97,12 +97,21 @@
   >
     <!-- Expand/Collapse Chevron (for parents with sub-issues) -->
     {#if hasSubIssues}
-      <button
+      <div
         onclick={(e) => {
           e.stopPropagation();
           onToggleExpand?.();
         }}
-        class="flex items-center shrink-0 pt-1"
+        onkeydown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+            e.preventDefault();
+            onToggleExpand?.();
+          }
+        }}
+        role="button"
+        tabindex="0"
+        class="flex items-center shrink-0 pt-1 cursor-pointer"
         aria-label={isExpanded ? 'Collapse sub-issues' : 'Expand sub-issues'}
       >
         {#if isExpanded}
@@ -110,7 +119,7 @@
         {:else}
           <ChevronRight class="h-4 w-4 text-muted-foreground" />
         {/if}
-      </button>
+      </div>
     {:else}
       <!-- Spacer for alignment when no chevron -->
       <div class="w-4 shrink-0"></div>
@@ -118,7 +127,7 @@
 
     <!-- Status indicator: small colored dot per North spec -->
     <div class="flex items-center pt-1 shrink-0">
-      <div class={`w-1.5 h-1.5 rounded-full ${getStatusColor(issue.status)}`} />
+      <div class={`w-1.5 h-1.5 rounded-full ${getStatusColor(issue.status)}`}></div>
     </div>
 
     <div class="flex-1 min-w-0">

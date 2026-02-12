@@ -80,7 +80,7 @@
 
   // Filter epics to only show those from the same project
   let projectEpics = $derived(
-    issue ? epics.filter((epic) => epic.project_id === issue.project_id) : [],
+    issue ? epics.filter((epic) => epic.project_id === issue?.project_id) : [],
   );
 
   // Get blocking dependencies
@@ -89,7 +89,9 @@
   // Get issues that this issue blocks
   let blockingIssues = $derived(
     issue
-      ? allIssues.filter((i) => i.dependencies?.some((dep) => dep.depends_on_issue_id === issue.id))
+      ? allIssues.filter((i) =>
+          i.dependencies?.some((dep) => dep.depends_on_issue_id === issue?.id),
+        )
       : [],
   );
 

@@ -69,10 +69,7 @@
           <h3 class="text-section-header font-ui">{project.name}</h3>
 
           <!-- Action buttons - visible on hover -->
-          <div
-            class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            onclick={(e) => e.preventDefault()}
-          >
+          <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {#if onEdit}
               <Button
                 variant="ghost"

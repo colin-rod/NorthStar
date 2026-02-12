@@ -101,21 +101,24 @@ export const actions: Actions = {
 
     // 2. Parse form data
     const formData = await request.formData();
-    const title = formData.get('title')?.toString().trim();
+    const titleRaw = formData.get('title')?.toString().trim();
     let epicId = formData.get('epic_id')?.toString();
     const projectId = formData.get('project_id')?.toString();
     const parentIssueId = formData.get('parent_issue_id')?.toString() || null;
 
     // 3. Validation
-    if (!title || title.length === 0) {
+    if (!titleRaw || titleRaw.length === 0) {
       return fail(400, { error: 'Issue title is required' });
     }
-    if (title.length > 500) {
+    if (titleRaw.length > 500) {
       return fail(400, { error: 'Issue title must be 500 characters or less' });
     }
     if (!epicId || !projectId) {
       return fail(400, { error: 'Epic and project are required' });
     }
+
+    // titleRaw is validated above to be non-empty
+    const title = titleRaw;
 
     // 4. If creating sub-issue, validate parent and inherit epic
     if (parentIssueId) {
@@ -165,18 +168,10 @@ export const actions: Actions = {
       existingIssues?.[0]?.sort_order != null ? existingIssues[0].sort_order + 1 : 0;
 
     // 6. Insert issue with defaults
-    const insertData: {
-      title: string;
-      epic_id: string;
-      project_id: string;
-      status: string;
-      priority: number;
-      sort_order: number;
-      parent_issue_id?: string;
-    } = {
-      title,
-      epic_id: epicId,
-      project_id: projectId,
+    const insertData: Record<string, string | number> = {
+      title: title as string, // Validated above - titleRaw is non-empty string
+      epic_id: epicId as string,
+      project_id: projectId as string,
       status: 'todo',
       priority: 2, // P2 default
       sort_order: nextSortOrder,
