@@ -61,6 +61,7 @@
           <CommandItem
             onSelect={() => toggleProject(project.id)}
             class="flex items-center gap-2 cursor-pointer"
+            data-testid="project-checkbox"
           >
             <Checkbox checked={selectedProjectIds.includes(project.id)} aria-label={project.name} />
             <span>{project.name}</span>

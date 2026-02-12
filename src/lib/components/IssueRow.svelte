@@ -75,6 +75,7 @@
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
 <div
+  data-testid="issue-row"
   class="relative w-full flex items-center px-4 py-4 border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group"
 >
   <!-- Drag Handle (left side, hover-visible) -->
