@@ -100,12 +100,12 @@ Remove these imports and any code using them (if any exists).
 
 ## Acceptance Criteria
 
-1. ✅ Self-dependency rejected (via database function)
-2. ✅ Indirect cycle rejected (via database function)
-3. ✅ Non-cycle edges succeed quickly (acceptable performance for personal scale)
-4. ✅ No client-side cycle detection code remains
-5. ✅ All tests pass (unit tests for remaining functions, integration tests for database)
-6. ✅ No unused imports or dead code
+1. ✅ Self-dependency rejected (via database function) - VERIFIED
+2. ✅ Indirect cycle rejected (via database function) - VERIFIED
+3. ✅ Non-cycle edges succeed quickly (acceptable performance for personal scale) - VERIFIED
+4. ✅ No client-side cycle detection code remains - VERIFIED
+5. ✅ All tests pass (unit tests for remaining functions, integration tests for database) - VERIFIED
+6. ✅ No unused imports or dead code - VERIFIED
 
 ## Testing Strategy
 
@@ -132,9 +132,9 @@ Test in UI that cycle error appears correctly in AddDependencyDialog when attemp
 
 ## Files Modified
 
-1. `src/lib/utils/dependency-graph.ts` - Remove functions
-2. `src/lib/utils/dependency-graph.test.ts` - Remove tests
-3. Any files importing deleted functions (TBD after search)
+1. ✅ `src/lib/utils/dependency-graph.ts` - Removed functions (wouldCreateCycle, findDependencyPath, buildAdjacencyList)
+2. ✅ `src/lib/utils/dependency-graph.test.ts` - Removed tests (16 tests removed, 17 remaining)
+3. ✅ No external usage found (functions were unused)
 
 ## Out of Scope
 
