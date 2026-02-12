@@ -4,7 +4,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { invalidateAll } from '$app/navigation';
-  import { createClient } from '$lib/supabase';
+  import { supabase } from '$lib/supabase';
 
   // Props
   let {
@@ -51,8 +51,19 @@
   });
 
   // Helper to get status badge variant
-  function getStatusVariant(status: string) {
-    const variantMap: Record<string, string> = {
+  function getStatusVariant(
+    status: string,
+  ):
+    | 'status-todo'
+    | 'status-doing'
+    | 'status-in-review'
+    | 'status-done'
+    | 'status-canceled'
+    | undefined {
+    const variantMap: Record<
+      string,
+      'status-todo' | 'status-doing' | 'status-in-review' | 'status-done' | 'status-canceled'
+    > = {
       todo: 'status-todo',
       doing: 'status-doing',
       in_review: 'status-in-review',
@@ -78,8 +89,6 @@
     error = null;
 
     try {
-      const supabase = createClient();
-
       // 1. Check for cycles using DB function
       const { data: wouldCycle, error: cycleError } = await supabase.rpc('check_dependency_cycle', {
         new_issue_id: issue.id,
@@ -133,7 +142,8 @@
     <!-- Search Input -->
     <div class="mb-4">
       <Input
-        bind:value={searchTerm}
+        value={searchTerm}
+        oninput={(e: Event) => (searchTerm = (e.target as HTMLInputElement).value)}
         placeholder="Search issues..."
         disabled={loading}
         class="text-body"

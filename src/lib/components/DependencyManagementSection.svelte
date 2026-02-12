@@ -3,9 +3,9 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import AddDependencyDialog from '$lib/components/AddDependencyDialog.svelte';
-  import { X } from 'lucide-svelte';
+  import X from '@lucide/svelte/icons/x';
   import { invalidateAll } from '$app/navigation';
-  import { createClient } from '$lib/supabase';
+  import { supabase } from '$lib/supabase';
 
   // Props
   let {
@@ -26,8 +26,19 @@
   let dialogOpen = $state(false);
 
   // Helper to get status badge variant
-  function getStatusVariant(status: string) {
-    const variantMap: Record<string, string> = {
+  function getStatusVariant(
+    status: string,
+  ):
+    | 'status-todo'
+    | 'status-doing'
+    | 'status-in-review'
+    | 'status-done'
+    | 'status-canceled'
+    | undefined {
+    const variantMap: Record<
+      string,
+      'status-todo' | 'status-doing' | 'status-in-review' | 'status-done' | 'status-canceled'
+    > = {
       todo: 'status-todo',
       doing: 'status-doing',
       in_review: 'status-in-review',
@@ -48,8 +59,6 @@
   // Remove dependency handler
   async function removeDependency(dependsOnIssueId: string) {
     try {
-      const supabase = createClient();
-
       const { error } = await supabase
         .from('dependencies')
         .delete()
