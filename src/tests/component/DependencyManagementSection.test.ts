@@ -2,19 +2,29 @@ import { render, screen } from '@testing-library/svelte';
 import { describe, it, expect } from 'vitest';
 
 import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
-import type { Issue } from '$lib/types';
+import type { Issue, IssueStatus } from '$lib/types';
 
 describe('DependencyManagementSection - Blocking Summary', () => {
-  const createIssue = (id: string, title: string, status: string): Issue => ({
+  const createIssue = (id: string, title: string, status: IssueStatus): Issue => ({
     id,
     title,
     status,
     priority: 0,
     project_id: 'proj-1',
     epic_id: 'epic-1',
+    parent_issue_id: null,
+    milestone_id: null,
+    story_points: null,
     sort_order: 1,
     created_at: new Date().toISOString(),
-    epic: { id: 'epic-1', name: 'Test Epic' },
+    epic: {
+      id: 'epic-1',
+      name: 'Test Epic',
+      project_id: 'proj-1',
+      status: 'active',
+      is_default: false,
+      sort_order: null,
+    },
   });
 
   it('should display "Blocked by 2 dependencies" when issue has 2 blocking deps', () => {
