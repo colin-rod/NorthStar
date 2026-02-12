@@ -158,10 +158,11 @@ describe('Dependency Queries Integration', () => {
 
     const blockedBy = issue?.blocked_by?.[0];
     expect(blockedBy).toBeDefined();
-    expect(blockedBy?.depends_on_issue?.id).toBe(issueB.id);
-    expect(blockedBy?.depends_on_issue?.title).toBe(issueB.title);
-    expect(blockedBy?.depends_on_issue?.epic).toBeDefined();
-    expect(blockedBy?.depends_on_issue?.project).toBeDefined();
+    const dependsOnIssue = blockedBy?.depends_on_issue as any;
+    expect(dependsOnIssue?.id).toBe(issueB.id);
+    expect(dependsOnIssue?.title).toBe(issueB.title);
+    expect(dependsOnIssue?.epic).toBeDefined();
+    expect(dependsOnIssue?.project).toBeDefined();
   });
 
   it('should load blocking relationships (issues this one blocks)', async () => {
@@ -196,10 +197,11 @@ describe('Dependency Queries Integration', () => {
 
     const blocking = issue?.blocking?.[0];
     expect(blocking).toBeDefined();
-    expect(blocking?.issue?.id).toBe(issueC.id);
-    expect(blocking?.issue?.title).toBe(issueC.title);
-    expect(blocking?.issue?.epic).toBeDefined();
-    expect(blocking?.issue?.project).toBeDefined();
+    const blockingIssue = blocking?.issue as any;
+    expect(blockingIssue?.id).toBe(issueC.id);
+    expect(blockingIssue?.title).toBe(issueC.title);
+    expect(blockingIssue?.epic).toBeDefined();
+    expect(blockingIssue?.project).toBeDefined();
   });
 
   it('should load both blocked_by and blocking in a single query', async () => {
@@ -229,11 +231,13 @@ describe('Dependency Queries Integration', () => {
 
     // Verify blocked_by (A depends on B, so B blocks A)
     expect(issue?.blocked_by).toHaveLength(1);
-    expect(issue?.blocked_by?.[0]?.depends_on_issue?.id).toBe(issueB.id);
+    const blockedByIssue = issue?.blocked_by?.[0]?.depends_on_issue as any;
+    expect(blockedByIssue?.id).toBe(issueB.id);
 
     // Verify blocking (C depends on A, so A blocks C)
     expect(issue?.blocking).toHaveLength(1);
-    expect(issue?.blocking?.[0]?.issue?.id).toBe(issueC.id);
+    const blockingIssue = issue?.blocking?.[0]?.issue as any;
+    expect(blockingIssue?.id).toBe(issueC.id);
   });
 
   it('should return empty arrays when issue has no dependencies', async () => {
@@ -261,6 +265,7 @@ describe('Dependency Queries Integration', () => {
     expect(issue).toBeDefined();
     expect(issue?.blocked_by).toEqual([]);
     expect(issue?.blocking).toHaveLength(1); // B blocks A
-    expect(issue?.blocking?.[0]?.issue?.id).toBe(issueA.id);
+    const blockingIssue = issue?.blocking?.[0]?.issue as any;
+    expect(blockingIssue?.id).toBe(issueA.id);
   });
 });
