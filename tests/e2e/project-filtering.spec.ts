@@ -85,16 +85,19 @@ test.describe('Project Filtering', () => {
       test.skip(true, 'Could not get project name');
     }
 
+    // TypeScript narrowing: we know firstProjectName is not null after the skip check
+    const projectName = firstProjectName!;
+
     // Search for the first project
     const searchInput = page.getByPlaceholder('Search projects...');
-    await searchInput.fill(firstProjectName);
+    await searchInput.fill(projectName);
 
     // Verify filtered results
     const filteredCount = await page.locator('[data-testid="project-checkbox"]').count();
     expect(filteredCount).toBeLessThanOrEqual(initialCount);
 
     // The searched project should still be visible
-    await expect(page.getByText(firstProjectName, { exact: false })).toBeVisible();
+    await expect(page.getByText(projectName, { exact: false })).toBeVisible();
   });
 
   test('updates URL when project is selected', async ({ page }) => {
