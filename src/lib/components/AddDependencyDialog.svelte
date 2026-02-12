@@ -10,13 +10,13 @@
   let {
     open = $bindable(false),
     issue = $bindable<Issue | null>(null),
-    allIssues = [],
+    projectIssues = [],
     blockedByIssues = [],
     blockingIssues = [],
   }: {
     open: boolean;
     issue: Issue | null;
-    allIssues: Issue[];
+    projectIssues: Issue[];
     blockedByIssues: Issue[];
     blockingIssues: Issue[];
   } = $props();
@@ -28,7 +28,7 @@
 
   // Filter available issues (exclude self and existing dependencies)
   let availableIssues = $derived(
-    allIssues.filter(
+    projectIssues.filter(
       (i) =>
         i.id !== issue?.id &&
         !blockedByIssues.some((dep) => dep.id === i.id) &&

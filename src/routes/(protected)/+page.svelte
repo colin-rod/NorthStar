@@ -89,7 +89,7 @@
   issue={$selectedIssue}
   epics={data.epics || []}
   milestones={data.milestones || []}
-  allIssues={data.issues || []}
+  projectIssues={data.issues || []}
 />
 
 <!-- TODO: Add search/filter functionality -->

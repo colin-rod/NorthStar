@@ -329,7 +329,7 @@
   issue={selectedIssue}
   epics={data.epics || []}
   milestones={data.milestones || []}
-  allIssues={(data.allIssues as any) || []}
+  projectIssues={data.issues || []}
 />
 
 <!-- Toast Feedback -->

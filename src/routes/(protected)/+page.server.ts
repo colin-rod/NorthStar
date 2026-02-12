@@ -21,6 +21,22 @@ export const load: PageServerLoad = async ({ locals }) => {
         depends_on_issue_id,
         depends_on_issue:issues(*, epic:epics(*), project:projects(*))
       ),
+      blocked_by:dependencies!dependencies_issue_id_fkey(
+        depends_on_issue_id,
+        depends_on_issue:issues(
+          id, title, status, priority, epic_id, project_id,
+          epic:epics(id, name),
+          project:projects(id, name)
+        )
+      ),
+      blocking:dependencies!dependencies_depends_on_issue_id_fkey(
+        issue_id,
+        issue:issues(
+          id, title, status, priority, epic_id, project_id,
+          epic:epics(id, name),
+          project:projects(id, name)
+        )
+      ),
       sub_issues:issues!parent_issue_id(
         id,
         title,

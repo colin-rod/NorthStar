@@ -10,13 +10,13 @@
   // Props
   let {
     issue,
-    allIssues = [],
+    projectIssues = [],
     blockedByIssues = [],
     blockingIssues = [],
     saveError = $bindable<string | null>(null),
   }: {
     issue: Issue;
-    allIssues: Issue[];
+    projectIssues: Issue[];
     blockedByIssues: Issue[];
     blockingIssues: Issue[];
     saveError?: string | null;
@@ -143,7 +143,7 @@
 <AddDependencyDialog
   bind:open={dialogOpen}
   {issue}
-  {allIssues}
+  {projectIssues}
   {blockedByIssues}
   {blockingIssues}
 />

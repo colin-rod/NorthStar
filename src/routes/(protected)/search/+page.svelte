@@ -74,4 +74,10 @@
 </div>
 
 <!-- Issue detail sheet -->
-<IssueSheet open={false} issue={null} epics={[]} milestones={[]} allIssues={[]} />
+<IssueSheet
+  open={false}
+  issue={null}
+  epics={data.epics || []}
+  milestones={data.milestones || []}
+  projectIssues={data.issues || []}
+/>

@@ -38,13 +38,13 @@
     issue = $bindable<Issue | null>(null),
     epics = [],
     milestones = [],
-    allIssues = [],
+    projectIssues = [],
   }: {
     open: boolean;
     issue: Issue | null;
     epics: Epic[];
     milestones: Milestone[];
-    allIssues: Issue[];
+    projectIssues: Issue[];
   } = $props();
 
   // Local state for form fields
@@ -94,16 +94,20 @@
     issue ? epics.filter((epic) => epic.project_id === issue?.project_id) : [],
   );
 
-  // Get blocking dependencies
-  let blockedByIssues = $derived(issue ? getBlockingDependencies(issue) : []);
+  // Get blocking dependencies (issues that block this one)
+  // Use server-provided data and filter for active blockers (not done/canceled)
+  let blockedByIssues = $derived(
+    issue?.blocked_by
+      ?.map((dep) => dep.depends_on_issue)
+      .filter(
+        (i): i is Issue => i !== undefined && i.status !== 'done' && i.status !== 'canceled',
+      ) || [],
+  );
 
   // Get issues that this issue blocks
+  // Use server-provided data directly
   let blockingIssues = $derived(
-    issue
-      ? allIssues.filter((i) =>
-          i.dependencies?.some((dep) => dep.depends_on_issue_id === issue?.id),
-        )
-      : [],
+    issue?.blocking?.map((dep) => dep.issue).filter((i): i is Issue => i !== undefined) || [],
   );
 
   // Get sub-issues
@@ -453,7 +457,7 @@
         <!-- Dependencies Section -->
         <DependencyManagementSection
           {issue}
-          {allIssues}
+          {projectIssues}
           {blockedByIssues}
           {blockingIssues}
           bind:saveError

@@ -38,6 +38,22 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         depends_on_issue_id,
         depends_on_issue:issues(*, epic:epics(*), project:projects(*))
       ),
+      blocked_by:dependencies!dependencies_issue_id_fkey(
+        depends_on_issue_id,
+        depends_on_issue:issues(
+          id, title, status, priority, epic_id, project_id,
+          epic:epics(id, name),
+          project:projects(id, name)
+        )
+      ),
+      blocking:dependencies!dependencies_depends_on_issue_id_fkey(
+        issue_id,
+        issue:issues(
+          id, title, status, priority, epic_id, project_id,
+          epic:epics(id, name),
+          project:projects(id, name)
+        )
+      ),
       sub_issues:issues!parent_issue_id(
         id,
         title,
@@ -67,28 +83,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     .select('*')
     .order('name', { ascending: true });
 
-  // Load ALL issues for dependency checking (needed for "blocking" calculation)
-  const { data: allIssues } = await locals.supabase.from('issues').select(
-    `
-      id,
-      title,
-      status,
-      epic_id,
-      project_id,
-      epic:epics(id, name),
-      dependencies!dependencies_issue_id_fkey(
-        issue_id,
-        depends_on_issue_id
-      )
-    `,
-  );
-
   return {
     epic,
     issues: issues || [],
     epics: epics || [],
     milestones: milestones || [],
-    allIssues: allIssues || [],
     breadcrumbs: [
       { label: 'Projects', href: '/projects' },
       { label: epic.project.name, href: `/projects/${epic.project_id}` },

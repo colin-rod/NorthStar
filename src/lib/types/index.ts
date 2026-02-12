@@ -91,8 +91,8 @@ export interface Issue {
   parent_issue?: Issue;
   sub_issues?: Issue[];
   dependencies?: Dependency[]; // Issues this depends on
-  blocked_by?: Issue[]; // Issues blocking this one
-  blocking?: Issue[]; // Issues this one blocks
+  blocked_by?: Dependency[]; // Dependencies where this issue is blocked (with depends_on_issue populated)
+  blocking?: Dependency[]; // Dependencies where this issue blocks others (with issue populated)
 }
 
 export type IssueStatus = 'todo' | 'doing' | 'in_review' | 'done' | 'canceled';
