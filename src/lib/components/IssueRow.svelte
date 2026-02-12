@@ -23,7 +23,7 @@
 
   import type { Issue } from '$lib/types';
   import Badge from '$lib/components/ui/badge/badge.svelte';
-  import { isBlocked } from '$lib/utils/issue-helpers';
+  import { isBlocked, getBlockingDependencies } from '$lib/utils/issue-helpers';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -57,6 +57,7 @@
 
   // Compute blocked status
   let blocked = $derived(isBlocked(issue));
+  let blockingCount = $derived(getBlockingDependencies(issue).length);
 
   // Status color dot mapping (4px diameter)
   const getStatusColor = (status: string) => {
@@ -151,9 +152,9 @@
     <!-- Priority Badge: light burnt orange tint per North spec -->
     <Badge variant="default" class="text-xs">P{issue.priority}</Badge>
 
-    <!-- Blocked Indicator: amber dot with text -->
+    <!-- Blocked Indicator: amber dot with count -->
     {#if blocked}
-      <Badge variant="status-blocked" class="text-xs">Blocked</Badge>
+      <Badge variant="status-blocked" class="text-xs">Blocked ({blockingCount})</Badge>
     {/if}
 
     <!-- Move Up/Down Buttons (hover-visible) -->
