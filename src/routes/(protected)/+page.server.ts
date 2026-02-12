@@ -2,17 +2,23 @@
  * Home Page Server Load
  *
  * Loads all issues with their relations for the home view.
+ * Supports optional project filtering via URL query parameter.
  */
 
 import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-  const { data: issues, error } = await locals.supabase
-    .from('issues')
-    .select(
-      `
+import { parseProjectIds } from '$lib/utils/url-helpers';
+
+export const load: PageServerLoad = async ({ locals, url }) => {
+  // 1. Parse projects query param
+  const projectsParam = url.searchParams.get('projects');
+  const selectedProjectIds = parseProjectIds(projectsParam);
+
+  // 2. Build issues query
+  let issuesQuery = locals.supabase.from('issues').select(
+    `
       *,
       project:projects(*),
       epic:epics(*),
@@ -45,21 +51,33 @@ export const load: PageServerLoad = async ({ locals }) => {
         sort_order
       )
     `,
-    )
-    .order('sort_order', { ascending: true });
+  );
+
+  // 3. Apply project filter if specified
+  if (selectedProjectIds.length > 0) {
+    issuesQuery = issuesQuery.in('project_id', selectedProjectIds);
+  }
+
+  const { data: issues, error } = await issuesQuery.order('sort_order', { ascending: true });
 
   if (error) {
     console.error('Error loading issues:', error);
-    return { issues: [], epics: [], milestones: [] };
+    return { issues: [], projects: [], epics: [], milestones: [], selectedProjectIds: [] };
   }
 
-  // Load all epics for the user (for epic picker in IssueSheet)
+  // 4. Load projects for filter dropdown
+  const { data: projects } = await locals.supabase
+    .from('projects')
+    .select('id, name')
+    .order('name', { ascending: true });
+
+  // 5. Load all epics for the user (for epic picker in IssueSheet)
   const { data: epics } = await locals.supabase
     .from('epics')
     .select('*')
     .order('sort_order', { ascending: true });
 
-  // Load all milestones for the user (global, cross-project)
+  // 6. Load all milestones for the user (global, cross-project)
   const { data: milestones } = await locals.supabase
     .from('milestones')
     .select('*')
@@ -67,8 +85,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 
   return {
     issues: issues || [],
+    projects: projects || [],
     epics: epics || [],
     milestones: milestones || [],
+    selectedProjectIds,
   };
 };
 

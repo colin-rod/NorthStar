@@ -13,6 +13,7 @@
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
   import IssueList from '$lib/components/IssueList.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
+  import ProjectFilter from '$lib/components/ProjectFilter.svelte';
   import { issues, selectedIssue, isIssueSheetOpen, openIssueSheet } from '$lib/stores/issues';
   import { readyIssues, doingIssues, blockedIssues, doneIssues } from '$lib/stores/computed';
 
@@ -27,6 +28,12 @@
     <h1 class="text-3xl font-bold">Issues</h1>
     <!-- TODO: Add "New Issue" button -->
   </div>
+
+  <!-- Project Filter -->
+  <ProjectFilter
+    projects={data.projects || []}
+    selectedProjectIds={data.selectedProjectIds || []}
+  />
 
   <!-- Segmented Filters -->
   <Tabs defaultValue="ready" class="w-full">
