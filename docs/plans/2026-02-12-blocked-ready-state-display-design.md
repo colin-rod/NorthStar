@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-12
 **Issue:** Issue 5.4 - Compute "Blocked" + "Ready" states and expose on lists
-**Status:** Design Complete
+**Status:** ✅ Implemented
 
 ## Overview
 
