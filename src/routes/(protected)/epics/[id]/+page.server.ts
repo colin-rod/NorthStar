@@ -89,6 +89,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     epics: epics || [],
     milestones: milestones || [],
     allIssues: allIssues || [],
+    breadcrumbs: [
+      { label: 'Projects', href: '/projects' },
+      { label: epic.project.name, href: `/projects/${epic.project_id}` },
+      { label: epic.name, href: `/epics/${epic.id}`, current: true },
+    ],
   };
 };
 

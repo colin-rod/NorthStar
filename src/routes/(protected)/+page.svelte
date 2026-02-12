@@ -11,7 +11,7 @@
 
   import type { PageData } from './$types';
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
-  import IssueRow from '$lib/components/IssueRow.svelte';
+  import IssueList from '$lib/components/IssueList.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import { issues, selectedIssue, isIssueSheetOpen, openIssueSheet } from '$lib/stores/issues';
   import { readyIssues, doingIssues, blockedIssues, doneIssues } from '$lib/stores/computed';
@@ -50,11 +50,7 @@
       {#if $readyIssues.length === 0}
         <p class="text-center text-muted-foreground py-8">No ready issues</p>
       {:else}
-        <div class="border rounded-lg divide-y">
-          {#each $readyIssues as issue (issue.id)}
-            <IssueRow {issue} onClick={() => openIssueSheet(issue)} />
-          {/each}
-        </div>
+        <IssueList issues={$readyIssues} onIssueClick={openIssueSheet} />
       {/if}
     </TabsContent>
 
@@ -63,11 +59,7 @@
       {#if $doingIssues.length === 0}
         <p class="text-center text-muted-foreground py-8">No issues in progress</p>
       {:else}
-        <div class="border rounded-lg divide-y">
-          {#each $doingIssues as issue (issue.id)}
-            <IssueRow {issue} onClick={() => openIssueSheet(issue)} />
-          {/each}
-        </div>
+        <IssueList issues={$doingIssues} onIssueClick={openIssueSheet} />
       {/if}
     </TabsContent>
 
@@ -76,11 +68,7 @@
       {#if $blockedIssues.length === 0}
         <p class="text-center text-muted-foreground py-8">No blocked issues</p>
       {:else}
-        <div class="border rounded-lg divide-y">
-          {#each $blockedIssues as issue (issue.id)}
-            <IssueRow {issue} onClick={() => openIssueSheet(issue)} />
-          {/each}
-        </div>
+        <IssueList issues={$blockedIssues} onIssueClick={openIssueSheet} />
       {/if}
     </TabsContent>
 
@@ -89,11 +77,7 @@
       {#if $doneIssues.length === 0}
         <p class="text-center text-muted-foreground py-8">No completed issues</p>
       {:else}
-        <div class="border rounded-lg divide-y">
-          {#each $doneIssues as issue (issue.id)}
-            <IssueRow {issue} onClick={() => openIssueSheet(issue)} />
-          {/each}
-        </div>
+        <IssueList issues={$doneIssues} onIssueClick={openIssueSheet} />
       {/if}
     </TabsContent>
   </Tabs>

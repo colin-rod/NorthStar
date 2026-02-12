@@ -29,6 +29,7 @@
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
+  import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
 
   // Props
   let {
@@ -63,6 +64,15 @@
 
   // Debounce timer for title field
   let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
+  let sheetClass = $derived(
+    isDesktop()
+      ? 'w-[600px] h-screen overflow-y-auto p-6'
+      : 'max-h-[85vh] overflow-y-auto relative',
+  );
 
   // Initialize local state when issue changes
   $effect(() => {
@@ -270,7 +280,7 @@
 </script>
 
 <Sheet bind:open>
-  <SheetContent side="bottom" class="max-h-[85vh] overflow-y-auto relative">
+  <SheetContent side={sheetSide} class={sheetClass}>
     {#if issue}
       <!-- Loading overlay -->
       {#if loading}

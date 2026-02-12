@@ -12,7 +12,7 @@
           'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t border-border rounded-t-[20px]',
         left: 'data-[state=closed]:slide-out-to-start data-[state=open]:slide-in-from-start inset-y-0 start-0 h-full w-3/4 border-e border-border sm:max-w-sm rounded-e-lg',
         right:
-          'data-[state=closed]:slide-out-to-end data-[state=open]:slide-in-from-end inset-y-0 end-0 h-full w-3/4 border-s border-border sm:max-w-sm rounded-s-lg',
+          'data-[state=closed]:slide-out-to-end data-[state=open]:slide-in-from-end inset-y-0 end-0 h-full w-full border-s border-border sm:max-w-[600px] rounded-s-lg',
       },
     },
     defaultVariants: {

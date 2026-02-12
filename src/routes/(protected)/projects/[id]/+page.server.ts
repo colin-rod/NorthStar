@@ -53,5 +53,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   return {
     project,
     epics: epicsWithCounts,
+    breadcrumbs: [
+      { label: 'Projects', href: '/projects' },
+      { label: project.name, href: `/projects/${project.id}`, current: true },
+    ],
   };
 };
