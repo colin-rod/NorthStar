@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     throw error(404, 'Epic not found');
   }
 
-  // Load issues in this epic with full dependency relations
+  // Load issues in this epic with full dependency relations and sub-issues
   const { data: issues, error: issuesError } = await locals.supabase
     .from('issues')
     .select(
@@ -37,6 +37,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
       dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
         depends_on_issue:issues(*, epic:epics(*), project:projects(*))
+      ),
+      sub_issues:issues!parent_issue_id(
+        id,
+        title,
+        status,
+        priority,
+        sort_order
       )
     `,
     )
@@ -95,8 +102,9 @@ export const actions: Actions = {
     // 2. Parse form data
     const formData = await request.formData();
     const title = formData.get('title')?.toString().trim();
-    const epicId = formData.get('epic_id')?.toString();
+    let epicId = formData.get('epic_id')?.toString();
     const projectId = formData.get('project_id')?.toString();
+    const parentIssueId = formData.get('parent_issue_id')?.toString() || null;
 
     // 3. Validation
     if (!title || title.length === 0) {
@@ -109,28 +117,79 @@ export const actions: Actions = {
       return fail(400, { error: 'Epic and project are required' });
     }
 
-    // 4. Get next sort_order (max + 1 in epic)
-    const { data: existingIssues } = await supabase
-      .from('issues')
-      .select('sort_order')
-      .eq('epic_id', epicId)
-      .order('sort_order', { ascending: false })
-      .limit(1);
+    // 4. If creating sub-issue, validate parent and inherit epic
+    if (parentIssueId) {
+      // Fetch parent issue to inherit epic_id
+      const { data: parentIssue, error: parentError } = await supabase
+        .from('issues')
+        .select('epic_id, project_id')
+        .eq('id', parentIssueId)
+        .single();
 
+      if (parentError || !parentIssue) {
+        return fail(400, { error: 'Parent issue not found' });
+      }
+
+      // Override epicId with parent's epic (force inheritance)
+      epicId = parentIssue.epic_id;
+
+      // Verify project matches (redundant with DB trigger, but good UX)
+      if (parentIssue.project_id !== projectId) {
+        return fail(400, { error: 'Sub-issue must be in same project as parent' });
+      }
+    }
+
+    // 5. Get next sort_order (scoped to parent if sub-issue, or epic if top-level)
+    let sortOrderQuery;
+    if (parentIssueId) {
+      // Sub-issue: sort order scoped to parent's sub-issues
+      sortOrderQuery = supabase
+        .from('issues')
+        .select('sort_order')
+        .eq('parent_issue_id', parentIssueId)
+        .order('sort_order', { ascending: false })
+        .limit(1);
+    } else {
+      // Top-level issue: sort order scoped to epic (exclude sub-issues)
+      sortOrderQuery = supabase
+        .from('issues')
+        .select('sort_order')
+        .eq('epic_id', epicId)
+        .is('parent_issue_id', null)
+        .order('sort_order', { ascending: false })
+        .limit(1);
+    }
+
+    const { data: existingIssues } = await sortOrderQuery;
     const nextSortOrder =
       existingIssues?.[0]?.sort_order != null ? existingIssues[0].sort_order + 1 : 0;
 
-    // 5. Insert issue with defaults
+    // 6. Insert issue with defaults
+    const insertData: {
+      title: string;
+      epic_id: string;
+      project_id: string;
+      status: string;
+      priority: number;
+      sort_order: number;
+      parent_issue_id?: string;
+    } = {
+      title,
+      epic_id: epicId,
+      project_id: projectId,
+      status: 'todo',
+      priority: 2, // P2 default
+      sort_order: nextSortOrder,
+    };
+
+    // Add parent_issue_id if creating sub-issue
+    if (parentIssueId) {
+      insertData.parent_issue_id = parentIssueId;
+    }
+
     const { data, error: insertError } = await supabase
       .from('issues')
-      .insert({
-        title,
-        epic_id: epicId,
-        project_id: projectId,
-        status: 'todo',
-        priority: 2, // P2 default
-        sort_order: nextSortOrder,
-      })
+      .insert(insertData)
       .select()
       .single();
 

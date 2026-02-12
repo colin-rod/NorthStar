@@ -20,6 +20,13 @@ export const load: PageServerLoad = async ({ locals }) => {
       dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
         depends_on_issue:issues(*, epic:epics(*), project:projects(*))
+      ),
+      sub_issues:issues!parent_issue_id(
+        id,
+        title,
+        status,
+        priority,
+        sort_order
       )
     `,
     )
@@ -131,10 +138,10 @@ export const actions: Actions = {
     // Epic ID
     const epicId = formData.get('epic_id')?.toString();
     if (epicId !== undefined) {
-      // Verify epic exists and belongs to same project as issue
+      // Check if this is a sub-issue (has parent_issue_id)
       const { data: issue } = await supabase
         .from('issues')
-        .select('project_id')
+        .select('parent_issue_id, project_id')
         .eq('id', id)
         .single();
 
@@ -142,6 +149,14 @@ export const actions: Actions = {
         return fail(404, { error: 'Issue not found' });
       }
 
+      // Block epic changes for sub-issues
+      if (issue.parent_issue_id) {
+        return fail(400, {
+          error: 'Cannot change epic for sub-issues - they inherit from parent',
+        });
+      }
+
+      // Verify epic exists and belongs to same project as issue
       const { data: epic, error: epicError } = await supabase
         .from('epics')
         .select('id, project_id')

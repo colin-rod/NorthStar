@@ -28,6 +28,7 @@
   import { invalidateAll } from '$app/navigation';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
+  import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
 
   // Props
   let {
@@ -56,6 +57,9 @@
   let loading = $state(false);
   let saveError = $state<string | null>(null);
   let saveSuccess = $state(false);
+
+  // Sub-issues state
+  let showSubIssueForm = $state(false);
 
   // Debounce timer for title field
   let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -88,6 +92,9 @@
       ? allIssues.filter((i) => i.dependencies?.some((dep) => dep.depends_on_issue_id === issue.id))
       : [],
   );
+
+  // Get sub-issues
+  let subIssues = $derived(issue?.sub_issues || []);
 
   // Helper to get status badge variant
   function getStatusVariant(
@@ -363,17 +370,30 @@
             <!-- Epic Select -->
             <div>
               <Label for="epic" class="text-metadata mb-2 block">Epic</Label>
-              <select
-                id="epic"
-                bind:value={localEpicId}
-                onchange={handleEpicChange}
-                disabled={loading}
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {#each projectEpics as epic (epic.id)}
-                  <option value={epic.id}>{epic.name}</option>
-                {/each}
-              </select>
+              {#if issue.parent_issue_id}
+                <!-- Sub-issue: Show epic but don't allow changes -->
+                <div
+                  class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm items-center"
+                >
+                  <span class="text-foreground-muted">
+                    {projectEpics.find((e) => e.id === localEpicId)?.name}
+                    <span class="text-metadata ml-1">(inherited from parent)</span>
+                  </span>
+                </div>
+              {:else}
+                <!-- Top-level issue: Allow epic changes -->
+                <select
+                  id="epic"
+                  bind:value={localEpicId}
+                  onchange={handleEpicChange}
+                  disabled={loading}
+                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {#each projectEpics as epic (epic.id)}
+                    <option value={epic.id}>{epic.name}</option>
+                  {/each}
+                </select>
+              {/if}
             </div>
 
             <!-- Milestone Select -->
@@ -472,13 +492,54 @@
           </div>
         </section>
 
-        <!-- Sub-issues Section (placeholder) -->
+        <!-- Sub-issues Section -->
         <section>
           <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
             Sub-issues
           </h3>
-          <p class="text-metadata text-foreground-muted">No sub-issues</p>
-          <!-- TODO: Implement collapsible sub-issues list -->
+
+          <div class="space-y-2">
+            <!-- Sub-issues List -->
+            {#if subIssues.length > 0}
+              {#each subIssues as subIssue (subIssue.id)}
+                <button
+                  type="button"
+                  onclick={() => {
+                    issue = subIssue;
+                    showSubIssueForm = false;
+                  }}
+                  class="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted w-full text-left transition-colors"
+                >
+                  <Badge variant={getStatusVariant(subIssue.status)} class="shrink-0">
+                    {formatStatus(subIssue.status)}
+                  </Badge>
+                  <span class="text-body flex-1 truncate">{subIssue.title}</span>
+                </button>
+              {/each}
+            {:else if !showSubIssueForm}
+              <p class="text-metadata text-foreground-muted">No sub-issues</p>
+            {/if}
+
+            <!-- Inline Form for Creating Sub-issue -->
+            {#if showSubIssueForm}
+              <InlineSubIssueForm
+                parentIssueId={issue.id}
+                epicId={issue.epic_id}
+                projectId={issue.project_id}
+                onCancel={() => (showSubIssueForm = false)}
+                onSuccess={() => (showSubIssueForm = false)}
+              />
+            {:else}
+              <Button
+                variant="outline"
+                size="sm"
+                onclick={() => (showSubIssueForm = true)}
+                class="w-full"
+              >
+                Add Sub-issue
+              </Button>
+            {/if}
+          </div>
         </section>
       </div>
     {/if}
