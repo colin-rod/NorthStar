@@ -34,6 +34,7 @@
     onClick?: () => void;
     dragDisabled?: boolean;
     hasSubIssues?: boolean;
+    subIssueCount?: number;
     isExpanded?: boolean;
     isSubIssue?: boolean;
     onToggleExpand?: (() => void) | null;
@@ -46,6 +47,7 @@
     onClick = () => {},
     dragDisabled = $bindable(true),
     hasSubIssues = false,
+    subIssueCount = 0,
     isExpanded = false,
     isSubIssue = false,
     onToggleExpand = null,
@@ -111,13 +113,16 @@
         }}
         role="button"
         tabindex="0"
-        class="flex items-center shrink-0 pt-1 cursor-pointer"
+        class="flex items-center gap-1 shrink-0 pt-1 cursor-pointer"
         aria-label={isExpanded ? 'Collapse sub-issues' : 'Expand sub-issues'}
       >
         {#if isExpanded}
           <ChevronDown class="h-4 w-4 text-muted-foreground" />
         {:else}
           <ChevronRight class="h-4 w-4 text-muted-foreground" />
+        {/if}
+        {#if subIssueCount > 0}
+          <span class="text-xs text-muted-foreground">({subIssueCount})</span>
         {/if}
       </div>
     {:else}

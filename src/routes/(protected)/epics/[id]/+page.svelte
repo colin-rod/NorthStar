@@ -88,6 +88,17 @@
     new Set(allIssues.filter((i) => i.parent_issue_id).map((i) => i.parent_issue_id!)),
   );
 
+  // Compute sub-issue counts for display
+  let subIssueCounts = $derived.by(() => {
+    const counts = new Map<string, number>();
+    for (const issue of allIssues) {
+      if (issue.sub_issues?.length) {
+        counts.set(issue.id, issue.sub_issues.length);
+      }
+    }
+    return counts;
+  });
+
   function toggleParent(parentId: string) {
     if (expandedParents.has(parentId)) {
       expandedParents.delete(parentId);
@@ -296,6 +307,7 @@
               bind:dragDisabled
               onClick={() => openIssueSheet(issue)}
               hasSubIssues={issuesWithSubIssues.has(issue.id)}
+              subIssueCount={subIssueCounts.get(issue.id) || 0}
               isExpanded={expandedParents.has(issue.id)}
               isSubIssue={!!issue.parent_issue_id}
               onToggleExpand={issuesWithSubIssues.has(issue.id)
