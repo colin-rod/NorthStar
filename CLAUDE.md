@@ -8,6 +8,93 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Core Purpose**: Clearly identify what to work on next, with dependencies never forgotten or implicit.
 
+## Coding Principles
+
+These principles guide all development work in NorthStar. They complement the TDD methodology described later and help avoid common pitfalls when building features.
+
+### Principle 1: Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing any feature:
+
+- State your assumptions explicitly. If uncertain, ask clarifying questions.
+- If multiple interpretations exist, present them rather than choosing silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+**NorthStar Example**: When asked to "add dependency cycle detection":
+
+- ❌ Don't assume: Silently implement PostgreSQL recursive CTE without asking where to show errors
+- ✅ Do clarify: "Should cycle errors appear during dependency creation (blocking), or as validation warnings in the UI? Should we show the cycle path to help users understand the issue?"
+
+### Principle 2: Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+**NorthStar Example**: When implementing issue status filters:
+
+- ❌ Don't overcomplicate: Create a flexible FilterBuilder class with chainable methods, configuration files, and support for custom filter expressions
+- ✅ Do simplify: Use Svelte's reactive `$:` statements to filter issues based on status equality: `$: filteredIssues = issues.filter(i => i.status === selectedStatus)`
+
+### Principle 3: Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+The test: Every changed line should trace directly to the user's request.
+
+**NorthStar Example**: When fixing a bug in issue sorting by priority:
+
+- ❌ Don't expand scope: Fix the sort bug AND convert the component to TypeScript AND add JSDoc comments AND refactor variable names AND update the entire file to use `const` instead of `let`
+- ✅ Do stay surgical: Change only the comparison function: `issues.sort((a, b) => a.priority - b.priority)` → `issues.sort((a, b) => b.priority - a.priority)` (P0 first)
+
+### Principle 4: Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform vague tasks into verifiable goals with explicit verification steps:
+
+- "Add validation" → "Write tests for invalid inputs (story points = 4), then make them pass"
+- "Fix the bug" → "Write a test that reproduces blocked state calculation error, then make it pass"
+- "Refactor X" → "Ensure all tests pass before and after refactoring"
+
+For multi-step tasks, state a brief plan with verification checkpoints.
+
+**NorthStar Example**: When implementing sub-issues feature:
+
+```
+1. Add parent_issue_id column → verify: migration applies without errors
+2. Update RLS policies for sub-issues → verify: test that sub-issues inherit parent's project access
+3. Add sub-issues UI in IssueSheet → verify: can create sub-issue, appears in parent's collapsible list
+4. Test epic inheritance → verify: sub-issue automatically gets parent's epic_id
+```
+
+---
+
+**For detailed examples across various scenarios, reference the `karpathy-principles` skill.**
+
+These principles work with TDD:
+
+- **Think Before Coding** → Write failing test first (TDD Red: understand requirements)
+- **Simplicity First** → Minimal code to pass test (TDD Green: avoid over-engineering)
+- **Surgical Changes** → Refactor only after tests pass (TDD Refactor: preserve working code)
+- **Goal-Driven Execution** → Test-driven verification loops (TDD: measurable success)
+
 ## Tech Stack
 
 **Frontend:**
