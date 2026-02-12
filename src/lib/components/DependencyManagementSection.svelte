@@ -6,6 +6,7 @@
   import X from '@lucide/svelte/icons/x';
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
+  import { getBlockingDependencies, getSatisfiedDependencies } from '$lib/utils/issue-helpers';
 
   // Props
   let {
@@ -21,6 +22,14 @@
     blockingIssues: Issue[];
     saveError?: string | null;
   } = $props();
+
+  // Compute blocking vs satisfied dependencies
+  let blockingDeps = $derived(
+    blockedByIssues.filter((dep) => dep.status !== 'done' && dep.status !== 'canceled'),
+  );
+  let satisfiedDeps = $derived(
+    blockedByIssues.filter((dep) => dep.status === 'done' || dep.status === 'canceled'),
+  );
 
   // Local state
   let dialogOpen = $state(false);
@@ -81,12 +90,20 @@
     Dependencies
   </h3>
   <div class="space-y-4">
-    <!-- Blocked By -->
-    {#if blockedByIssues.length > 0}
+    <!-- Blocking Summary -->
+    {#if blockingDeps.length > 0}
+      <div class="text-sm text-destructive font-medium mb-2">
+        🔒 Blocked by {blockingDeps.length}
+        {blockingDeps.length === 1 ? 'dependency' : 'dependencies'}
+      </div>
+    {/if}
+
+    <!-- Blocking Dependencies -->
+    {#if blockingDeps.length > 0}
       <div>
         <p class="text-metadata text-foreground-muted mb-2">Blocked by:</p>
         <div class="space-y-2">
-          {#each blockedByIssues as dep (dep.id)}
+          {#each blockingDeps as dep (dep.id)}
             <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
               <Badge variant={getStatusVariant(dep.status)} class="shrink-0">
                 {formatStatus(dep.status)}
@@ -95,7 +112,6 @@
               <span class="text-metadata text-foreground-muted shrink-0">
                 {dep.epic?.name}
               </span>
-              <!-- X button: visible on hover (desktop) or always (mobile) -->
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
@@ -108,7 +124,38 @@
           {/each}
         </div>
       </div>
-    {:else}
+    {/if}
+
+    <!-- Satisfied Dependencies -->
+    {#if satisfiedDeps.length > 0}
+      <div>
+        <p class="text-metadata text-foreground-muted mb-2">Satisfied dependencies</p>
+        <div class="space-y-2">
+          {#each satisfiedDeps as dep (dep.id)}
+            <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
+              <Badge variant={getStatusVariant(dep.status)} class="shrink-0">
+                {formatStatus(dep.status)}
+              </Badge>
+              <span class="text-body flex-1 truncate">{dep.title}</span>
+              <span class="text-metadata text-foreground-muted shrink-0">
+                {dep.epic?.name}
+              </span>
+              <button
+                type="button"
+                onclick={() => removeDependency(dep.id)}
+                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                aria-label="Remove dependency"
+              >
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    <!-- No dependencies message -->
+    {#if blockedByIssues.length === 0}
       <p class="text-metadata text-foreground-muted">No blocking dependencies</p>
     {/if}
 
