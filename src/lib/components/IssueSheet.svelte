@@ -29,6 +29,7 @@
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
+  import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
 
   // Props
@@ -450,59 +451,13 @@
         </section>
 
         <!-- Dependencies Section -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-            Dependencies
-          </h3>
-          <div class="space-y-4">
-            <!-- Blocked By -->
-            {#if blockedByIssues.length > 0}
-              <div>
-                <p class="text-metadata text-foreground-muted mb-2">Blocked by:</p>
-                <div class="space-y-2">
-                  {#each blockedByIssues as dep (dep.id)}
-                    <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <Badge variant={getStatusVariant(dep.status)} class="shrink-0">
-                        {formatStatus(dep.status)}
-                      </Badge>
-                      <span class="text-body flex-1 truncate">{dep.title}</span>
-                      <span class="text-metadata text-foreground-muted shrink-0"
-                        >{dep.epic?.name}</span
-                      >
-                    </div>
-                  {/each}
-                </div>
-              </div>
-            {:else}
-              <p class="text-metadata text-foreground-muted">No blocking dependencies</p>
-            {/if}
-
-            <!-- Blocking -->
-            {#if blockingIssues.length > 0}
-              <div>
-                <p class="text-metadata text-foreground-muted mb-2">Blocking:</p>
-                <div class="space-y-2">
-                  {#each blockingIssues as blocked (blocked.id)}
-                    <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <Badge variant={getStatusVariant(blocked.status)} class="shrink-0">
-                        {formatStatus(blocked.status)}
-                      </Badge>
-                      <span class="text-body flex-1 truncate">{blocked.title}</span>
-                      <span class="text-metadata text-foreground-muted shrink-0"
-                        >{blocked.epic?.name}</span
-                      >
-                    </div>
-                  {/each}
-                </div>
-              </div>
-            {/if}
-
-            <!-- TODO: Add dependency management UI (Add/Remove buttons) -->
-            <Button variant="outline" size="sm" disabled class="w-full">
-              Add Dependency (Coming Soon)
-            </Button>
-          </div>
-        </section>
+        <DependencyManagementSection
+          {issue}
+          {allIssues}
+          {blockedByIssues}
+          {blockingIssues}
+          bind:saveError
+        />
 
         <!-- Sub-issues Section -->
         <section>
