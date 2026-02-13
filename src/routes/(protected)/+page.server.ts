@@ -9,12 +9,19 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
-import { parseProjectIds } from '$lib/utils/url-helpers';
+import { parseProjectIds, parsePriorities, parseMilestones } from '$lib/utils/url-helpers';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-  // 1. Parse projects query param
+  // 1. Parse query params
   const projectsParam = url.searchParams.get('projects');
   const selectedProjectIds = parseProjectIds(projectsParam);
+
+  const priorityParam = url.searchParams.get('priority');
+  const selectedPriorities = parsePriorities(priorityParam);
+
+  const milestoneParam = url.searchParams.get('milestone');
+  const { milestoneIds: selectedMilestoneIds, includeNoMilestone } =
+    parseMilestones(milestoneParam);
 
   // 2. Build issues query
   let issuesQuery = locals.supabase.from('issues').select(
@@ -53,9 +60,28 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     `,
   );
 
-  // 3. Apply project filter if specified
+  // 3. Apply filters if specified
   if (selectedProjectIds.length > 0) {
     issuesQuery = issuesQuery.in('project_id', selectedProjectIds);
+  }
+
+  // Priority filter
+  if (selectedPriorities.length > 0 && selectedPriorities.length < 4) {
+    issuesQuery = issuesQuery.in('priority', selectedPriorities);
+  }
+
+  // Milestone filter
+  if (selectedMilestoneIds.length > 0 || includeNoMilestone) {
+    if (includeNoMilestone && selectedMilestoneIds.length > 0) {
+      // Show both specific milestones AND no milestone
+      issuesQuery = issuesQuery.or(
+        `milestone_id.in.(${selectedMilestoneIds.join(',')}),milestone_id.is.null`,
+      );
+    } else if (includeNoMilestone) {
+      issuesQuery = issuesQuery.is('milestone_id', null);
+    } else {
+      issuesQuery = issuesQuery.in('milestone_id', selectedMilestoneIds);
+    }
   }
 
   const { data: issues, error } = await issuesQuery.order('sort_order', { ascending: true });
@@ -89,6 +115,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     epics: epics || [],
     milestones: milestones || [],
     selectedProjectIds,
+    selectedPriorities,
+    selectedMilestoneIds,
+    includeNoMilestone,
   };
 };
 

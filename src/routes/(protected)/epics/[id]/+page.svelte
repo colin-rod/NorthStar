@@ -19,6 +19,8 @@
   import IssueRow from '$lib/components/IssueRow.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import InlineIssueForm from '$lib/components/InlineIssueForm.svelte';
+  import PriorityFilter from '$lib/components/PriorityFilter.svelte';
+  import MilestoneFilter from '$lib/components/MilestoneFilter.svelte';
   import { Button } from '$lib/components/ui/button';
   import { openIssueSheet } from '$lib/stores/issues';
   import { isBlocked } from '$lib/utils/issue-helpers';
@@ -258,6 +260,17 @@
       onSuccess={() => (showInlineForm = false)}
     />
   {/if}
+
+  <!-- Filter controls -->
+  <div class="flex gap-2 flex-wrap">
+    <PriorityFilter selectedPriorities={data.selectedPriorities || []} issues={data.issues || []} />
+    <MilestoneFilter
+      milestones={data.milestones || []}
+      selectedMilestoneIds={data.selectedMilestoneIds || []}
+      includeNoMilestone={data.includeNoMilestone || false}
+      issues={data.issues || []}
+    />
+  </div>
 
   <!-- Issue Filters -->
   <Tabs defaultValue={filter} class="w-full">

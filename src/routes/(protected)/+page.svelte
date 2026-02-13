@@ -14,6 +14,8 @@
   import IssueList from '$lib/components/IssueList.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import ProjectFilter from '$lib/components/ProjectFilter.svelte';
+  import PriorityFilter from '$lib/components/PriorityFilter.svelte';
+  import MilestoneFilter from '$lib/components/MilestoneFilter.svelte';
   import { issues, selectedIssue, isIssueSheetOpen, openIssueSheet } from '$lib/stores/issues';
   import { readyIssues, doingIssues, blockedIssues, doneIssues } from '$lib/stores/computed';
 
@@ -29,11 +31,20 @@
     <!-- TODO: Add "New Issue" button -->
   </div>
 
-  <!-- Project Filter -->
-  <ProjectFilter
-    projects={data.projects || []}
-    selectedProjectIds={data.selectedProjectIds || []}
-  />
+  <!-- Filter controls -->
+  <div class="flex gap-2 flex-wrap">
+    <ProjectFilter
+      projects={data.projects || []}
+      selectedProjectIds={data.selectedProjectIds || []}
+    />
+    <PriorityFilter selectedPriorities={data.selectedPriorities || []} issues={data.issues || []} />
+    <MilestoneFilter
+      milestones={data.milestones || []}
+      selectedMilestoneIds={data.selectedMilestoneIds || []}
+      includeNoMilestone={data.includeNoMilestone || false}
+      issues={data.issues || []}
+    />
+  </div>
 
   <!-- Segmented Filters -->
   <Tabs defaultValue="ready" class="w-full">

@@ -8,7 +8,16 @@ import { error, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+import { parsePriorities, parseMilestones } from '$lib/utils/url-helpers';
+
+export const load: PageServerLoad = async ({ params, locals, url }) => {
+  // Parse query params for filtering
+  const priorityParam = url.searchParams.get('priority');
+  const selectedPriorities = parsePriorities(priorityParam);
+
+  const milestoneParam = url.searchParams.get('milestone');
+  const { milestoneIds: selectedMilestoneIds, includeNoMilestone } =
+    parseMilestones(milestoneParam);
   // Load epic
   const { data: epic, error: epicError } = await locals.supabase
     .from('epics')
@@ -26,7 +35,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   }
 
   // Load issues in this epic with full dependency relations and sub-issues
-  const { data: issues, error: issuesError } = await locals.supabase
+  let issuesQuery = locals.supabase
     .from('issues')
     .select(
       `
@@ -63,8 +72,30 @@ export const load: PageServerLoad = async ({ params, locals }) => {
       )
     `,
     )
-    .eq('epic_id', params.id)
-    .order('sort_order', { ascending: true });
+    .eq('epic_id', params.id);
+
+  // Apply priority filter
+  if (selectedPriorities.length > 0 && selectedPriorities.length < 4) {
+    issuesQuery = issuesQuery.in('priority', selectedPriorities);
+  }
+
+  // Apply milestone filter
+  if (selectedMilestoneIds.length > 0 || includeNoMilestone) {
+    if (includeNoMilestone && selectedMilestoneIds.length > 0) {
+      // Show both specific milestones AND no milestone
+      issuesQuery = issuesQuery.or(
+        `milestone_id.in.(${selectedMilestoneIds.join(',')}),milestone_id.is.null`,
+      );
+    } else if (includeNoMilestone) {
+      issuesQuery = issuesQuery.is('milestone_id', null);
+    } else {
+      issuesQuery = issuesQuery.in('milestone_id', selectedMilestoneIds);
+    }
+  }
+
+  const { data: issues, error: issuesError } = await issuesQuery.order('sort_order', {
+    ascending: true,
+  });
 
   if (issuesError) {
     console.error('Error loading issues:', issuesError);
@@ -88,6 +119,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     issues: issues || [],
     epics: epics || [],
     milestones: milestones || [],
+    selectedPriorities,
+    selectedMilestoneIds,
+    includeNoMilestone,
     breadcrumbs: [
       { label: 'Projects', href: '/projects' },
       { label: epic.project.name, href: `/projects/${epic.project_id}` },
