@@ -2,6 +2,5 @@
   "buildCommand": "pnpm run build",
   "devCommand": "pnpm run dev",
   "installCommand": "pnpm install --frozen-lockfile",
-  "framework": "sveltekit",
-  "outputDirectory": "build"
+  "framework": "sveltekit"
 }
