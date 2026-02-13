@@ -32,6 +32,7 @@
   import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
+  import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
 
   // Props
   let {
@@ -67,14 +68,22 @@
   // Debounce timer for title field
   let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // Ref for sheet content (keyboard-aware height)
+  let sheetContentRef = $state<HTMLElement | null>(null);
+
   // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
   let sheetClass = $derived(
-    isDesktop()
-      ? 'w-[600px] h-screen overflow-y-auto p-6'
-      : 'max-h-[85vh] overflow-y-auto relative',
+    isDesktop() ? 'w-[600px] h-screen overflow-y-auto p-6' : 'overflow-y-auto relative', // No max-h, handled by hook
   );
+
+  // Apply keyboard-aware height on mobile only
+  $effect(() => {
+    if (!isDesktop() && sheetContentRef) {
+      useKeyboardAwareHeight(sheetContentRef);
+    }
+  });
 
   // Initialize local state when issue changes
   $effect(() => {
@@ -270,6 +279,7 @@
 
 <Sheet bind:open>
   <SheetContent
+    bind:ref={sheetContentRef}
     side={sheetSide}
     class={sheetClass}
     onOpenChange={(isOpen) => {
@@ -338,7 +348,7 @@
                   bind:value={localStatus}
                   onchange={handleStatusChange}
                   disabled={loading}
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="todo">Todo</option>
                   <option value="doing">Doing</option>
@@ -356,7 +366,7 @@
                   bind:value={localPriority}
                   onchange={handlePriorityChange}
                   disabled={loading}
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value={0}>P0 (Critical)</option>
                   <option value={1}>P1 (High)</option>
@@ -394,7 +404,7 @@
                   bind:value={localEpicId}
                   onchange={handleEpicChange}
                   disabled={loading}
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {#each projectEpics as epic (epic.id)}
                     <option value={epic.id}>{epic.name}</option>
@@ -428,10 +438,11 @@
             <Label for="story_points" class="text-metadata mb-2 block">Story Points</Label>
             <select
               id="story_points"
+              inputmode="numeric"
               value={localStoryPoints?.toString() ?? 'null'}
               onchange={handleStoryPointsChange}
               disabled={loading}
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="null">Not set</option>
               {#each ALLOWED_STORY_POINTS as points (points)}
