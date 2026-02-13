@@ -120,7 +120,9 @@ describe('Blocked/Ready Tab Filtering', () => {
   it('should identify ready issue correctly', async () => {
     const { data: issue } = await supabase
       .from('issues')
-      .select('*, dependencies(depends_on_issue_id, depends_on_issue:issues(*))')
+      .select(
+        '*, dependencies!dependencies_issue_id_fkey(depends_on_issue_id, depends_on_issue:issues(*))',
+      )
       .eq('id', readyIssueId)
       .single();
 
@@ -132,7 +134,9 @@ describe('Blocked/Ready Tab Filtering', () => {
   it('should identify blocked issue correctly', async () => {
     const { data: issue } = await supabase
       .from('issues')
-      .select('*, dependencies(depends_on_issue_id, depends_on_issue:issues(*))')
+      .select(
+        '*, dependencies!dependencies_issue_id_fkey(depends_on_issue_id, depends_on_issue:issues(*))',
+      )
       .eq('id', blockedIssueId)
       .single();
 
@@ -149,7 +153,9 @@ describe('Blocked/Ready Tab Filtering', () => {
     // Re-fetch blocked issue
     const { data: issue } = await supabase
       .from('issues')
-      .select('*, dependencies(depends_on_issue_id, depends_on_issue:issues(*))')
+      .select(
+        '*, dependencies!dependencies_issue_id_fkey(depends_on_issue_id, depends_on_issue:issues(*))',
+      )
       .eq('id', blockedIssueId)
       .single();
 

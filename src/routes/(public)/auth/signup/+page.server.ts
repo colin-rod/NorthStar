@@ -10,8 +10,10 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
   // Redirect if already logged in
-  const session = await locals.supabase.auth.getSession();
-  if (session.data.session) {
+  const {
+    data: { user },
+  } = await locals.supabase.auth.getUser();
+  if (user) {
     throw redirect(303, '/');
   }
 };
