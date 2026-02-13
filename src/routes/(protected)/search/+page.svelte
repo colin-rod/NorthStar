@@ -10,17 +10,24 @@
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import { Search } from '@lucide/svelte';
-  import { openIssueSheet } from '$lib/stores/issues';
+  import { openIssueSheet, selectedIssue, isIssueSheetOpen } from '$lib/stores/issues';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
   let searchQuery = $state('');
 
-  // Client-side filtering
+  // Client-side filtering across title, project name, and epic name
   let filteredIssues = $derived(
     searchQuery.trim()
-      ? data.issues.filter((issue) => issue.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      ? data.issues.filter((issue) => {
+          const query = searchQuery.toLowerCase();
+          return (
+            issue.title.toLowerCase().includes(query) ||
+            issue.project?.name?.toLowerCase().includes(query) ||
+            issue.epic?.name?.toLowerCase().includes(query)
+          );
+        })
       : [],
   );
 
@@ -39,7 +46,7 @@
         <Input
           id="search-input"
           type="search"
-          placeholder="Search for issues by title..."
+          placeholder="Search issues, projects, and epics..."
           value={searchQuery}
           oninput={(e) => (searchQuery = e.currentTarget.value)}
           class="pl-10"
@@ -75,8 +82,8 @@
 
 <!-- Issue detail sheet -->
 <IssueSheet
-  open={false}
-  issue={null}
+  bind:open={$isIssueSheetOpen}
+  bind:issue={$selectedIssue}
   epics={data.epics || []}
   milestones={data.milestones || []}
   projectIssues={data.issues || []}
