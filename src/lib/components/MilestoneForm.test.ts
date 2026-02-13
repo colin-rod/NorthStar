@@ -113,6 +113,43 @@ describe('MilestoneForm - Create Mode', () => {
 
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
   });
+
+  it('should not call onCancel when non-Escape key is pressed', async () => {
+    const mockOnSuccess = vi.fn();
+    const mockOnCancel = vi.fn();
+
+    render(MilestoneForm, {
+      props: {
+        mode: 'create',
+        onSuccess: mockOnSuccess,
+        onCancel: mockOnCancel,
+      },
+    });
+
+    const nameInput = screen.getByLabelText(/name/i);
+    await fireEvent.keyDown(nameInput, { key: 'a' });
+
+    expect(mockOnCancel).not.toHaveBeenCalled();
+  });
+
+  it('should initialize with empty values in create mode without milestone', () => {
+    const mockOnSuccess = vi.fn();
+    const mockOnCancel = vi.fn();
+
+    render(MilestoneForm, {
+      props: {
+        mode: 'create',
+        onSuccess: mockOnSuccess,
+        onCancel: mockOnCancel,
+      },
+    });
+
+    const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
+    const dueDateInput = screen.getByLabelText(/due date/i) as HTMLInputElement;
+
+    expect(nameInput.value).toBe('');
+    expect(dueDateInput.value).toBe('');
+  });
 });
 
 describe('MilestoneForm - Edit Mode', () => {

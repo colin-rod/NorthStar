@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
-import { getMobileInputClasses, shouldUseNativePicker } from './mobile-input-helpers';
+import {
+  getMobileInputClasses,
+  shouldUseNativePicker,
+  getNumericInputMode,
+} from './mobile-input-helpers';
 
 describe('mobile-input-helpers', () => {
   describe('getMobileInputClasses', () => {
@@ -70,6 +74,17 @@ describe('mobile-input-helpers', () => {
       expect(shouldUseNativePicker()).toBe(true);
     });
 
+    it('should return false when navigator is undefined (SSR)', () => {
+      const originalNavigator = globalThis.navigator;
+      // @ts-expect-error - simulating SSR environment
+      delete globalThis.navigator;
+
+      expect(shouldUseNativePicker()).toBe(false);
+
+      // Restore navigator
+      globalThis.navigator = originalNavigator;
+    });
+
     it('should return false on desktop', () => {
       // Mock userAgent for desktop macOS
       Object.defineProperty(navigator, 'userAgent', {
@@ -79,6 +94,20 @@ describe('mobile-input-helpers', () => {
       });
 
       expect(shouldUseNativePicker()).toBe(false);
+    });
+  });
+
+  describe('getNumericInputMode', () => {
+    it('should return "numeric" when allowDecimal is false', () => {
+      expect(getNumericInputMode(false)).toBe('numeric');
+    });
+
+    it('should return "decimal" when allowDecimal is true', () => {
+      expect(getNumericInputMode(true)).toBe('decimal');
+    });
+
+    it('should return "numeric" by default (no argument)', () => {
+      expect(getNumericInputMode()).toBe('numeric');
     });
   });
 });

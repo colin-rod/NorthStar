@@ -481,4 +481,144 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     expect(filtered.length).toBe(0);
   });
+
+  it('should show error when cycle check RPC fails', async () => {
+    const { supabase } = await import('$lib/supabase');
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: null,
+      error: new Error('rpc error'),
+    } as never);
+
+    render(AddDependencyDialog, {
+      props: {
+        open: true,
+        issue: mockIssue,
+        projectIssues: mockAvailableIssues,
+        blockedByIssues: [],
+        blockingIssues: [],
+      },
+    });
+
+    // Click on an available issue to trigger addDependency
+    const issueButton = screen.getByText('Available Issue 1');
+    await fireEvent.click(issueButton);
+
+    // Wait for async operation
+    await vi.waitFor(() => {
+      expect(screen.getByText('Failed to add dependency')).toBeInTheDocument();
+    });
+  });
+
+  it('should show error when cycle would be created', async () => {
+    const { supabase } = await import('$lib/supabase');
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: true,
+      error: null,
+    } as never);
+
+    render(AddDependencyDialog, {
+      props: {
+        open: true,
+        issue: mockIssue,
+        projectIssues: mockAvailableIssues,
+        blockedByIssues: [],
+        blockingIssues: [],
+      },
+    });
+
+    const issueButton = screen.getByText('Available Issue 1');
+    await fireEvent.click(issueButton);
+
+    await vi.waitFor(() => {
+      expect(
+        screen.getByText('Cannot add: this would create a circular dependency'),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('should show error when insert fails', async () => {
+    const { supabase } = await import('$lib/supabase');
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: false,
+      error: null,
+    } as never);
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      insert: vi.fn().mockResolvedValueOnce({
+        error: new Error('insert error'),
+      }),
+    } as never);
+
+    render(AddDependencyDialog, {
+      props: {
+        open: true,
+        issue: mockIssue,
+        projectIssues: mockAvailableIssues,
+        blockedByIssues: [],
+        blockingIssues: [],
+      },
+    });
+
+    const issueButton = screen.getByText('Available Issue 1');
+    await fireEvent.click(issueButton);
+
+    await vi.waitFor(() => {
+      expect(screen.getByText('Failed to add dependency')).toBeInTheDocument();
+    });
+  });
+
+  it('should not call supabase when issue is null', async () => {
+    const { supabase } = await import('$lib/supabase');
+    vi.mocked(supabase.rpc).mockClear();
+
+    render(AddDependencyDialog, {
+      props: {
+        open: true,
+        issue: null,
+        projectIssues: mockAvailableIssues,
+        blockedByIssues: [],
+        blockingIssues: [],
+      },
+    });
+
+    // With issue=null, the available issues filter will show all projectIssues
+    // (since i.id !== null?.id is always true)
+    // Click an issue - addDependency should early return
+    const issueButton = screen.getByText('Available Issue 1');
+    await fireEvent.click(issueButton);
+
+    // rpc should not have been called since issue is null
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('should successfully add dependency and close dialog', async () => {
+    const { supabase } = await import('$lib/supabase');
+    const { invalidateAll } = await import('$app/navigation');
+
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({
+      data: false,
+      error: null,
+    } as never);
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      insert: vi.fn().mockResolvedValueOnce({
+        error: null,
+      }),
+    } as never);
+
+    render(AddDependencyDialog, {
+      props: {
+        open: true,
+        issue: mockIssue,
+        projectIssues: mockAvailableIssues,
+        blockedByIssues: [],
+        blockingIssues: [],
+      },
+    });
+
+    const issueButton = screen.getByText('Available Issue 1');
+    await fireEvent.click(issueButton);
+
+    await vi.waitFor(() => {
+      expect(invalidateAll).toHaveBeenCalled();
+    });
+  });
 });

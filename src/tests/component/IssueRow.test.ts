@@ -504,6 +504,29 @@ describe('IssueRow - Additional Scenarios', () => {
     expect(dragHandle).toBeInTheDocument();
   });
 
+  it('should not render chevron or expand button when hasSubIssues is false', () => {
+    render(IssueRow, {
+      props: {
+        issue: baseIssue,
+        hasSubIssues: false,
+      },
+    });
+
+    expect(screen.queryByLabelText('Expand sub-issues')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Collapse sub-issues')).not.toBeInTheDocument();
+  });
+
+  it('should not render move buttons when onMoveUp and onMoveDown are not provided', () => {
+    render(IssueRow, {
+      props: {
+        issue: baseIssue,
+      },
+    });
+
+    expect(screen.queryByLabelText('Move up')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Move down')).not.toBeInTheDocument();
+  });
+
   it('should handle touch events on drag handle', async () => {
     render(IssueRow, {
       props: {

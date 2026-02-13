@@ -123,6 +123,46 @@ describe('MilestonePicker', () => {
     expect(mockOnChange).toHaveBeenCalledWith('milestone-2');
   });
 
+  it('should display selected milestone without due date (no date shown)', () => {
+    const mockOnChange = vi.fn();
+
+    render(MilestonePicker, {
+      props: {
+        selectedMilestoneId: 'milestone-3',
+        milestones: mockMilestones,
+        disabled: false,
+        onChange: mockOnChange,
+      },
+    });
+
+    // milestone-3 is "Sprint 23" with due_date: null
+    expect(screen.getByText(/Sprint 23/i)).toBeInTheDocument();
+    // Should NOT show any date text for this milestone
+    expect(screen.queryByText(/2026/)).not.toBeInTheDocument();
+  });
+
+  it('should not show progress bar when milestone has zero issues', async () => {
+    const mockOnChange = vi.fn();
+
+    render(MilestonePicker, {
+      props: {
+        selectedMilestoneId: null,
+        milestones: mockMilestones,
+        issues: [], // No issues assigned to any milestone
+        disabled: false,
+        onChange: mockOnChange,
+      },
+    });
+
+    // Open popover
+    const trigger = screen.getByRole('button');
+    await fireEvent.click(trigger);
+
+    // Milestones should render but without progress bars (no "0/0" text)
+    expect(screen.getByText(/Q1 2026 Launch/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\/0/)).not.toBeInTheDocument();
+  });
+
   it('should call onChange with null when "No milestone" is selected', async () => {
     const mockOnChange = vi.fn();
 
