@@ -30,6 +30,7 @@
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
   import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
+  import MilestonePicker from '$lib/components/MilestonePicker.svelte';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
 
   // Props
@@ -188,7 +189,6 @@
   let prevPriority = $state(2);
   let prevStoryPoints = $state<StoryPoints | null>(null);
   let prevEpicId = $state('');
-  let prevMilestoneId = $state<string | null>(null);
 
   // Field change handlers
   function handleTitleChange(event: Event) {
@@ -230,15 +230,6 @@
     localEpicId = select.value;
   }
 
-  function handleMilestoneChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    if (select.value === 'null') {
-      localMilestoneId = null;
-    } else {
-      localMilestoneId = select.value;
-    }
-  }
-
   // Watch for changes and auto-save
   $effect(() => {
     if (localStatus !== prevStatus && localStatus !== issue?.status) {
@@ -265,13 +256,6 @@
     if (localEpicId !== prevEpicId && localEpicId !== issue?.epic_id) {
       autoSave('epic_id', localEpicId);
       prevEpicId = localEpicId;
-    }
-  });
-
-  $effect(() => {
-    if (localMilestoneId !== prevMilestoneId && localMilestoneId !== issue?.milestone_id) {
-      autoSave('milestone_id', localMilestoneId);
-      prevMilestoneId = localMilestoneId;
     }
   });
 
@@ -413,21 +397,18 @@
               {/if}
             </div>
 
-            <!-- Milestone Select -->
+            <!-- Milestone Picker -->
             <div>
               <Label for="milestone" class="text-metadata mb-2 block">Milestone</Label>
-              <select
-                id="milestone"
-                value={localMilestoneId ?? 'null'}
-                onchange={handleMilestoneChange}
+              <MilestonePicker
+                selectedMilestoneId={localMilestoneId}
+                {milestones}
                 disabled={loading}
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="null">No milestone</option>
-                {#each milestones as milestone (milestone.id)}
-                  <option value={milestone.id}>{milestone.name}</option>
-                {/each}
-              </select>
+                onChange={(id) => {
+                  localMilestoneId = id;
+                  autoSave('milestone_id', id);
+                }}
+              />
             </div>
           </div>
         </section>
