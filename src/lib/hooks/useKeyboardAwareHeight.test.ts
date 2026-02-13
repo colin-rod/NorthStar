@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import TestKeyboardAwareWrapper from './TestKeyboardAwareWrapper.svelte';
 
 describe('useKeyboardAwareHeight', () => {
-  let visualViewportMock: Partial<VisualViewport>;
+  let visualViewportMock: { height: number; addEventListener: any; removeEventListener: any };
   let resizeListeners: Array<(e: Event) => void> = [];
 
   beforeEach(() => {

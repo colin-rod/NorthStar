@@ -35,9 +35,15 @@
   let loading = $state(false);
   let nameInputElement: HTMLInputElement | undefined = undefined;
 
-  // Initialize form values (use $derived to properly track milestone changes)
-  let nameValue = $state(milestone?.name || '');
-  let dueDateValue = $state(milestone?.due_date || '');
+  // Initialize form values as state
+  let nameValue = $state('');
+  let dueDateValue = $state('');
+
+  // Sync form values when milestone prop changes
+  $effect(() => {
+    nameValue = milestone?.name || '';
+    dueDateValue = milestone?.due_date || '';
+  });
 
   // Auto-focus on mount
   $effect(() => {
