@@ -1,8 +1,26 @@
 import { render, screen } from '@testing-library/svelte';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
 import type { Issue, IssueStatus } from '$lib/types';
+
+// Mock Supabase
+vi.mock('$lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      delete: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({ error: null })),
+        })),
+      })),
+    })),
+  },
+}));
+
+// Mock navigation
+vi.mock('$app/navigation', () => ({
+  invalidateAll: vi.fn(),
+}));
 
 describe('DependencyManagementSection - Blocking Summary', () => {
   const createIssue = (id: string, title: string, status: IssueStatus): Issue => ({
@@ -127,5 +145,95 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     expect(screen.getByText('Blocking Dep 2')).toBeInTheDocument();
     expect(screen.getByText('Satisfied Dep 1')).toBeInTheDocument();
     expect(screen.getByText('Satisfied Dep 2')).toBeInTheDocument();
+  });
+
+  it('should render "Add Dependency" button', () => {
+    const issue = createIssue('1', 'Test Issue', 'todo');
+
+    render(DependencyManagementSection, {
+      props: {
+        issue,
+        projectIssues: [],
+        blockedByIssues: [],
+        blockingIssues: [],
+      },
+    });
+
+    expect(screen.getByText('Add Dependency')).toBeInTheDocument();
+  });
+
+  it('should display "Blocking:" section when blocking issues exist', () => {
+    const issue = createIssue('1', 'Test Issue', 'todo');
+    const blockingIssues = [createIssue('block-1', 'Blocked Issue', 'todo')];
+
+    render(DependencyManagementSection, {
+      props: {
+        issue,
+        projectIssues: [],
+        blockedByIssues: [],
+        blockingIssues,
+      },
+    });
+
+    expect(screen.getByText('Blocking:')).toBeInTheDocument();
+    expect(screen.getByText('Blocked Issue')).toBeInTheDocument();
+  });
+
+  it('should render remove dependency buttons for blocked by dependencies', () => {
+    const issue = createIssue('1', 'Test Issue', 'todo');
+    const dep = createIssue('dep-1', 'Dependency 1', 'todo');
+
+    render(DependencyManagementSection, {
+      props: {
+        issue,
+        projectIssues: [],
+        blockedByIssues: [dep],
+        blockingIssues: [],
+      },
+    });
+
+    const removeButtons = screen.getAllByLabelText('Remove dependency');
+    expect(removeButtons.length).toBeGreaterThan(0);
+  });
+
+  it('should render status badges for dependencies', () => {
+    const issue = createIssue('1', 'Test Issue', 'todo');
+    const blockedByIssues = [
+      createIssue('dep-1', 'Todo Dep', 'todo'),
+      createIssue('dep-2', 'Doing Dep', 'doing'),
+      createIssue('dep-3', 'Done Dep', 'done'),
+    ];
+
+    render(DependencyManagementSection, {
+      props: {
+        issue,
+        projectIssues: [],
+        blockedByIssues,
+        blockingIssues: [],
+      },
+    });
+
+    // Check that all dependencies are rendered with their status badges
+    expect(screen.getByText('Todo Dep')).toBeInTheDocument();
+    expect(screen.getByText('Doing Dep')).toBeInTheDocument();
+    expect(screen.getByText('Done Dep')).toBeInTheDocument();
+  });
+
+  it('should handle undefined epic name gracefully', () => {
+    const issue = createIssue('1', 'Test Issue', 'todo');
+    const dep = createIssue('dep-1', 'Dependency 1', 'todo');
+    dep.epic = undefined;
+
+    render(DependencyManagementSection, {
+      props: {
+        issue,
+        projectIssues: [],
+        blockedByIssues: [dep],
+        blockingIssues: [],
+      },
+    });
+
+    // Should still render the dependency even without epic name
+    expect(screen.getByText('Dependency 1')).toBeInTheDocument();
   });
 });

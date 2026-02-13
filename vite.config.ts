@@ -28,6 +28,10 @@ export default defineConfig({
         '**/__mocks__/**',
         'src/routes/**/+*.ts',
         'src/routes/**/+*.server.ts',
+        // Exclude third-party UI library components (shadcn/svelte)
+        'src/lib/components/ui/**',
+        // Exclude re-export index files with no testable logic
+        '**/index.ts',
       ],
       thresholds: {
         branches: 80,

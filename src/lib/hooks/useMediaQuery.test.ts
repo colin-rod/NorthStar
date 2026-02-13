@@ -8,37 +8,39 @@ describe('useMediaQuery', () => {
   let listeners: Array<(e: MediaQueryListEvent) => void> = [];
 
   beforeEach(() => {
-    // Helper to create a media query list object that we can control
-    const createMediaQueryList = (query: string): MediaQueryList => {
-      return {
-        matches: false,
-        media: query,
-        addEventListener: vi.fn((_, handler) => {
-          listeners.push(handler as (e: MediaQueryListEvent) => void);
-        }),
-        removeEventListener: vi.fn((_, handler) => {
-          const index = listeners.indexOf(handler as (e: MediaQueryListEvent) => void);
-          if (index > -1) {
-            listeners.splice(index, 1);
-          }
-        }),
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      } as MediaQueryList;
-    };
+    listeners = [];
+  });
 
-    // Mock window.matchMedia
+  const createMediaQueryList = (query: string, matches: boolean): MediaQueryList => {
+    return {
+      matches,
+      media: query,
+      addEventListener: vi.fn((_, handler) => {
+        listeners.push(handler as (e: MediaQueryListEvent) => void);
+      }),
+      removeEventListener: vi.fn((_, handler) => {
+        const index = listeners.indexOf(handler as (e: MediaQueryListEvent) => void);
+        if (index > -1) {
+          listeners.splice(index, 1);
+        }
+      }),
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as MediaQueryList;
+  };
+
+  const setupMatchMedia = (matches: boolean) => {
     matchMediaMock = vi.fn((query: string) => {
-      return createMediaQueryList(query);
+      return createMediaQueryList(query, matches);
     });
 
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: matchMediaMock,
     });
-  });
+  };
 
   afterEach(() => {
     listeners = [];
@@ -47,11 +49,19 @@ describe('useMediaQuery', () => {
   });
 
   it('should return false initially (SSR-safe default)', () => {
+    setupMatchMedia(false);
     render(TestMediaQueryWrapper, { props: { query: '(min-width: 768px)' } });
     expect(screen.getByTestId('media-query-result').textContent).toBe('false');
   });
 
+  it('should return true when media query matches', () => {
+    setupMatchMedia(true);
+    render(TestMediaQueryWrapper, { props: { query: '(min-width: 768px)' } });
+    expect(screen.getByTestId('media-query-result').textContent).toBe('true');
+  });
+
   it('should return a function that returns the current matches value', () => {
+    setupMatchMedia(false);
     render(TestMediaQueryWrapper, { props: { query: '(min-width: 768px)' } });
 
     // Initial value should be false (SSR-safe default)
@@ -59,6 +69,7 @@ describe('useMediaQuery', () => {
   });
 
   it('should cleanup event listener on unmount', () => {
+    setupMatchMedia(false);
     const { unmount } = render(TestMediaQueryWrapper, { props: { query: '(min-width: 768px)' } });
 
     // Verify matchMedia was called
@@ -72,18 +83,21 @@ describe('useMediaQuery', () => {
   });
 
   it('should work with different media queries', () => {
+    setupMatchMedia(false);
     const { unmount: unmount1 } = render(TestMediaQueryWrapper, {
       props: { query: '(max-width: 767px)' },
     });
     expect(screen.getByTestId('media-query-result').textContent).toBe('false');
     unmount1();
 
+    setupMatchMedia(false);
     const { unmount: unmount2 } = render(TestMediaQueryWrapper, {
       props: { query: '(min-width: 768px)' },
     });
     expect(screen.getByTestId('media-query-result').textContent).toBe('false');
     unmount2();
 
+    setupMatchMedia(false);
     const { unmount: unmount3 } = render(TestMediaQueryWrapper, {
       props: { query: '(min-width: 1024px)' },
     });
