@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
       milestone:milestones(*),
       dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
-        depends_on_issue:issues(*, epic:epics(*), project:projects(*))
+        depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*, epic:epics(*), project:projects(*))
       ),
       blocked_by:dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
