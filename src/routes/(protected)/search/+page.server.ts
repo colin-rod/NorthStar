@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
       ),
       blocked_by:dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
-        depends_on_issue:issues(
+        depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(
           id, title, status, priority, epic_id, project_id,
           epic:epics(id, name),
           project:projects(id, name)
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
       ),
       blocking:dependencies!dependencies_depends_on_issue_id_fkey(
         issue_id,
-        issue:issues(
+        issue:issues!dependencies_issue_id_fkey(
           id, title, status, priority, epic_id, project_id,
           epic:epics(id, name),
           project:projects(id, name)
