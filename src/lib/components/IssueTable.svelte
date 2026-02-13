@@ -291,9 +291,11 @@
 
             <!-- Story Points Cell -->
             <td class="px-3 py-4">
-              <span class="text-metadata text-foreground-muted">
-                {issue.story_points ?? '—'}
-              </span>
+              {#if issue.story_points}
+                <Badge variant="secondary" class="text-xs">{issue.story_points}</Badge>
+              {:else}
+                <span class="text-metadata text-foreground-muted">—</span>
+              {/if}
             </td>
 
             <!-- Blocked Cell -->

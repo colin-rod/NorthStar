@@ -398,13 +398,68 @@ export const actions: Actions = {
   /**
    * Create a new issue
    */
-  createIssue: async ({ request }) => {
-    const _formData = await request.formData();
+  createIssue: async ({ request, locals: { supabase, session } }) => {
+    if (!session) {
+      return fail(401, { error: 'Unauthorized' });
+    }
 
-    // TODO: Validate form data
-    // TODO: Create issue in database
-    // TODO: Return success/error with new issue ID
+    const formData = await request.formData();
+    const titleRaw = formData.get('title')?.toString().trim();
+    const epicId = formData.get('epic_id')?.toString();
+    const projectId = formData.get('project_id')?.toString();
 
-    return { success: true };
+    if (!titleRaw || titleRaw.length === 0) {
+      return fail(400, { error: 'Issue title is required' });
+    }
+    if (titleRaw.length > 500) {
+      return fail(400, { error: 'Issue title must be 500 characters or less' });
+    }
+    if (!epicId || !projectId) {
+      return fail(400, { error: 'Epic and project are required' });
+    }
+
+    // Verify epic belongs to selected project
+    const { data: epic, error: epicError } = await supabase
+      .from('epics')
+      .select('id, project_id')
+      .eq('id', epicId)
+      .eq('project_id', projectId)
+      .single();
+
+    if (epicError || !epic) {
+      return fail(400, { error: 'Epic not found or does not belong to selected project' });
+    }
+
+    // Get next sort_order (scoped to epic, exclude sub-issues)
+    const { data: existingIssues } = await supabase
+      .from('issues')
+      .select('sort_order')
+      .eq('epic_id', epicId)
+      .is('parent_issue_id', null)
+      .order('sort_order', { ascending: false })
+      .limit(1);
+
+    const nextSortOrder =
+      existingIssues?.[0]?.sort_order != null ? existingIssues[0].sort_order + 1 : 0;
+
+    const { data, error: insertError } = await supabase
+      .from('issues')
+      .insert({
+        title: titleRaw,
+        epic_id: epicId,
+        project_id: projectId,
+        status: 'todo',
+        priority: 2,
+        sort_order: nextSortOrder,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Create issue error:', insertError);
+      return fail(500, { error: 'Failed to create issue' });
+    }
+
+    return { success: true, action: 'createIssue', issue: data };
   },
 };

@@ -20,6 +20,7 @@
 
   import { enhance } from '$app/forms';
   import type { Project } from '$lib/types';
+  import { computeProgress, type IssueCounts } from '$lib/utils/issue-counts';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
@@ -27,16 +28,22 @@
 
   interface Props {
     project: Project;
+    counts?: IssueCounts;
     onEdit?: (project: Project) => void;
     onArchive?: (project: Project) => void;
   }
 
-  let { project, onEdit, onArchive }: Props = $props();
+  let { project, counts, onEdit, onArchive }: Props = $props();
 
-  // TODO: Calculate counts from project.epics
-  const readyCount = 0;
-  const blockedCount = 0;
-  const doingCount = 0;
+  const defaultCounts: IssueCounts = {
+    ready: 0,
+    blocked: 0,
+    doing: 0,
+    inReview: 0,
+    done: 0,
+    canceled: 0,
+  };
+  let effectiveCounts = $derived(counts ?? defaultCounts);
 
   function handleEdit(e: MouseEvent) {
     e.preventDefault();
@@ -103,22 +110,34 @@
         <!-- Counts with subtle badges -->
         <div class="flex gap-4 text-metadata">
           <div class="flex items-center gap-2">
-            <Badge variant="default" class="text-xs">{readyCount}</Badge>
+            <Badge variant="default" class="text-xs">{effectiveCounts.ready}</Badge>
             <span class="text-foreground-secondary">Ready</span>
           </div>
           <div class="flex items-center gap-2">
-            <Badge variant="status-doing" class="text-xs">{doingCount}</Badge>
+            <Badge variant="status-doing" class="text-xs">{effectiveCounts.doing}</Badge>
             <span class="text-foreground-secondary">Doing</span>
           </div>
           <div class="flex items-center gap-2">
-            <Badge variant="status-blocked" class="text-xs">{blockedCount}</Badge>
+            <Badge variant="status-blocked" class="text-xs">{effectiveCounts.blocked}</Badge>
             <span class="text-foreground-secondary">Blocked</span>
           </div>
         </div>
+        <!-- Progress bar -->
+        {@const progress = computeProgress(effectiveCounts)}
+        {#if progress.total > 0}
+          <div class="mt-3 flex items-center gap-2">
+            <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+              <div
+                class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+                style="width: {progress.percentage}%"
+              ></div>
+            </div>
+            <span class="text-metadata text-foreground-secondary shrink-0">
+              {progress.percentage}%
+            </span>
+          </div>
+        {/if}
       </CardContent>
     </Card>
   </a>
 </div>
-
-<!-- TODO: Implement count calculations from loaded data -->
-<!-- TODO: Add loading skeleton state -->

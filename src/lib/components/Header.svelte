@@ -26,7 +26,7 @@
       <!-- North wordmark with serif font per design spec -->
       <a
         href="/"
-        class="font-accent text-page-title text-foreground hover:text-primary transition-colors"
+        class="font-accent text-page-title text-foreground hover:text-primary transition-colors md:hidden"
       >
         North
       </a>

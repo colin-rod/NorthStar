@@ -31,6 +31,24 @@
     return counts;
   });
 
+  // Calculate progress (done + canceled / total) for each milestone
+  let milestoneProgress = $derived.by(() => {
+    const progress = new Map<string, { completed: number; total: number; percentage: number }>();
+    for (const milestone of milestones) {
+      const milestoneIssues = issues.filter((i) => i.milestone_id === milestone.id);
+      const total = milestoneIssues.length;
+      const completed = milestoneIssues.filter(
+        (i) => i.status === 'done' || i.status === 'canceled',
+      ).length;
+      progress.set(milestone.id, {
+        completed,
+        total,
+        percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+      });
+    }
+    return progress;
+  });
+
   // Sort milestones by due_date (closest first), then alphabetically
   let sortedMilestones = $derived.by(() => {
     return [...milestones].sort((a, b) => {
@@ -131,19 +149,33 @@
 
         <!-- Regular milestones (filtered by search) -->
         {#each filteredMilestones as milestone (milestone.id)}
+          {@const prog = milestoneProgress.get(milestone.id)}
           <CommandItem
             onSelect={() => toggleMilestone(milestone.id)}
-            class="flex items-center gap-2 cursor-pointer"
+            class="flex flex-col gap-1.5 cursor-pointer"
             data-testid="milestone-checkbox"
           >
-            <Checkbox
-              checked={selectedMilestoneIds.includes(milestone.id)}
-              aria-label={milestone.name}
-            />
-            <span class="flex-1">{milestone.name}</span>
-            <span class="text-muted-foreground text-sm">
-              ({milestoneCounts.get(milestone.id) || 0})
-            </span>
+            <div class="flex items-center gap-2 w-full">
+              <Checkbox
+                checked={selectedMilestoneIds.includes(milestone.id)}
+                aria-label={milestone.name}
+              />
+              <span class="flex-1">{milestone.name}</span>
+              <span class="text-muted-foreground text-sm">
+                {prog?.completed ?? 0}/{prog?.total ?? 0}
+              </span>
+            </div>
+            {#if prog && prog.total > 0}
+              <div class="flex items-center gap-2 pl-6 w-full">
+                <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+                    style="width: {prog.percentage}%"
+                  ></div>
+                </div>
+                <span class="text-xs text-muted-foreground shrink-0">{prog.percentage}%</span>
+              </div>
+            {/if}
           </CommandItem>
         {/each}
 

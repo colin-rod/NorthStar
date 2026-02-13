@@ -37,16 +37,20 @@
   // Props
   let {
     open = $bindable(false),
+    mode = 'edit',
     issue = $bindable<Issue | null>(null),
     epics = [],
     milestones = [],
     projectIssues = [],
+    projects = [],
   }: {
     open: boolean;
+    mode?: 'edit' | 'create';
     issue: Issue | null;
     epics: Epic[];
     milestones: Milestone[];
     projectIssues: Issue[];
+    projects?: { id: string; name: string }[];
   } = $props();
 
   // Local state for form fields
@@ -64,6 +68,10 @@
 
   // Sub-issues state
   let showSubIssueForm = $state(false);
+
+  // Create mode state
+  let selectedProjectId = $state('');
+  let createLoading = $state(false);
 
   // Debounce timer for title field
   let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -85,7 +93,7 @@
     }
   });
 
-  // Initialize local state when issue changes
+  // Initialize local state when issue changes (edit mode)
   $effect(() => {
     if (issue) {
       localTitle = issue.title;
@@ -99,9 +107,45 @@
     }
   });
 
-  // Filter epics to only show those from the same project
+  // Initialize create mode defaults when sheet opens
+  $effect(() => {
+    if (mode === 'create' && open) {
+      localTitle = '';
+      localStatus = 'todo';
+      localPriority = 2;
+      localStoryPoints = null;
+      localMilestoneId = null;
+      saveError = null;
+      if (projects.length > 0 && !selectedProjectId) {
+        selectedProjectId = projects[0].id;
+      }
+    }
+  });
+
+  // Auto-select first epic when project changes in create mode
+  $effect(() => {
+    if (mode === 'create' && selectedProjectId) {
+      const firstEpic = epics.find((e) => e.project_id === selectedProjectId);
+      localEpicId = firstEpic?.id ?? '';
+    }
+  });
+
+  // Reset create mode state when sheet closes
+  $effect(() => {
+    if (!open && mode === 'create') {
+      selectedProjectId = '';
+      localEpicId = '';
+      createLoading = false;
+    }
+  });
+
+  // Filter epics to only show those from the relevant project
   let projectEpics = $derived(
-    issue ? epics.filter((epic) => epic.project_id === issue?.project_id) : [],
+    mode === 'create'
+      ? epics.filter((epic) => epic.project_id === selectedProjectId)
+      : issue
+        ? epics.filter((epic) => epic.project_id === issue?.project_id)
+        : [],
   );
 
   // Get blocking dependencies (issues that block this one)
@@ -190,6 +234,49 @@
       }, 5000);
     } finally {
       loading = false;
+    }
+  }
+
+  // Create issue form submission
+  async function handleCreateSubmit(event: Event) {
+    event.preventDefault();
+
+    if (!localTitle.trim()) {
+      saveError = 'Issue title is required';
+      return;
+    }
+    if (!selectedProjectId || !localEpicId) {
+      saveError = 'Project and epic are required';
+      return;
+    }
+
+    createLoading = true;
+    saveError = null;
+
+    try {
+      const formData = new FormData();
+      formData.append('title', localTitle.trim());
+      formData.append('project_id', selectedProjectId);
+      formData.append('epic_id', localEpicId);
+
+      const response = await fetch('?/createIssue', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.type === 'success') {
+        await invalidateAll();
+        open = false;
+      } else {
+        saveError = result.data?.error || 'Failed to create issue';
+      }
+    } catch (error) {
+      console.error('Create issue error:', error);
+      saveError = 'Network error - please try again';
+    } finally {
+      createLoading = false;
     }
   }
 
@@ -286,9 +373,9 @@
       open = isOpen;
     }}
   >
-    {#if issue}
+    {#if mode === 'create' || issue}
       <!-- Loading overlay -->
-      {#if loading}
+      {#if loading || createLoading}
         <div
           class="absolute inset-0 bg-background/50 flex items-center justify-center z-50 rounded-t-lg"
         >
@@ -298,7 +385,9 @@
 
       <!-- Header -->
       <SheetHeader class="mb-6">
-        <SheetTitle class="font-accent text-page-title">Edit Issue</SheetTitle>
+        <SheetTitle class="font-accent text-page-title">
+          {mode === 'create' ? 'New Issue' : 'Edit Issue'}
+        </SheetTitle>
       </SheetHeader>
 
       <!-- Success/Error Toast -->
@@ -317,200 +406,276 @@
         </div>
       {/if}
 
-      <div class="space-y-6 pb-6">
-        <!-- Basic Info Section -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-            Basic Info
-          </h3>
-          <div class="space-y-4">
-            <!-- Title -->
+      {#if mode === 'create'}
+        <!-- Create mode: form with submit button -->
+        <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
+          <!-- Basic Info Section -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              Basic Info
+            </h3>
             <div>
               <Label for="title" class="text-metadata mb-2 block">Title</Label>
               <Input
                 id="title"
                 name="title"
                 value={localTitle}
-                oninput={handleTitleChange}
+                oninput={(e) => {
+                  localTitle = e.currentTarget.value;
+                }}
                 required
-                disabled={loading}
+                disabled={createLoading}
+                placeholder="What needs to be done?"
                 class="text-body"
               />
             </div>
+          </section>
 
-            <!-- Status & Priority Row -->
-            <div class="flex gap-4">
-              <!-- Status Select -->
-              <div class="flex-1">
-                <Label for="status" class="text-metadata mb-2 block">Status</Label>
+          <!-- Organization Section -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              Organization
+            </h3>
+            <div class="space-y-4">
+              <!-- Project Select -->
+              <div>
+                <Label for="project" class="text-metadata mb-2 block">Project</Label>
                 <select
-                  id="status"
-                  bind:value={localStatus}
-                  onchange={handleStatusChange}
-                  disabled={loading}
+                  id="project"
+                  bind:value={selectedProjectId}
+                  required
+                  disabled={createLoading}
                   class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <option value="todo">Todo</option>
-                  <option value="doing">Doing</option>
-                  <option value="in_review">In Review</option>
-                  <option value="done">Done</option>
-                  <option value="canceled">Canceled</option>
+                  {#each projects as project (project.id)}
+                    <option value={project.id}>{project.name}</option>
+                  {/each}
                 </select>
               </div>
 
-              <!-- Priority Select -->
-              <div class="flex-1">
-                <Label for="priority" class="text-metadata mb-2 block">Priority</Label>
-                <select
-                  id="priority"
-                  bind:value={localPriority}
-                  onchange={handlePriorityChange}
-                  disabled={loading}
-                  class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value={0}>P0 (Critical)</option>
-                  <option value={1}>P1 (High)</option>
-                  <option value={2}>P2 (Medium)</option>
-                  <option value={3}>P3 (Low)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Organization Section -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-            Organization
-          </h3>
-          <div class="space-y-4">
-            <!-- Epic Select -->
-            <div>
-              <Label for="epic" class="text-metadata mb-2 block">Epic</Label>
-              {#if issue.parent_issue_id}
-                <!-- Sub-issue: Show epic but don't allow changes -->
-                <div
-                  class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm items-center"
-                >
-                  <span class="text-foreground-muted">
-                    {projectEpics.find((e) => e.id === localEpicId)?.name}
-                    <span class="text-metadata ml-1">(inherited from parent)</span>
-                  </span>
-                </div>
-              {:else}
-                <!-- Top-level issue: Allow epic changes -->
+              <!-- Epic Select -->
+              <div>
+                <Label for="epic" class="text-metadata mb-2 block">Epic</Label>
                 <select
                   id="epic"
                   bind:value={localEpicId}
-                  onchange={handleEpicChange}
-                  disabled={loading}
+                  required
+                  disabled={createLoading}
                   class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {#each projectEpics as epic (epic.id)}
                     <option value={epic.id}>{epic.name}</option>
                   {/each}
                 </select>
-              {/if}
+              </div>
             </div>
+          </section>
 
-            <!-- Milestone Picker -->
-            <div>
-              <Label for="milestone" class="text-metadata mb-2 block">Milestone</Label>
-              <MilestonePicker
-                selectedMilestoneId={localMilestoneId}
-                {milestones}
-                disabled={loading}
-                onChange={(id) => {
-                  localMilestoneId = id;
-                  autoSave('milestone_id', id);
-                }}
-              />
+          <!-- Submit Button -->
+          <Button type="submit" disabled={createLoading || !localTitle.trim()} class="w-full">
+            {createLoading ? 'Creating...' : 'Create Issue'}
+          </Button>
+        </form>
+      {:else}
+        <!-- Edit mode: auto-save behavior -->
+        <div class="space-y-6 pb-6">
+          <!-- Basic Info Section -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              Basic Info
+            </h3>
+            <div class="space-y-4">
+              <!-- Title -->
+              <div>
+                <Label for="title" class="text-metadata mb-2 block">Title</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={localTitle}
+                  oninput={handleTitleChange}
+                  required
+                  disabled={loading}
+                  class="text-body"
+                />
+              </div>
+
+              <!-- Status & Priority Row -->
+              <div class="flex gap-4">
+                <!-- Status Select -->
+                <div class="flex-1">
+                  <Label for="status" class="text-metadata mb-2 block">Status</Label>
+                  <select
+                    id="status"
+                    bind:value={localStatus}
+                    onchange={handleStatusChange}
+                    disabled={loading}
+                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="todo">Todo</option>
+                    <option value="doing">In Progress</option>
+                    <option value="in_review">In Review</option>
+                    <option value="done">Done</option>
+                    <option value="canceled">Canceled</option>
+                  </select>
+                </div>
+
+                <!-- Priority Select -->
+                <div class="flex-1">
+                  <Label for="priority" class="text-metadata mb-2 block">Priority</Label>
+                  <select
+                    id="priority"
+                    bind:value={localPriority}
+                    onchange={handlePriorityChange}
+                    disabled={loading}
+                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value={0}>P0 (Critical)</option>
+                    <option value={1}>P1 (High)</option>
+                    <option value={2}>P2 (Medium)</option>
+                    <option value={3}>P3 (Low)</option>
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <!-- Estimation Section -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-            Estimation
-          </h3>
-          <div>
-            <Label for="story_points" class="text-metadata mb-2 block">Story Points</Label>
-            <select
-              id="story_points"
-              inputmode="numeric"
-              value={localStoryPoints?.toString() ?? 'null'}
-              onchange={handleStoryPointsChange}
-              disabled={loading}
-              class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="null">Not set</option>
-              {#each ALLOWED_STORY_POINTS as points (points)}
-                <option value={points.toString()}>{points}</option>
-              {/each}
-            </select>
-          </div>
-        </section>
+          <!-- Organization Section -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              Organization
+            </h3>
+            <div class="space-y-4">
+              <!-- Epic Select -->
+              <div>
+                <Label for="epic" class="text-metadata mb-2 block">Epic</Label>
+                {#if issue?.parent_issue_id}
+                  <!-- Sub-issue: Show epic but don't allow changes -->
+                  <div
+                    class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm items-center"
+                  >
+                    <span class="text-foreground-muted">
+                      {projectEpics.find((e) => e.id === localEpicId)?.name}
+                      <span class="text-metadata ml-1">(inherited from parent)</span>
+                    </span>
+                  </div>
+                {:else}
+                  <!-- Top-level issue: Allow epic changes -->
+                  <select
+                    id="epic"
+                    bind:value={localEpicId}
+                    onchange={handleEpicChange}
+                    disabled={loading}
+                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {#each projectEpics as epic (epic.id)}
+                      <option value={epic.id}>{epic.name}</option>
+                    {/each}
+                  </select>
+                {/if}
+              </div>
 
-        <!-- Dependencies Section -->
-        <DependencyManagementSection
-          {issue}
-          {projectIssues}
-          {blockedByIssues}
-          {blockingIssues}
-          bind:saveError
-        />
-
-        <!-- Sub-issues Section -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-            Sub-issues
-          </h3>
-
-          <div class="space-y-2">
-            <!-- Sub-issues List -->
-            {#if subIssues.length > 0}
-              {#each subIssues as subIssue (subIssue.id)}
-                <button
-                  type="button"
-                  onclick={() => {
-                    issue = subIssue;
-                    showSubIssueForm = false;
+              <!-- Milestone Picker -->
+              <div>
+                <Label for="milestone" class="text-metadata mb-2 block">Milestone</Label>
+                <MilestonePicker
+                  selectedMilestoneId={localMilestoneId}
+                  {milestones}
+                  issues={projectIssues}
+                  disabled={loading}
+                  onChange={(id) => {
+                    localMilestoneId = id;
+                    autoSave('milestone_id', id);
                   }}
-                  class="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted w-full text-left transition-colors"
-                >
-                  <Badge variant={getStatusVariant(subIssue.status)} class="shrink-0">
-                    {formatStatus(subIssue.status)}
-                  </Badge>
-                  <span class="text-body flex-1 truncate">{subIssue.title}</span>
-                </button>
-              {/each}
-            {:else if !showSubIssueForm}
-              <p class="text-metadata text-foreground-muted">No sub-issues</p>
-            {/if}
+                />
+              </div>
+            </div>
+          </section>
 
-            <!-- Inline Form for Creating Sub-issue -->
-            {#if showSubIssueForm}
-              <InlineSubIssueForm
-                parentIssueId={issue.id}
-                epicId={issue.epic_id}
-                projectId={issue.project_id}
-                onCancel={() => (showSubIssueForm = false)}
-                onSuccess={() => (showSubIssueForm = false)}
-              />
-            {:else}
-              <Button
-                variant="outline"
-                size="sm"
-                onclick={() => (showSubIssueForm = true)}
-                class="w-full"
+          <!-- Estimation Section -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              Estimation
+            </h3>
+            <div>
+              <Label for="story_points" class="text-metadata mb-2 block">Story Points</Label>
+              <select
+                id="story_points"
+                inputmode="numeric"
+                value={localStoryPoints?.toString() ?? 'null'}
+                onchange={handleStoryPointsChange}
+                disabled={loading}
+                class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Add Sub-issue
-              </Button>
-            {/if}
-          </div>
-        </section>
-      </div>
+                <option value="null">Not set</option>
+                {#each ALLOWED_STORY_POINTS as points (points)}
+                  <option value={points.toString()}>{points}</option>
+                {/each}
+              </select>
+            </div>
+          </section>
+
+          <!-- Dependencies Section -->
+          {#if issue}
+            <DependencyManagementSection
+              {issue}
+              {projectIssues}
+              {blockedByIssues}
+              {blockingIssues}
+              bind:saveError
+            />
+
+            <!-- Sub-issues Section -->
+            <section>
+              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+                Sub-issues
+              </h3>
+
+              <div class="space-y-2">
+                <!-- Sub-issues List -->
+                {#if subIssues.length > 0}
+                  {#each subIssues as subIssue (subIssue.id)}
+                    <button
+                      type="button"
+                      onclick={() => {
+                        issue = subIssue;
+                        showSubIssueForm = false;
+                      }}
+                      class="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted w-full text-left transition-colors"
+                    >
+                      <Badge variant={getStatusVariant(subIssue.status)} class="shrink-0">
+                        {formatStatus(subIssue.status)}
+                      </Badge>
+                      <span class="text-body flex-1 truncate">{subIssue.title}</span>
+                    </button>
+                  {/each}
+                {:else if !showSubIssueForm}
+                  <p class="text-metadata text-foreground-muted">No sub-issues</p>
+                {/if}
+
+                <!-- Inline Form for Creating Sub-issue -->
+                {#if showSubIssueForm}
+                  <InlineSubIssueForm
+                    parentIssueId={issue.id}
+                    epicId={issue.epic_id}
+                    projectId={issue.project_id}
+                    onCancel={() => (showSubIssueForm = false)}
+                    onSuccess={() => (showSubIssueForm = false)}
+                  />
+                {:else}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onclick={() => (showSubIssueForm = true)}
+                    class="w-full"
+                  >
+                    Add Sub-issue
+                  </Button>
+                {/if}
+              </div>
+            </section>
+          {/if}
+        </div>
+      {/if}
     {/if}
   </SheetContent>
 </Sheet>

@@ -2,6 +2,8 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
+import { computeIssueCounts } from '$lib/utils/issue-counts';
+
 export const load: PageServerLoad = async ({ locals: { supabase, session } }) => {
   if (!session) {
     redirect(303, '/auth/login');
@@ -9,7 +11,18 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
 
   const { data: projects, error } = await supabase
     .from('projects')
-    .select('*')
+    .select(
+      `
+      *,
+      issues(
+        *,
+        dependencies!dependencies_issue_id_fkey(
+          depends_on_issue_id,
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*)
+        )
+      )
+    `,
+    )
     .is('archived_at', null)
     .order('created_at', { ascending: false });
 
@@ -18,7 +31,12 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     return { projects: [] };
   }
 
-  return { projects: projects || [] };
+  const projectsWithCounts = (projects || []).map((project) => ({
+    ...project,
+    counts: computeIssueCounts(project.issues || []),
+  }));
+
+  return { projects: projectsWithCounts };
 };
 
 export const actions: Actions = {

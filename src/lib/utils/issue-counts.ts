@@ -30,6 +30,23 @@ export interface IssueCounts {
  * @param issues - Array of issues with dependencies loaded
  * @returns Counts object with 6 states
  */
+export interface Progress {
+  completed: number;
+  total: number;
+  percentage: number;
+}
+
+export function computeProgress(counts: IssueCounts): Progress {
+  const completed = counts.done + counts.canceled;
+  const total =
+    counts.ready + counts.blocked + counts.doing + counts.inReview + counts.done + counts.canceled;
+  return {
+    completed,
+    total,
+    percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+  };
+}
+
 export function computeIssueCounts(issues: Issue[]): IssueCounts {
   const counts: IssueCounts = {
     ready: 0,

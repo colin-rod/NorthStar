@@ -21,17 +21,42 @@
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
   import { Button } from '$lib/components/ui/button';
   import MilestoneForm from './MilestoneForm.svelte';
-  import type { Milestone } from '$lib/types';
+  import type { Issue, Milestone } from '$lib/types';
   import { Calendar, ChevronDown, Edit, Plus } from '@lucide/svelte';
 
   interface Props {
     selectedMilestoneId: string | null;
     milestones: Milestone[];
+    issues?: Issue[];
     disabled?: boolean;
     onChange: (milestoneId: string | null) => void;
   }
 
-  let { selectedMilestoneId, milestones, disabled = false, onChange }: Props = $props();
+  let {
+    selectedMilestoneId,
+    milestones,
+    issues = [],
+    disabled = false,
+    onChange,
+  }: Props = $props();
+
+  // Calculate progress per milestone
+  let milestoneProgress = $derived.by(() => {
+    const progress = new Map<string, { completed: number; total: number; percentage: number }>();
+    for (const milestone of milestones) {
+      const milestoneIssues = issues.filter((i) => i.milestone_id === milestone.id);
+      const total = milestoneIssues.length;
+      const completed = milestoneIssues.filter(
+        (i) => i.status === 'done' || i.status === 'canceled',
+      ).length;
+      progress.set(milestone.id, {
+        completed,
+        total,
+        percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+      });
+    }
+    return progress;
+  });
 
   // State
   let open = $state(false);
@@ -141,31 +166,47 @@
 
         <!-- Milestone options -->
         {#each milestones as milestone (milestone.id)}
+          {@const prog = milestoneProgress.get(milestone.id)}
           <div
-            class="group flex w-full items-center justify-between rounded-sm px-3 py-2 text-sm hover:bg-muted cursor-pointer"
+            class="group flex flex-col gap-1 rounded-sm px-3 py-2 text-sm hover:bg-muted cursor-pointer"
           >
-            <button
-              type="button"
-              onclick={() => handleSelect(milestone.id)}
-              class="flex flex-col items-start gap-1 flex-1 text-left"
-            >
-              <span class="font-medium">{milestone.name}</span>
-              {#if milestone.due_date}
-                <span class="text-xs text-muted-foreground">
-                  {formatDueDate(milestone.due_date)}
-                </span>
-              {/if}
-            </button>
+            <div class="flex w-full items-center justify-between">
+              <button
+                type="button"
+                onclick={() => handleSelect(milestone.id)}
+                class="flex flex-col items-start gap-1 flex-1 text-left"
+              >
+                <span class="font-medium">{milestone.name}</span>
+                {#if milestone.due_date}
+                  <span class="text-xs text-muted-foreground">
+                    {formatDueDate(milestone.due_date)}
+                  </span>
+                {/if}
+              </button>
 
-            <!-- Edit icon (visible on hover) -->
-            <button
-              type="button"
-              onclick={(e) => handleEditClick(milestone, e)}
-              class="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity"
-              aria-label="Edit milestone"
-            >
-              <Edit class="h-3 w-3" />
-            </button>
+              <!-- Edit icon (visible on hover) -->
+              <button
+                type="button"
+                onclick={(e) => handleEditClick(milestone, e)}
+                class="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity"
+                aria-label="Edit milestone"
+              >
+                <Edit class="h-3 w-3" />
+              </button>
+            </div>
+            {#if prog && prog.total > 0}
+              <div class="flex items-center gap-2 w-full">
+                <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+                    style="width: {prog.percentage}%"
+                  ></div>
+                </div>
+                <span class="text-xs text-muted-foreground shrink-0">
+                  {prog.completed}/{prog.total}
+                </span>
+              </div>
+            {/if}
           </div>
         {/each}
 

@@ -174,10 +174,12 @@ Projects (top-level containers)
 
 - Note: `in_review` counts as NOT done (still blocks)
 
-**Ready**: An issue that is:
+**Ready (displayed as "Todo" in UI)**: An issue that is:
 
 - Status = `todo`
 - NOT Blocked
+
+Note: The "Todo" tab on the home page shows only ready issues (todo AND not blocked). This is a computed state, not a stored status value.
 
 These states are computed dynamically, not stored in database.
 
@@ -454,17 +456,17 @@ export async function cleanupTestDatabase() {
 
 **Home View** (default):
 
-- Primary list showing "Ready" issues
-- Segmented filters: Ready, Doing, Blocked, Done
+- Primary list showing "Ready" issues (displayed as "Todo" tab)
+- Segmented filters: Todo, In Progress, Blocked, Done
 - Each row: title, project/epic, priority, blocked indicator
 
 **Project View**:
 
-- Epics list with counts (Ready, Blocked, Doing)
+- Epics list with counts (Ready, Blocked, In Progress)
 
 **Epic View**:
 
-- Flat issue list with filters (All, Todo, Doing, In Review, Blocked, Done, Canceled)
+- Flat issue list with filters (All, Todo, In Progress, In Review, Blocked, Done, Canceled)
 - Inline "Add issue" functionality
 
 **Issue Detail**:
@@ -522,6 +524,8 @@ story_points integer CHECK (story_points IN (1, 2, 3, 5, 8, 13, 21))
 sort_order integer
 created_at timestamptz DEFAULT now()
 ```
+
+**Note**: UI displays "In Progress" for `status='doing'` to use more conventional terminology. Database values remain unchanged.
 
 **dependencies**
 

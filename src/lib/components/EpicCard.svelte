@@ -18,7 +18,7 @@
    */
 
   import type { Epic } from '$lib/types';
-  import type { IssueCounts } from '$lib/utils/issue-counts';
+  import { computeProgress, type IssueCounts } from '$lib/utils/issue-counts';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
 
@@ -79,6 +79,21 @@
           <span class="text-foreground-secondary">Canceled</span>
         </div>
       </div>
+      <!-- Progress bar -->
+      {@const progress = computeProgress(counts)}
+      {#if progress.total > 0}
+        <div class="mt-3 flex items-center gap-2">
+          <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+            <div
+              class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+              style="width: {progress.percentage}%"
+            ></div>
+          </div>
+          <span class="text-metadata text-foreground-secondary shrink-0">
+            {progress.percentage}%
+          </span>
+        </div>
+      {/if}
     </CardContent>
   </Card>
 </a>

@@ -5,7 +5,7 @@
    * Flat issue list with filters, inline creation, and reordering.
    *
    * Requirements from CLAUDE.md:
-   * - Filters: All, Todo, Doing, In Review, Blocked, Done, Canceled
+   * - Filters: All, Todo, In Progress, In Review, Blocked, Done, Canceled
    * - URL-persisted filter state
    * - Inline "Add issue" functionality
    * - Drag-and-drop + up/down button reordering
@@ -261,79 +261,85 @@
     />
   {/if}
 
-  <!-- Filter controls -->
-  <div class="flex gap-2 flex-wrap">
-    <PriorityFilter selectedPriorities={data.selectedPriorities || []} issues={data.issues || []} />
-    <MilestoneFilter
-      milestones={data.milestones || []}
-      selectedMilestoneIds={data.selectedMilestoneIds || []}
-      includeNoMilestone={data.includeNoMilestone || false}
-      issues={data.issues || []}
-    />
-  </div>
+  <!-- Controls: Filters + Tabs grouped as one control layer -->
+  <div class="space-y-3">
+    <div class="flex gap-2 flex-wrap">
+      <PriorityFilter
+        selectedPriorities={data.selectedPriorities || []}
+        issues={data.issues || []}
+      />
+      <MilestoneFilter
+        milestones={data.milestones || []}
+        selectedMilestoneIds={data.selectedMilestoneIds || []}
+        includeNoMilestone={data.includeNoMilestone || false}
+        issues={data.issues || []}
+      />
+    </div>
 
-  <!-- Issue Filters -->
-  <Tabs defaultValue={filter} class="w-full">
-    <TabsList class="grid w-full grid-cols-7">
-      <TabsTrigger value="all" onclick={() => setFilter('all')}
-        >All ({allIssues.length})</TabsTrigger
-      >
-      <TabsTrigger value="todo" onclick={() => setFilter('todo')}
-        >Todo ({todoIssues.length})</TabsTrigger
-      >
-      <TabsTrigger value="doing" onclick={() => setFilter('doing')}
-        >Doing ({doingIssues.length})</TabsTrigger
-      >
-      <TabsTrigger value="in_review" onclick={() => setFilter('in_review')}
-        >In Review ({inReviewIssues.length})</TabsTrigger
-      >
-      <TabsTrigger value="blocked" onclick={() => setFilter('blocked')}
-        >Blocked ({blockedIssues.length})</TabsTrigger
-      >
-      <TabsTrigger value="done" onclick={() => setFilter('done')}
-        >Done ({doneIssues.length})</TabsTrigger
-      >
-      <TabsTrigger value="canceled" onclick={() => setFilter('canceled')}
-        >Canceled ({canceledIssues.length})</TabsTrigger
-      >
-    </TabsList>
-
-    <!-- Issue List -->
-    <TabsContent value={filter} class="mt-4">
-      {#if visibleIssues.length === 0}
-        <p class="text-center text-muted-foreground py-8">No issues in this filter</p>
-      {:else}
-        <div
-          class="border rounded-lg divide-y"
-          use:dndzone={{
-            items: visibleIssues,
-            dragDisabled,
-            flipDurationMs: 200,
-            type: 'issues',
-          }}
-          onconsider={handleDndConsider}
-          onfinalize={handleDndFinalize}
+    <Tabs defaultValue={filter} class="w-full">
+      <TabsList class="grid w-full grid-cols-7">
+        <TabsTrigger value="all" onclick={() => setFilter('all')}
+          >All ({allIssues.length})</TabsTrigger
         >
-          {#each visibleIssues as issue, index (issue.id)}
-            <IssueRow
-              {issue}
-              bind:dragDisabled
-              onClick={() => openIssueSheet(issue)}
-              hasSubIssues={issuesWithSubIssues.has(issue.id)}
-              subIssueCount={subIssueCounts.get(issue.id) || 0}
-              isExpanded={expandedParents.has(issue.id)}
-              isSubIssue={!!issue.parent_issue_id}
-              onToggleExpand={issuesWithSubIssues.has(issue.id)
-                ? () => toggleParent(issue.id)
-                : null}
-              onMoveUp={index > 0 ? () => handleMoveUp(issue.id) : null}
-              onMoveDown={index < visibleIssues.length - 1 ? () => handleMoveDown(issue.id) : null}
-            />
-          {/each}
-        </div>
-      {/if}
-    </TabsContent>
-  </Tabs>
+        <TabsTrigger value="todo" onclick={() => setFilter('todo')}
+          >Todo ({todoIssues.length})</TabsTrigger
+        >
+        <TabsTrigger value="doing" onclick={() => setFilter('doing')}
+          >In Progress ({doingIssues.length})</TabsTrigger
+        >
+        <TabsTrigger value="in_review" onclick={() => setFilter('in_review')}
+          >In Review ({inReviewIssues.length})</TabsTrigger
+        >
+        <TabsTrigger value="blocked" onclick={() => setFilter('blocked')}
+          >Blocked ({blockedIssues.length})</TabsTrigger
+        >
+        <TabsTrigger value="done" onclick={() => setFilter('done')}
+          >Done ({doneIssues.length})</TabsTrigger
+        >
+        <TabsTrigger value="canceled" onclick={() => setFilter('canceled')}
+          >Canceled ({canceledIssues.length})</TabsTrigger
+        >
+      </TabsList>
+
+      <!-- Issue List -->
+      <TabsContent value={filter} class="mt-4">
+        {#if visibleIssues.length === 0}
+          <p class="text-center text-muted-foreground py-8">No issues in this filter</p>
+        {:else}
+          <div
+            class="border rounded-lg divide-y"
+            use:dndzone={{
+              items: visibleIssues,
+              dragDisabled,
+              flipDurationMs: 200,
+              type: 'issues',
+            }}
+            onconsider={handleDndConsider}
+            onfinalize={handleDndFinalize}
+          >
+            {#each visibleIssues as issue, index (issue.id)}
+              <IssueRow
+                {issue}
+                bind:dragDisabled
+                onClick={() => openIssueSheet(issue)}
+                hasSubIssues={issuesWithSubIssues.has(issue.id)}
+                subIssueCount={subIssueCounts.get(issue.id) || 0}
+                isExpanded={expandedParents.has(issue.id)}
+                isSubIssue={!!issue.parent_issue_id}
+                onToggleExpand={issuesWithSubIssues.has(issue.id)
+                  ? () => toggleParent(issue.id)
+                  : null}
+                onMoveUp={index > 0 ? () => handleMoveUp(issue.id) : null}
+                onMoveDown={index < visibleIssues.length - 1
+                  ? () => handleMoveDown(issue.id)
+                  : null}
+              />
+            {/each}
+          </div>
+        {/if}
+      </TabsContent>
+    </Tabs>
+  </div>
 </div>
 
 <!-- Issue Detail Sheet -->

@@ -84,7 +84,12 @@
   {:else}
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {#each data.projects as project}
-        <ProjectCard {project} onEdit={openEditSheet} onArchive={handleArchive} />
+        <ProjectCard
+          {project}
+          counts={project.counts}
+          onEdit={openEditSheet}
+          onArchive={handleArchive}
+        />
       {/each}
     </div>
   {/if}
