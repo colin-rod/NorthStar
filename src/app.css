@@ -3,6 +3,7 @@
 @import '@fontsource-variable/fraunces';
 
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
 @layer base {
   :root {
