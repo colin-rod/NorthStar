@@ -110,13 +110,13 @@
     {#if showCreateForm}
       <!-- Create Form -->
       <div class="p-4">
-        <h4 class="text-sm font-medium mb-4">Create Milestone</h4>
+        <h4 class="text-section-header mb-4">Create Milestone</h4>
         <MilestoneForm mode="create" onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
       </div>
     {:else if editingMilestone}
       <!-- Edit Form -->
       <div class="p-4">
-        <h4 class="text-sm font-medium mb-4">Edit Milestone</h4>
+        <h4 class="text-section-header mb-4">Edit Milestone</h4>
         <MilestoneForm
           mode="edit"
           milestone={editingMilestone}
@@ -147,7 +147,7 @@
             <button
               type="button"
               onclick={() => handleSelect(milestone.id)}
-              class="flex flex-col items-start gap-0.5 flex-1 text-left"
+              class="flex flex-col items-start gap-1 flex-1 text-left"
             >
               <span class="font-medium">{milestone.name}</span>
               {#if milestone.due_date}

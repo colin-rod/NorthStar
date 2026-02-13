@@ -18,7 +18,7 @@
 <div class="container max-w-lg mx-auto px-4 py-8 md:py-16">
   <Card>
     <CardHeader>
-      <h1 class="text-2xl font-bold">NorthStar</h1>
+      <h1 class="font-accent text-page-title">NorthStar</h1>
       <p class="text-muted-foreground">Sign in to manage your projects</p>
     </CardHeader>
 

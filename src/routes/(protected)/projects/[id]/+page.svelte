@@ -18,7 +18,7 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-3xl font-bold">{data.project?.name || 'Project'}</h1>
+      <h1 class="font-accent text-page-title">{data.project?.name || 'Project'}</h1>
       <p class="text-muted-foreground">
         {data.epics?.length || 0} epics
       </p>

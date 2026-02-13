@@ -269,7 +269,13 @@
 </script>
 
 <Sheet bind:open>
-  <SheetContent side={sheetSide} class={sheetClass}>
+  <SheetContent
+    side={sheetSide}
+    class={sheetClass}
+    onOpenChange={(isOpen) => {
+      open = isOpen;
+    }}
+  >
     {#if issue}
       <!-- Loading overlay -->
       {#if loading}

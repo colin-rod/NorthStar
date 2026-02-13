@@ -16,12 +16,12 @@
 </script>
 
 <div class="space-y-6">
-  <h1 class="text-3xl font-bold">Settings</h1>
+  <h1 class="font-accent text-page-title">Settings</h1>
 
   <!-- Profile Section -->
   <Card>
     <CardHeader>
-      <h2 class="text-xl font-semibold">Profile</h2>
+      <h2 class="text-section-header">Profile</h2>
     </CardHeader>
     <CardContent class="space-y-4">
       <div>
@@ -34,7 +34,7 @@
   <!-- Account Section -->
   <Card>
     <CardHeader>
-      <h2 class="text-xl font-semibold">Account</h2>
+      <h2 class="text-section-header">Account</h2>
     </CardHeader>
     <CardContent>
       <form
@@ -58,7 +58,7 @@
   <!-- Theme Section (Placeholder) -->
   <Card>
     <CardHeader>
-      <h2 class="text-xl font-semibold">Theme</h2>
+      <h2 class="text-section-header">Theme</h2>
     </CardHeader>
     <CardContent>
       <p class="text-muted-foreground">Coming soon</p>
@@ -68,7 +68,7 @@
   <!-- Notifications Section (Placeholder) -->
   <Card>
     <CardHeader>
-      <h2 class="text-xl font-semibold">Notifications</h2>
+      <h2 class="text-section-header">Notifications</h2>
     </CardHeader>
     <CardContent>
       <p class="text-muted-foreground">Coming soon</p>
@@ -78,7 +78,7 @@
   <!-- Data & Privacy Section (Placeholder) -->
   <Card>
     <CardHeader>
-      <h2 class="text-xl font-semibold">Data & Privacy</h2>
+      <h2 class="text-section-header">Data & Privacy</h2>
     </CardHeader>
     <CardContent>
       <p class="text-muted-foreground">Coming soon</p>
@@ -88,7 +88,7 @@
   <!-- Archived Projects Section -->
   <Card>
     <CardHeader>
-      <h2 class="text-xl font-semibold">Archived Projects</h2>
+      <h2 class="text-section-header">Archived Projects</h2>
       <p class="text-sm text-foreground-secondary mt-1">
         Restore archived projects to make them active again.
       </p>

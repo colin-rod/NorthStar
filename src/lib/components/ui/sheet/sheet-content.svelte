@@ -31,19 +31,29 @@
   import SheetOverlay from './sheet-overlay.svelte';
   import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
   import type { ComponentProps } from 'svelte';
+  import { useSwipeToDismiss } from '$lib/hooks/useSwipeToDismiss.svelte';
 
   let {
     ref = $bindable(null),
     class: className,
     side = 'bottom',
     portalProps,
+    onOpenChange,
     children,
     ...restProps
   }: WithoutChildrenOrChild<SheetPrimitive.ContentProps> & {
     portalProps?: WithoutChildrenOrChild<ComponentProps<typeof SheetPortal>>;
     side?: Side;
+    onOpenChange?: (open: boolean) => void;
     children: Snippet;
   } = $props();
+
+  // Enable swipe-to-dismiss for bottom sheet only
+  $effect(() => {
+    if (side === 'bottom' && ref && onOpenChange) {
+      useSwipeToDismiss(ref, () => onOpenChange(false));
+    }
+  });
 </script>
 
 <SheetPortal {...portalProps}>

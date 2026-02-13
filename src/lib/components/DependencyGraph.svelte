@@ -22,12 +22,12 @@
 </script>
 
 <div class="border rounded-lg p-4">
-  <h3 class="font-medium mb-4">Dependency Graph</h3>
+  <h3 class="text-section-header mb-4">Dependency Graph</h3>
 
   <!-- Placeholder: Simple list view -->
   <div class="space-y-4">
     <div>
-      <h4 class="text-sm font-medium text-muted-foreground mb-2">Blocked by:</h4>
+      <h4 class="text-section-header text-muted-foreground mb-2">Blocked by:</h4>
       <ul class="space-y-1">
         <!-- TODO: List blocking dependencies -->
         <li class="text-sm">No blocking dependencies</li>
@@ -35,7 +35,7 @@
     </div>
 
     <div>
-      <h4 class="text-sm font-medium text-muted-foreground mb-2">Blocking:</h4>
+      <h4 class="text-section-header text-muted-foreground mb-2">Blocking:</h4>
       <ul class="space-y-1">
         <!-- TODO: List issues this blocks -->
         <li class="text-sm">Not blocking any issues</li>

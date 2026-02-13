@@ -27,7 +27,7 @@
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-3xl font-bold">Issues</h1>
+    <h1 class="font-accent text-page-title">Issues</h1>
     <!-- TODO: Add "New Issue" button -->
   </div>
 

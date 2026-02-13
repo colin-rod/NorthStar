@@ -71,7 +71,7 @@
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-3xl font-bold">Projects</h1>
+    <h1 class="font-accent text-page-title">Projects</h1>
     <Button onclick={openCreateSheet} class="bg-primary hover:bg-primary-hover text-white">
       New Project
     </Button>

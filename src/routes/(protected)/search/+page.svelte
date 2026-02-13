@@ -37,7 +37,7 @@
 
 <div class="space-y-6">
   <div>
-    <h1 class="text-3xl font-bold mb-4">Search Issues</h1>
+    <h1 class="font-accent text-page-title mb-4">Search Issues</h1>
 
     <div class="relative">
       <Label for="search-input" class="sr-only">Search issues</Label>

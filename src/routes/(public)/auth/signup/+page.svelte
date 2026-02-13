@@ -18,7 +18,7 @@
 <div class="min-h-screen flex items-center justify-center p-4">
   <Card class="w-full max-w-md">
     <CardHeader>
-      <h1 class="text-2xl font-bold">Create Account</h1>
+      <h1 class="font-accent text-page-title">Create Account</h1>
       <p class="text-muted-foreground">Sign up for NorthStar</p>
     </CardHeader>
     <CardContent>

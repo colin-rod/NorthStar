@@ -236,7 +236,7 @@
           ← {data.epic?.project?.name}
         </a>
       </div>
-      <h1 class="text-3xl font-bold">{data.epic?.name || 'Epic'}</h1>
+      <h1 class="font-accent text-page-title">{data.epic?.name || 'Epic'}</h1>
       <p class="text-muted-foreground">
         {allIssues.length} issues
       </p>
