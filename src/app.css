@@ -2,9 +2,7 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/fraunces';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
