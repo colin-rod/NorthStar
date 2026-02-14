@@ -50,9 +50,19 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     counts: computeIssueCounts(epic.issues || []),
   }));
 
+  // Flatten all issues from all epics for drill-down view
+  const allIssues = epicsWithCounts.flatMap((epic) =>
+    (epic.issues || []).map((issue) => ({
+      ...issue,
+      epic: { id: epic.id, name: epic.name, status: epic.status },
+      project: { id: project.id, name: project.name },
+    })),
+  );
+
   return {
     project,
     epics: epicsWithCounts,
+    issues: allIssues,
     breadcrumbs: [
       { label: 'Projects', href: '/projects' },
       { label: project.name, href: `/projects/${project.id}`, current: true },
