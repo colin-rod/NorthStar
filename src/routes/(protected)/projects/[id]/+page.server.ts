@@ -52,7 +52,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
   // Flatten all issues from all epics for drill-down view
   const allIssues = epicsWithCounts.flatMap((epic) =>
-    (epic.issues || []).map((issue) => ({
+    (epic.issues || []).map((issue: Record<string, unknown>) => ({
       ...issue,
       epic: { id: epic.id, name: epic.name, status: epic.status },
       project: { id: project.id, name: project.name },

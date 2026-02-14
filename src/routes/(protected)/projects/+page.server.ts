@@ -9,34 +9,69 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     redirect(303, '/auth/login');
   }
 
-  const { data: projects, error } = await supabase
+  // Load all active projects
+  const { data: projects, error: projectsError } = await supabase
     .from('projects')
-    .select(
-      `
-      *,
-      issues(
-        *,
-        dependencies!dependencies_issue_id_fkey(
-          depends_on_issue_id,
-          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*)
-        )
-      )
-    `,
-    )
+    .select('*')
     .is('archived_at', null)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error loading projects:', error);
+  if (projectsError) {
+    console.error('Error loading projects:', projectsError);
     return { projects: [] };
   }
 
-  const projectsWithCounts = (projects || []).map((project) => ({
-    ...project,
-    counts: computeIssueCounts(project.issues || []),
-  }));
+  // For each project, load epics with issues and dependencies
+  const projectsWithData = await Promise.all(
+    (projects || []).map(async (project) => {
+      // Load epics with nested issues
+      const { data: epics } = await supabase
+        .from('epics')
+        .select(
+          `
+          *,
+          issues(
+            *,
+            dependencies!dependencies_issue_id_fkey(
+              depends_on_issue_id,
+              depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*)
+            )
+          )
+        `,
+        )
+        .eq('project_id', project.id)
+        .order('sort_order', { ascending: true });
 
-  return { projects: projectsWithCounts };
+      // Compute counts for each epic
+      const epicsWithCounts = (epics || []).map((epic) => ({
+        ...epic,
+        counts: computeIssueCounts(epic.issues || []),
+      }));
+
+      // Flatten all issues for project
+      const allIssues = epicsWithCounts.flatMap((epic) =>
+        (epic.issues || []).map((issue: Record<string, unknown>) => ({
+          ...issue,
+          epic: { id: epic.id, name: epic.name, status: epic.status },
+          project: { id: project.id, name: project.name },
+        })),
+      );
+
+      // Compute project-level counts
+      const projectCounts = computeIssueCounts(allIssues);
+
+      return {
+        ...project,
+        epics: epicsWithCounts,
+        issues: allIssues,
+        counts: projectCounts,
+      };
+    }),
+  );
+
+  return {
+    projects: projectsWithData,
+  };
 };
 
 export const actions: Actions = {
