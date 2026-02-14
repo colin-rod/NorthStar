@@ -191,3 +191,29 @@ export interface IssuePageData {
   dependencies: Dependency[];
   subIssues: Issue[];
 }
+
+/**
+ * Enhanced Issues View Types
+ */
+
+export type GroupByMode = 'none' | 'project' | 'status' | 'priority' | 'milestone' | 'story_points';
+
+export type SortByColumn =
+  | 'priority'
+  | 'status'
+  | 'title'
+  | 'project'
+  | 'epic'
+  | 'milestone'
+  | 'story_points';
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface IssueGroup {
+  key: string; // Unique identifier for group (project_id, status value, priority number, etc.)
+  name: string; // Display name (project name, "P0", "Todo", etc.)
+  issues: Issue[];
+  issueCount: number;
+  totalStoryPoints: number;
+  completionPercent: number; // % of done issues (excluding canceled)
+}

@@ -59,3 +59,39 @@ export function parseMilestones(param: string | null): {
 
   return { milestoneIds, includeNoMilestone };
 }
+
+/**
+ * Parse status filter from URL param
+ * @param param - "todo,doing,done" or null
+ * @returns ['todo', 'doing', 'done'] or []
+ */
+export function parseStatuses(param: string | null): string[] {
+  if (!param || param.trim().length === 0) {
+    return [];
+  }
+
+  const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+
+  return param
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => validStatuses.includes(s));
+}
+
+/**
+ * Parse story points filter from URL param
+ * @param param - "1,5,8,none" or null
+ * @returns ['1', '5', '8', 'none'] or [] (strings for ease of "none" handling)
+ */
+export function parseStoryPoints(param: string | null): string[] {
+  if (!param || param.trim().length === 0) {
+    return [];
+  }
+
+  const validPoints = ['1', '2', '3', '5', '8', '13', '21', 'none'];
+
+  return param
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => validPoints.includes(p));
+}

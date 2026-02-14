@@ -9,7 +9,13 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
-import { parseProjectIds, parsePriorities, parseMilestones } from '$lib/utils/url-helpers';
+import {
+  parseProjectIds,
+  parsePriorities,
+  parseMilestones,
+  parseStatuses,
+  parseStoryPoints,
+} from '$lib/utils/url-helpers';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   // 1. Parse query params
@@ -22,6 +28,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const milestoneParam = url.searchParams.get('milestone');
   const { milestoneIds: selectedMilestoneIds, includeNoMilestone } =
     parseMilestones(milestoneParam);
+
+  const statusParam = url.searchParams.get('status');
+  const selectedStatuses = parseStatuses(statusParam);
+
+  const storyPointsParam = url.searchParams.get('story_points');
+  const selectedStoryPoints = parseStoryPoints(storyPointsParam);
+
+  const groupBy = url.searchParams.get('group_by') || 'none';
+  const sortBy = url.searchParams.get('sort_by') || 'priority';
+  const sortDir = url.searchParams.get('sort_dir') || 'asc';
 
   // 2. Build issues query
   let issuesQuery = locals.supabase.from('issues').select(
@@ -118,6 +134,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     selectedPriorities,
     selectedMilestoneIds,
     includeNoMilestone,
+    selectedStatuses,
+    selectedStoryPoints,
+    groupBy,
+    sortBy,
+    sortDir,
   };
 };
 

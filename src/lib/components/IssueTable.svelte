@@ -25,8 +25,6 @@
   import type { Issue, IssueStatus } from '$lib/types';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
-  import ChevronUp from '@lucide/svelte/icons/chevron-up';
-  import ChevronDown from '@lucide/svelte/icons/chevron-down';
 
   interface Props {
     issues: Issue[];
@@ -34,53 +32,6 @@
   }
 
   let { issues, onRowClick }: Props = $props();
-
-  // Sorting state
-  type SortColumn = 'status' | 'title' | 'priority' | 'epic' | 'milestone' | 'story_points';
-  let sortColumn = $state<SortColumn>('priority');
-  let sortDirection = $state<'asc' | 'desc'>('asc');
-
-  // Sort issues based on current sort state
-  let sortedIssues = $derived.by(() => {
-    const sorted = [...issues].sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortColumn) {
-        case 'status':
-          comparison = a.status.localeCompare(b.status);
-          break;
-        case 'title':
-          comparison = a.title.localeCompare(b.title);
-          break;
-        case 'priority':
-          comparison = a.priority - b.priority;
-          break;
-        case 'epic':
-          comparison = (a.epic?.name || '').localeCompare(b.epic?.name || '');
-          break;
-        case 'milestone':
-          comparison = (a.milestone?.name || '').localeCompare(b.milestone?.name || '');
-          break;
-        case 'story_points':
-          comparison = (a.story_points || 0) - (b.story_points || 0);
-          break;
-      }
-
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-
-    return sorted;
-  });
-
-  // Toggle sort column/direction
-  function handleSort(column: SortColumn) {
-    if (sortColumn === column) {
-      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      sortColumn = column;
-      sortDirection = 'asc';
-    }
-  }
 
   // Status color dot mapping
   const getStatusColor = (status: string) => {
@@ -130,7 +81,7 @@
 </script>
 
 <!-- North Design: Clean table with subtle borders -->
-{#if sortedIssues.length === 0}
+{#if issues.length === 0}
   <div class="text-center py-12">
     <p class="text-metadata text-foreground-muted">No issues found</p>
   </div>
@@ -142,116 +93,49 @@
         <tr>
           <!-- Status Column -->
           <th class="text-left px-3 py-3">
-            <button
-              onclick={() => handleSort('status')}
-              class="flex items-center gap-1 text-metadata uppercase text-foreground-muted hover:text-foreground transition-colors"
-            >
-              Status
-              {#if sortColumn === 'status'}
-                {#if sortDirection === 'asc'}
-                  <ChevronUp class="h-3 w-3" />
-                {:else}
-                  <ChevronDown class="h-3 w-3" />
-                {/if}
-              {/if}
-            </button>
+            <span class="text-metadata uppercase text-foreground-muted">Status</span>
           </th>
 
           <!-- Title Column -->
           <th class="text-left px-3 py-3">
-            <button
-              onclick={() => handleSort('title')}
-              class="flex items-center gap-1 text-metadata uppercase text-foreground-muted hover:text-foreground transition-colors"
-            >
-              Title
-              {#if sortColumn === 'title'}
-                {#if sortDirection === 'asc'}
-                  <ChevronUp class="h-3 w-3" />
-                {:else}
-                  <ChevronDown class="h-3 w-3" />
-                {/if}
-              {/if}
-            </button>
+            <span class="text-metadata uppercase text-foreground-muted">Title</span>
+          </th>
+
+          <!-- Project Column (NEW) -->
+          <th class="text-left px-3 py-3">
+            <span class="text-metadata uppercase text-foreground-muted">Project</span>
           </th>
 
           <!-- Epic Column -->
           <th class="text-left px-3 py-3">
-            <button
-              onclick={() => handleSort('epic')}
-              class="flex items-center gap-1 text-metadata uppercase text-foreground-muted hover:text-foreground transition-colors"
-            >
-              Epic
-              {#if sortColumn === 'epic'}
-                {#if sortDirection === 'asc'}
-                  <ChevronUp class="h-3 w-3" />
-                {:else}
-                  <ChevronDown class="h-3 w-3" />
-                {/if}
-              {/if}
-            </button>
+            <span class="text-metadata uppercase text-foreground-muted">Epic</span>
           </th>
 
           <!-- Priority Column -->
           <th class="text-left px-3 py-3">
-            <button
-              onclick={() => handleSort('priority')}
-              class="flex items-center gap-1 text-metadata uppercase text-foreground-muted hover:text-foreground transition-colors"
-            >
-              Priority
-              {#if sortColumn === 'priority'}
-                {#if sortDirection === 'asc'}
-                  <ChevronUp class="h-3 w-3" />
-                {:else}
-                  <ChevronDown class="h-3 w-3" />
-                {/if}
-              {/if}
-            </button>
+            <span class="text-metadata uppercase text-foreground-muted">Priority</span>
           </th>
 
           <!-- Milestone Column -->
           <th class="text-left px-3 py-3">
-            <button
-              onclick={() => handleSort('milestone')}
-              class="flex items-center gap-1 text-metadata uppercase text-foreground-muted hover:text-foreground transition-colors"
-            >
-              Milestone
-              {#if sortColumn === 'milestone'}
-                {#if sortDirection === 'asc'}
-                  <ChevronUp class="h-3 w-3" />
-                {:else}
-                  <ChevronDown class="h-3 w-3" />
-                {/if}
-              {/if}
-            </button>
+            <span class="text-metadata uppercase text-foreground-muted">Milestone</span>
           </th>
 
           <!-- Story Points Column -->
           <th class="text-left px-3 py-3">
-            <button
-              onclick={() => handleSort('story_points')}
-              class="flex items-center gap-1 text-metadata uppercase text-foreground-muted hover:text-foreground transition-colors"
-            >
-              Story Points
-              {#if sortColumn === 'story_points'}
-                {#if sortDirection === 'asc'}
-                  <ChevronUp class="h-3 w-3" />
-                {:else}
-                  <ChevronDown class="h-3 w-3" />
-                {/if}
-              {/if}
-            </button>
+            <span class="text-metadata uppercase text-foreground-muted">Story Points</span>
           </th>
 
-          <!-- Blocked Column (not sortable) -->
+          <!-- Blocked Column -->
           <th class="text-left px-3 py-3">
-            <span class="text-metadata uppercase text-foreground-muted"> Blocked </span>
+            <span class="text-metadata uppercase text-foreground-muted">Blocked</span>
           </th>
         </tr>
       </thead>
 
       <!-- Table Body -->
       <tbody class="divide-y divide-border-divider">
-        {#each sortedIssues as issue (issue.id)}
+        {#each issues as issue (issue.id)}
           {@const blocked = isBlocked(issue)}
           <tr
             onclick={() => onRowClick(issue)}
@@ -270,10 +154,17 @@
               <span class="text-body truncate block max-w-md">{issue.title}</span>
             </td>
 
+            <!-- Project Cell (NEW) -->
+            <td class="px-3 py-4">
+              <span class="text-metadata text-foreground-muted">
+                {issue.project?.name || '—'}
+              </span>
+            </td>
+
             <!-- Epic Cell -->
             <td class="px-3 py-4">
               <span class="text-metadata text-foreground-muted truncate block max-w-xs">
-                {issue.project?.name} / {issue.epic?.name}
+                {issue.epic?.name || '—'}
               </span>
             </td>
 
