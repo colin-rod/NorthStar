@@ -3,6 +3,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
 import { computeIssueCounts } from '$lib/utils/issue-counts';
+import { computeProjectMetrics } from '$lib/utils/project-helpers';
 
 export const load: PageServerLoad = async ({ locals: { supabase, session } }) => {
   if (!session) {
@@ -60,11 +61,15 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
       // Compute project-level counts
       const projectCounts = computeIssueCounts(allIssues);
 
+      // Compute project metrics (story points and issue count)
+      const projectMetrics = computeProjectMetrics(allIssues);
+
       return {
         ...project,
         epics: epicsWithCounts,
         issues: allIssues,
         counts: projectCounts,
+        metrics: projectMetrics,
       };
     }),
   );

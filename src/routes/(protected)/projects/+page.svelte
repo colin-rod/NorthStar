@@ -8,8 +8,7 @@
 
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
-  import ProjectCard from '$lib/components/ProjectCard.svelte';
+  import ProjectList from '$lib/components/ProjectList.svelte';
   import ProjectSheet from '$lib/components/ProjectSheet.svelte';
   import ExpandedProjectView from '$lib/components/ExpandedProjectView.svelte';
   import { Button } from '$lib/components/ui/button';
@@ -81,16 +80,8 @@
     sheetOpen = true;
   }
 
-  function openEditSheet(project: Project) {
-    sheetMode = 'edit';
-    selectedProject = project;
-    sheetOpen = true;
-  }
-
-  function handleArchive(project: Project) {
-    if (confirm(`Archive "${project.name}"? It will be hidden from this list.`)) {
-      // Form will be submitted via the ProjectCard component
-    }
+  function navigateToProject(projectId: string) {
+    goto(`/projects/${projectId}`);
   }
 
   function showToast(message: string, type: 'success' | 'error') {
@@ -131,38 +122,29 @@
     <div class="text-center py-12">
       <p class="text-muted-foreground text-lg">No projects yet. Create your first project.</p>
     </div>
+  {:else if expandedProjectId}
+    <!-- Expanded project view -->
+    {@const expandedProject = data.projects.find((p) => p.id === expandedProjectId)}
+    {#if expandedProject}
+      <div class="transition-all duration-200">
+        <ExpandedProjectView
+          project={expandedProject}
+          {expandedEpicId}
+          {expandedIssueIds}
+          onToggleEpic={toggleEpic}
+          onToggleIssue={toggleIssue}
+          onClose={() => toggleProject(expandedProjectId)}
+        />
+      </div>
+    {/if}
   {:else}
-    <!-- Conditional grid columns based on expansion state -->
-    <div class="grid gap-4 {expandedProjectId ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}">
-      {#each data.projects as project (project.id)}
-        <div
-          class="transition-all duration-200 {expandedProjectId && expandedProjectId !== project.id
-            ? 'opacity-40 scale-95'
-            : 'opacity-100 scale-100'}"
-        >
-          {#if expandedProjectId === project.id}
-            <!-- Expanded project view showing epics -->
-            <ExpandedProjectView
-              {project}
-              {expandedEpicId}
-              {expandedIssueIds}
-              onToggleEpic={toggleEpic}
-              onToggleIssue={toggleIssue}
-              onClose={() => toggleProject(project.id)}
-            />
-          {:else}
-            <!-- Collapsed project card -->
-            <ProjectCard
-              {project}
-              counts={project.counts}
-              onEdit={openEditSheet}
-              onArchive={handleArchive}
-              onToggle={() => toggleProject(project.id)}
-            />
-          {/if}
-        </div>
-      {/each}
-    </div>
+    <!-- List view (collapsed projects) -->
+    <ProjectList
+      projects={data.projects}
+      {expandedProjectId}
+      onToggleProject={toggleProject}
+      onNavigateToProject={navigateToProject}
+    />
   {/if}
 </div>
 
