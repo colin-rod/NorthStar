@@ -21,6 +21,7 @@
     node: TreeNode;
     allNodes: TreeNode[];
     isExpanded: boolean;
+    expandedIds: Set<string>;
     isSelected: boolean;
     editMode: boolean;
     dragDropState?: DragDropState;
@@ -33,6 +34,7 @@
     node,
     allNodes,
     isExpanded,
+    expandedIds,
     isSelected,
     editMode,
     dragDropState,
@@ -70,6 +72,33 @@
     return classes.join(' ');
   });
 
+  // Derive expansion state classes for visual feedback
+  const expansionClasses = $derived.by(() => {
+    const classes = [];
+
+    // If nothing is expanded, no special styling
+    if (expandedIds.size === 0) {
+      return '';
+    }
+
+    // Check if THIS row is expanded
+    if (isExpanded) {
+      // Highlighted: subtle background accent
+      classes.push('bg-primary/5', 'ring-1', 'ring-primary/20');
+      return classes.join(' ');
+    }
+
+    // Check if this row is a CHILD of an expanded row
+    if (node.parentId && expandedIds.has(node.parentId)) {
+      // Child of expanded row: keep full opacity
+      return '';
+    }
+
+    // Otherwise: dim this row
+    classes.push('opacity-60');
+    return classes.join(' ');
+  });
+
   // Handle double-click to open drawer
   function handleDoubleClick() {
     // TODO: Emit event to open drawer for this node
@@ -80,7 +109,7 @@
 <tr
   class="relative border-b border-border-divider hover:bg-surface-subtle transition-all duration-150 group {bgClass} {isSelected
     ? 'bg-primary-tint'
-    : ''} {dragClasses}"
+    : ''} {dragClasses} {expansionClasses}"
   data-node-id={node.id}
   data-node-type={node.type}
   data-node-level={node.level}

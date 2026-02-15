@@ -300,6 +300,7 @@
             {node}
             {allNodes}
             isExpanded={expandedIds.has(node.id)}
+            {expandedIds}
             isSelected={selectedIds.has(node.id)}
             {editMode}
             {dragDropState}
