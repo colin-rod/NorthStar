@@ -93,10 +93,39 @@
     }));
   });
 
-  // Collect all expanded parent nodes that can have children
-  let expandedParentsWithAddRow = $derived.by(() => {
-    return visibleNodes.filter((node) => expandedIds.has(node.id) && node.type !== 'sub-issue');
-  });
+  /**
+   * Determines if an AddRow should be shown after the current node.
+   * Returns the parent node if AddRow should be shown, null otherwise.
+   */
+  function shouldShowAddRowAfter(
+    currentNode: TreeNode,
+    nextNode: TreeNode | undefined,
+    expandedIds: Set<string>,
+    allNodes: TreeNode[],
+  ): TreeNode | null {
+    // Don't show add row if current node's parent isn't expanded
+    if (!currentNode.parentId || !expandedIds.has(currentNode.parentId)) {
+      return null;
+    }
+
+    // Find the parent node
+    const parentNode = allNodes.find((n) => n.id === currentNode.parentId);
+    if (!parentNode || parentNode.type === 'sub-issue') {
+      return null; // Can't add children to sub-issues
+    }
+
+    // If there's no next node, this is the last node - show add row for its parent
+    if (!nextNode) {
+      return parentNode;
+    }
+
+    // If next node's parent is different, we've finished current parent's children
+    if (nextNode.parentId !== currentNode.parentId) {
+      return parentNode;
+    }
+
+    return null;
+  }
 
   // Column definitions (per spec)
   const columns = [
@@ -270,7 +299,7 @@
         onconsider={handleDndConsider}
         onfinalize={handleDndFinalize}
       >
-        {#each nodesWithDragState as node (node.id)}
+        {#each nodesWithDragState as node, index (node.id)}
           <TreeRow
             {node}
             {allNodes}
@@ -282,17 +311,19 @@
             {onToggleSelect}
             {onCellEdit}
           />
-        {/each}
 
-        <!-- Add Rows (bottom of table) -->
-        {#each expandedParentsWithAddRow as parentNode (parentNode.id)}
-          {@const childLevel = (parentNode.level + 1) as 1 | 2 | 3}
-          <AddRow
-            {parentNode}
-            level={childLevel}
-            indentation={calculateIndentation(childLevel)}
-            onCreate={(data) => onCreateChild(parentNode.id, parentNode.type, data)}
-          />
+          <!-- Check if we should show AddRow after this node -->
+          {@const nextNode = nodesWithDragState[index + 1]}
+          {@const parentNode = shouldShowAddRowAfter(node, nextNode, expandedIds, allNodes)}
+          {#if parentNode}
+            {@const childLevel = (parentNode.level + 1) as 1 | 2 | 3}
+            <AddRow
+              {parentNode}
+              level={childLevel}
+              indentation={calculateIndentation(childLevel)}
+              onCreate={(data) => onCreateChild(parentNode.id, parentNode.type, data)}
+            />
+          {/if}
         {/each}
       </tbody>
     </table>
