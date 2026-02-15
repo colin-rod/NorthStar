@@ -12,22 +12,40 @@
    * - Consistent padding (py-4 for rows, py-3 for headers)
    */
 
-  import type { Project } from '$lib/types';
+  import type { Project, Epic, Issue } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { computeProgress } from '$lib/utils/issue-counts';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import EpicTable from '$lib/components/EpicTable.svelte';
 
   interface Props {
     projects: (Project & { counts: IssueCounts; metrics: ProjectMetrics })[];
     expandedProjectId: string | null;
+    expandedEpicId: string | null;
+    expandedIssueIds: Set<string>;
     onToggleProject: (projectId: string) => void;
-    onNavigateToProject: (projectId: string) => void;
+    onToggleEpic: (epicId: string) => void;
+    onToggleIssue: (issueId: string) => void;
+    onOpenProjectSheet: (project: Project) => void;
+    onOpenEpicSheet: (epic: Epic) => void;
+    onOpenIssueSheet: (issue: Issue) => void;
   }
 
-  let { projects, expandedProjectId, onToggleProject, onNavigateToProject }: Props = $props();
+  let {
+    projects,
+    expandedProjectId,
+    expandedEpicId,
+    expandedIssueIds,
+    onToggleProject,
+    onToggleEpic,
+    onToggleIssue,
+    onOpenProjectSheet,
+    onOpenEpicSheet,
+    onOpenIssueSheet,
+  }: Props = $props();
 </script>
 
 <!-- North Design: Table with clean borders, minimal styling -->
@@ -85,7 +103,7 @@
           <!-- Project Name Column -->
           <td
             class="py-4 px-4"
-            onclick={() => onNavigateToProject(project.id)}
+            onclick={() => onOpenProjectSheet(project)}
             role="button"
             tabindex="0"
           >
@@ -95,7 +113,7 @@
           <!-- Total Issues Column -->
           <td
             class="py-4 px-4 text-foreground-secondary"
-            onclick={() => onNavigateToProject(project.id)}
+            onclick={() => onOpenProjectSheet(project)}
           >
             {project.metrics.totalIssues}
           </td>
@@ -103,7 +121,7 @@
           <!-- Active Story Points Column -->
           <td
             class="py-4 px-4 text-foreground-secondary"
-            onclick={() => onNavigateToProject(project.id)}
+            onclick={() => onOpenProjectSheet(project)}
           >
             {#if project.metrics.activeStoryPoints > 0}
               <Badge variant="default" class="text-xs">{project.metrics.activeStoryPoints}</Badge>
@@ -115,7 +133,7 @@
           <!-- Total Story Points Column -->
           <td
             class="py-4 px-4 text-foreground-secondary"
-            onclick={() => onNavigateToProject(project.id)}
+            onclick={() => onOpenProjectSheet(project)}
           >
             {#if project.metrics.totalStoryPoints > 0}
               <Badge variant="outline" class="text-xs">{project.metrics.totalStoryPoints}</Badge>
@@ -125,17 +143,17 @@
           </td>
 
           <!-- Ready Count Column -->
-          <td class="py-4 px-4" onclick={() => onNavigateToProject(project.id)}>
+          <td class="py-4 px-4" onclick={() => onOpenProjectSheet(project)}>
             <Badge variant="default" class="text-xs">{project.counts.ready}</Badge>
           </td>
 
           <!-- Doing Count Column -->
-          <td class="py-4 px-4" onclick={() => onNavigateToProject(project.id)}>
+          <td class="py-4 px-4" onclick={() => onOpenProjectSheet(project)}>
             <Badge variant="status-doing" class="text-xs">{project.counts.doing}</Badge>
           </td>
 
           <!-- Progress Bar Column -->
-          <td class="py-4 px-4" onclick={() => onNavigateToProject(project.id)}>
+          <td class="py-4 px-4" onclick={() => onOpenProjectSheet(project)}>
             {#if progress.total > 0}
               <div class="flex items-center gap-2">
                 <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
@@ -153,6 +171,26 @@
             {/if}
           </td>
         </tr>
+
+        <!-- Expanded Project Content (Epics) -->
+        {#if isExpanded}
+          <tr class="border-0">
+            <td colspan="8" class="p-0">
+              <div class="bg-surface-subtle px-8 py-4">
+                <EpicTable
+                  epics={project.epics || []}
+                  allIssues={project.issues || []}
+                  {expandedEpicId}
+                  {expandedIssueIds}
+                  {onToggleEpic}
+                  {onToggleIssue}
+                  {onOpenEpicSheet}
+                  {onOpenIssueSheet}
+                />
+              </div>
+            </td>
+          </tr>
+        {/if}
       {/each}
     </tbody>
   </table>

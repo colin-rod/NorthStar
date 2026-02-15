@@ -10,10 +10,13 @@
   import { goto } from '$app/navigation';
   import ProjectList from '$lib/components/ProjectList.svelte';
   import ProjectSheet from '$lib/components/ProjectSheet.svelte';
+  import EpicSheet from '$lib/components/EpicSheet.svelte';
+  import IssueSheet from '$lib/components/IssueSheet.svelte';
   import ExpandedProjectView from '$lib/components/ExpandedProjectView.svelte';
   import { Button } from '$lib/components/ui/button';
   import type { PageData } from './$types';
-  import type { Project } from '$lib/types';
+  import type { Project, Epic, Issue } from '$lib/types';
+  import { isIssueSheetOpen, selectedIssue, openIssueSheet } from '$lib/stores/issues';
 
   let { data }: { data: PageData } = $props();
 
@@ -64,20 +67,46 @@
     expandedIssueIds = newExpanded;
   }
 
-  // Sheet state management
-  let sheetOpen = $state(false);
-  let sheetMode: 'create' | 'edit' = $state('create');
+  // Sheet state management for projects
+  let projectSheetOpen = $state(false);
+  let projectSheetMode: 'create' | 'edit' = $state('create');
   let selectedProject: Project | undefined = $state(undefined);
+
+  // Sheet state management for epics
+  let epicSheetOpen = $state(false);
+  let epicSheetMode: 'create' | 'edit' = $state('create');
+  let selectedEpic: Epic | undefined = $state(undefined);
+  let epicCreateProjectId: string | undefined = $state(undefined);
 
   // Feedback message state
   let feedbackMessage = $state('');
   let feedbackType: 'success' | 'error' = $state('success');
   let showFeedback = $state(false);
 
-  function openCreateSheet() {
-    sheetMode = 'create';
+  function openProjectSheetForCreate() {
+    projectSheetMode = 'create';
     selectedProject = undefined;
-    sheetOpen = true;
+    projectSheetOpen = true;
+  }
+
+  function openProjectSheetForEdit(project: Project) {
+    projectSheetMode = 'edit';
+    selectedProject = project;
+    projectSheetOpen = true;
+  }
+
+  function openEpicSheetForCreate(projectId: string) {
+    epicSheetMode = 'create';
+    selectedEpic = undefined;
+    epicCreateProjectId = projectId;
+    epicSheetOpen = true;
+  }
+
+  function openEpicSheetForEdit(epic: Epic) {
+    epicSheetMode = 'edit';
+    selectedEpic = epic;
+    epicCreateProjectId = undefined;
+    epicSheetOpen = true;
   }
 
   function navigateToProject(projectId: string) {
@@ -113,7 +142,10 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Projects</h1>
-    <Button onclick={openCreateSheet} class="bg-primary hover:bg-primary-hover text-white">
+    <Button
+      onclick={openProjectSheetForCreate}
+      class="bg-primary hover:bg-primary-hover text-white"
+    >
       New Project
     </Button>
   </div>
@@ -138,18 +170,43 @@
       </div>
     {/if}
   {:else}
-    <!-- List view (collapsed projects) -->
+    <!-- List view with inline drill-down -->
     <ProjectList
       projects={data.projects}
       {expandedProjectId}
+      {expandedEpicId}
+      {expandedIssueIds}
       onToggleProject={toggleProject}
-      onNavigateToProject={navigateToProject}
+      onToggleEpic={toggleEpic}
+      onToggleIssue={toggleIssue}
+      onOpenProjectSheet={openProjectSheetForEdit}
+      onOpenEpicSheet={openEpicSheetForEdit}
+      onOpenIssueSheet={openIssueSheet}
     />
   {/if}
 </div>
 
 <!-- Project create/edit sheet -->
-<ProjectSheet bind:open={sheetOpen} mode={sheetMode} project={selectedProject} />
+<ProjectSheet bind:open={projectSheetOpen} mode={projectSheetMode} project={selectedProject} />
+
+<!-- Epic create/edit sheet -->
+<EpicSheet
+  bind:open={epicSheetOpen}
+  mode={epicSheetMode}
+  epic={selectedEpic}
+  projectId={epicCreateProjectId}
+/>
+
+<!-- Issue sheet (using store) -->
+<IssueSheet
+  bind:open={$isIssueSheetOpen}
+  mode={$selectedIssue ? 'edit' : 'create'}
+  issue={$selectedIssue}
+  epics={data.projects.flatMap((p) => p.epics || [])}
+  milestones={[]}
+  projectIssues={data.projects.flatMap((p) => p.issues || [])}
+  projects={data.projects}
+/>
 
 <!-- Simple toast-style feedback -->
 {#if showFeedback}

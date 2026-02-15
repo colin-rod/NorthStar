@@ -172,4 +172,115 @@ export const actions: Actions = {
 
     return { success: true, action: 'archive' };
   },
+
+  createEpic: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const name = formData.get('name')?.toString().trim();
+    const projectId = formData.get('projectId')?.toString();
+    const status = formData.get('status')?.toString() || 'active';
+
+    // Validation
+    if (!name || name.length === 0) {
+      return fail(400, { error: 'Epic name is required' });
+    }
+    if (name.length > 100) {
+      return fail(400, { error: 'Epic name must be 100 characters or less' });
+    }
+    if (!projectId) {
+      return fail(400, { error: 'Project ID is required' });
+    }
+    if (!['active', 'done', 'canceled'].includes(status)) {
+      return fail(400, { error: 'Invalid status' });
+    }
+
+    // Verify project exists and user owns it
+    const { data: project } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (!project) {
+      return fail(404, { error: 'Project not found' });
+    }
+
+    // Get max sort_order for this project
+    const { data: maxOrderEpic } = await supabase
+      .from('epics')
+      .select('sort_order')
+      .eq('project_id', projectId)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextSortOrder = (maxOrderEpic?.sort_order ?? -1) + 1;
+
+    // Insert epic
+    const { data, error } = await supabase
+      .from('epics')
+      .insert({
+        name,
+        project_id: projectId,
+        status,
+        sort_order: nextSortOrder,
+        is_default: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Create epic error:', error);
+      return fail(500, { error: 'Failed to create epic' });
+    }
+
+    return { success: true, action: 'createEpic', epic: data };
+  },
+
+  updateEpic: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+    const name = formData.get('name')?.toString().trim();
+    const status = formData.get('status')?.toString();
+
+    if (!id) {
+      return fail(400, { error: 'Epic ID is required' });
+    }
+
+    // Build updates object
+    const updates: Record<string, unknown> = {};
+    if (name !== undefined) {
+      if (name.length === 0) {
+        return fail(400, { error: 'Epic name cannot be empty' });
+      }
+      if (name.length > 100) {
+        return fail(400, { error: 'Epic name must be 100 characters or less' });
+      }
+      updates.name = name;
+    }
+    if (status !== undefined) {
+      if (!['active', 'done', 'canceled'].includes(status)) {
+        return fail(400, { error: 'Invalid status' });
+      }
+      updates.status = status;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return fail(400, { error: 'No fields to update' });
+    }
+
+    // Update epic (RLS ensures user owns the project)
+    const { error } = await supabase.from('epics').update(updates).eq('id', id);
+
+    if (error) {
+      console.error('Update epic error:', error);
+      return fail(500, { error: 'Failed to update epic' });
+    }
+
+    return { success: true, action: 'updateEpic' };
+  },
 };
