@@ -283,4 +283,167 @@ export const actions: Actions = {
 
     return { success: true, action: 'updateEpic' };
   },
+
+  createIssue: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const title = formData.get('title')?.toString().trim();
+    const epicId = formData.get('epicId')?.toString();
+    const projectId = formData.get('projectId')?.toString();
+
+    if (!title || title.length === 0) {
+      return fail(400, { error: 'Issue title is required' });
+    }
+    if (!epicId) {
+      return fail(400, { error: 'Epic ID is required' });
+    }
+    if (!projectId) {
+      return fail(400, { error: 'Project ID is required' });
+    }
+
+    // Get max sort_order for this epic
+    const { data: maxOrderIssue } = await supabase
+      .from('issues')
+      .select('sort_order')
+      .eq('epic_id', epicId)
+      .is('parent_issue_id', null)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextSortOrder = (maxOrderIssue?.sort_order ?? -1) + 1;
+
+    // Insert issue
+    const { data, error } = await supabase
+      .from('issues')
+      .insert({
+        title,
+        epic_id: epicId,
+        project_id: projectId,
+        status: 'todo',
+        priority: 3, // Default P3
+        sort_order: nextSortOrder,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Create issue error:', error);
+      return fail(500, { error: 'Failed to create issue' });
+    }
+
+    return { success: true, action: 'createIssue', issue: data };
+  },
+
+  createSubIssue: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const title = formData.get('title')?.toString().trim();
+    const parentIssueId = formData.get('parentIssueId')?.toString();
+    const epicId = formData.get('epicId')?.toString();
+    const projectId = formData.get('projectId')?.toString();
+
+    if (!title || title.length === 0) {
+      return fail(400, { error: 'Sub-issue title is required' });
+    }
+    if (!parentIssueId) {
+      return fail(400, { error: 'Parent issue ID is required' });
+    }
+    if (!epicId) {
+      return fail(400, { error: 'Epic ID is required' });
+    }
+    if (!projectId) {
+      return fail(400, { error: 'Project ID is required' });
+    }
+
+    // Get max sort_order for sub-issues of this parent
+    const { data: maxOrderSubIssue } = await supabase
+      .from('issues')
+      .select('sort_order')
+      .eq('parent_issue_id', parentIssueId)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextSortOrder = (maxOrderSubIssue?.sort_order ?? -1) + 1;
+
+    // Insert sub-issue
+    const { data, error } = await supabase
+      .from('issues')
+      .insert({
+        title,
+        parent_issue_id: parentIssueId,
+        epic_id: epicId,
+        project_id: projectId,
+        status: 'todo',
+        priority: 3, // Default P3
+        sort_order: nextSortOrder,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Create sub-issue error:', error);
+      return fail(500, { error: 'Failed to create sub-issue' });
+    }
+
+    return { success: true, action: 'createSubIssue', subIssue: data };
+  },
+
+  updateCell: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const nodeId = formData.get('nodeId')?.toString();
+    const nodeType = formData.get('nodeType')?.toString();
+    const field = formData.get('field')?.toString();
+    const value = formData.get('value')?.toString();
+
+    if (!nodeId || !nodeType || !field) {
+      return fail(400, { error: 'Missing required fields' });
+    }
+
+    // Determine which table to update
+    let table: string;
+    if (nodeType === 'project') {
+      table = 'projects';
+    } else if (nodeType === 'epic') {
+      table = 'epics';
+    } else if (nodeType === 'issue' || nodeType === 'sub-issue') {
+      table = 'issues';
+    } else {
+      return fail(400, { error: 'Invalid node type' });
+    }
+
+    // Build update object
+    const updates: Record<string, unknown> = {};
+
+    // Handle different field types
+    if (field === 'title' || field === 'name') {
+      const fieldName = nodeType === 'project' || nodeType === 'epic' ? 'name' : 'title';
+      updates[fieldName] = value;
+    } else if (field === 'status') {
+      updates.status = value;
+    } else if (field === 'milestone_id') {
+      updates.milestone_id = value || null;
+    } else if (field === 'story_points') {
+      updates.story_points = value ? parseInt(value, 10) : null;
+    } else if (field === 'priority') {
+      updates.priority = value ? parseInt(value, 10) : null;
+    } else {
+      return fail(400, { error: 'Invalid field' });
+    }
+
+    // Update the record (RLS ensures user owns it)
+    const { error } = await supabase.from(table).update(updates).eq('id', nodeId);
+
+    if (error) {
+      console.error('Update cell error:', error);
+      return fail(500, { error: 'Failed to update cell' });
+    }
+
+    return { success: true, action: 'updateCell' };
+  },
 };

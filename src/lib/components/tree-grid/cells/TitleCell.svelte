@@ -1,0 +1,122 @@
+<script lang="ts">
+  /**
+   * TitleCell Component - Title with Chevron and Indentation
+   *
+   * Displays:
+   * - Indentation based on hierarchy level
+   * - Chevron icon (expand/collapse) if node has children
+   * - Optional drag handle (in edit mode)
+   * - Title text (editable in edit mode)
+   */
+
+  import type { TreeNode } from '$lib/types/tree-grid';
+  import type { Project, Epic, Issue } from '$lib/types';
+  import ChevronRight from '@lucide/svelte/icons/chevron-right';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import GripVertical from '@lucide/svelte/icons/grip-vertical';
+
+  interface Props {
+    node: TreeNode;
+    isExpanded: boolean;
+    indentation: string;
+    fontWeight: string;
+    editMode: boolean;
+    onToggleExpand: () => void;
+    onEdit: (value: string) => void;
+  }
+
+  let { node, isExpanded, indentation, fontWeight, editMode, onToggleExpand, onEdit }: Props =
+    $props();
+
+  // Get title based on node type
+  const title = $derived.by(() => {
+    if (node.type === 'project') {
+      return (node.data as Project).name;
+    } else if (node.type === 'epic') {
+      return (node.data as Epic).name;
+    } else {
+      return (node.data as Issue).title;
+    }
+  });
+
+  let isEditing = $state(false);
+  let editValue = $state(title);
+
+  function startEditing() {
+    if (!editMode) return;
+    isEditing = true;
+    editValue = title;
+  }
+
+  function saveEdit() {
+    if (editValue.trim() && editValue !== title) {
+      onEdit(editValue.trim());
+    }
+    isEditing = false;
+  }
+
+  function cancelEdit() {
+    editValue = title;
+    isEditing = false;
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      saveEdit();
+    } else if (e.key === 'Escape') {
+      cancelEdit();
+    }
+  }
+</script>
+
+<div class="flex items-center gap-2" style="padding-left: {indentation}">
+  <!-- Drag Handle (shows on hover in edit mode) -->
+  {#if editMode}
+    <GripVertical
+      class="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-grab flex-shrink-0"
+    />
+  {/if}
+
+  <!-- Chevron (only if node has children) -->
+  {#if node.hasChildren}
+    <button
+      onclick={(e) => {
+        e.stopPropagation();
+        onToggleExpand();
+      }}
+      class="flex items-center justify-center w-7 h-7 cursor-pointer hover:bg-surface-subtle rounded transition-colors flex-shrink-0"
+      aria-label={isExpanded ? 'Collapse' : 'Expand'}
+      aria-expanded={isExpanded}
+    >
+      {#if isExpanded}
+        <ChevronDown class="h-4 w-4 text-muted-foreground" />
+      {:else}
+        <ChevronRight class="h-4 w-4 text-muted-foreground" />
+      {/if}
+    </button>
+  {:else}
+    <!-- Spacer to align titles when no chevron -->
+    <div class="w-7 flex-shrink-0"></div>
+  {/if}
+
+  <!-- Title -->
+  {#if isEditing}
+    <input
+      type="text"
+      bind:value={editValue}
+      onkeydown={handleKeydown}
+      onblur={saveEdit}
+      class="flex-1 px-2 py-1 text-sm border border-accent rounded focus:outline-none focus:ring-1 focus:ring-accent {fontWeight}"
+      autofocus
+    />
+  {:else}
+    <span
+      class="text-issue-title {fontWeight} truncate flex-1 {editMode ? 'cursor-text' : ''}"
+      onclick={startEditing}
+      role={editMode ? 'button' : undefined}
+      tabindex={editMode ? 0 : undefined}
+    >
+      {title}
+    </span>
+  {/if}
+</div>

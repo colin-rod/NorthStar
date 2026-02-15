@@ -1,18 +1,17 @@
 <script lang="ts">
   /**
-   * Projects List Page
+   * Projects List Page - Tree Grid View
    *
-   * Shows all user's projects in a grid layout with create/edit/archive actions
-   * Supports drill-down navigation: click project → expand inline to show epics
+   * Displays all projects with unified tree grid:
+   * Projects → Epics → Issues → Sub-issues
    */
 
   import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
-  import ProjectList from '$lib/components/ProjectList.svelte';
+  import { goto, invalidateAll } from '$app/navigation';
+  import TreeGrid from '$lib/components/tree-grid/TreeGrid.svelte';
   import ProjectSheet from '$lib/components/ProjectSheet.svelte';
   import EpicSheet from '$lib/components/EpicSheet.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
-  import ExpandedProjectView from '$lib/components/ExpandedProjectView.svelte';
   import { Button } from '$lib/components/ui/button';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
@@ -20,97 +19,223 @@
 
   let { data }: { data: PageData } = $props();
 
-  // URL-based state for expanded project and epic (enables deep-linking)
+  // URL-based state for expanded items (enables deep-linking)
   let expandedProjectId = $derived($page.url.searchParams.get('project') || null);
   let expandedEpicId = $derived($page.url.searchParams.get('epic') || null);
 
-  // Component-local state for expanded issues (no persistence needed)
-  let expandedIssueIds = $state<Set<string>>(new Set());
+  // Build expandedIds set from URL params
+  let expandedIds = $derived.by(() => {
+    const ids = new Set<string>();
+    if (expandedProjectId) ids.add(expandedProjectId);
+    if (expandedEpicId) ids.add(expandedEpicId);
+    // TODO: Add issue expansion from URL if needed
+    return ids;
+  });
 
-  function toggleProject(projectId: string) {
-    const url = new URL($page.url);
-    if (expandedProjectId === projectId) {
-      // Collapse: clear all expansions
-      url.searchParams.delete('project');
-      url.searchParams.delete('epic');
-      expandedIssueIds = new Set();
-    } else {
-      // Expand/switch: set project, clear epic and issues
-      url.searchParams.set('project', projectId);
-      url.searchParams.delete('epic');
-      expandedIssueIds = new Set();
-    }
-    goto(url, { replaceState: true, noScroll: true });
-  }
+  // Component-local state
+  let selectedIds = $state<Set<string>>(new Set());
+  let editMode = $state(false);
 
-  function toggleEpic(epicId: string) {
-    const url = new URL($page.url);
-    if (expandedEpicId === epicId) {
-      // Collapse epic: clear epic and issues
-      url.searchParams.delete('epic');
-      expandedIssueIds = new Set();
-    } else {
-      // Expand/switch epic: set epic, clear issues
-      url.searchParams.set('epic', epicId);
-      expandedIssueIds = new Set();
-    }
-    goto(url, { replaceState: true, noScroll: true });
-  }
-
-  function toggleIssue(issueId: string) {
-    const newExpanded = new Set(expandedIssueIds);
-    if (newExpanded.has(issueId)) {
-      newExpanded.delete(issueId);
-    } else {
-      newExpanded.add(issueId);
-    }
-    expandedIssueIds = newExpanded;
-  }
-
-  // Sheet state management for projects
+  // Sheet state management
   let projectSheetOpen = $state(false);
   let projectSheetMode: 'create' | 'edit' = $state('create');
   let selectedProject: Project | undefined = $state(undefined);
 
-  // Sheet state management for epics
   let epicSheetOpen = $state(false);
   let epicSheetMode: 'create' | 'edit' = $state('create');
   let selectedEpic: Epic | undefined = $state(undefined);
   let epicCreateProjectId: string | undefined = $state(undefined);
 
-  // Feedback message state
+  // Feedback state
   let feedbackMessage = $state('');
   let feedbackType: 'success' | 'error' = $state('success');
   let showFeedback = $state(false);
+
+  function toggleExpand(id: string) {
+    const url = new URL($page.url);
+
+    // Determine what type of node this is
+    const isProject = data.projects.some((p) => p.id === id);
+    const isEpic = data.projects.some((p) => p.epics?.some((e: Epic) => e.id === id));
+
+    if (isProject) {
+      if (expandedProjectId === id) {
+        url.searchParams.delete('project');
+        url.searchParams.delete('epic');
+      } else {
+        url.searchParams.set('project', id);
+        url.searchParams.delete('epic');
+      }
+    } else if (isEpic) {
+      if (expandedEpicId === id) {
+        url.searchParams.delete('epic');
+      } else {
+        url.searchParams.set('epic', id);
+      }
+    }
+    // TODO: Handle issue expansion if needed
+
+    goto(url, { replaceState: true, noScroll: true });
+  }
+
+  function toggleSelect(id: string) {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    selectedIds = newSelected;
+  }
+
+  function handleEditModeChange(enabled: boolean) {
+    editMode = enabled;
+  }
+
+  async function handleCellEdit(nodeId: string, field: string, value: any) {
+    // Determine node type
+    let nodeType = 'issue'; // default
+    if (data.projects.some((p) => p.id === nodeId)) {
+      nodeType = 'project';
+    } else if (data.projects.some((p) => p.epics?.some((e: Epic) => e.id === nodeId))) {
+      nodeType = 'epic';
+    }
+
+    // Submit form
+    const formData = new FormData();
+    formData.append('nodeId', nodeId);
+    formData.append('nodeType', nodeType);
+    formData.append('field', field);
+    formData.append('value', value?.toString() || '');
+
+    try {
+      const response = await fetch('?/updateCell', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        await invalidateAll();
+        showToast('Updated successfully', 'success');
+      } else {
+        showToast('Failed to update', 'error');
+      }
+    } catch (error) {
+      console.error('Cell edit error:', error);
+      showToast('Failed to update', 'error');
+    }
+  }
+
+  async function handleCreateChild(
+    parentId: string,
+    parentType: string,
+    childData: { title: string },
+  ) {
+    const formData = new FormData();
+    formData.append('title', childData.title);
+
+    // Determine what to create and gather required IDs
+    if (parentType === 'project') {
+      // Creating epic
+      formData.append('projectId', parentId);
+      formData.append('name', childData.title);
+
+      try {
+        const response = await fetch('?/createEpic', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          await invalidateAll();
+          showToast('Epic created', 'success');
+        } else {
+          showToast('Failed to create epic', 'error');
+        }
+      } catch (error) {
+        console.error('Create epic error:', error);
+        showToast('Failed to create epic', 'error');
+      }
+    } else if (parentType === 'epic') {
+      // Creating issue - need to find project ID
+      const project = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === parentId));
+      if (!project) {
+        showToast('Project not found', 'error');
+        return;
+      }
+
+      formData.append('epicId', parentId);
+      formData.append('projectId', project.id);
+
+      try {
+        const response = await fetch('?/createIssue', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          await invalidateAll();
+          showToast('Issue created', 'success');
+        } else {
+          showToast('Failed to create issue', 'error');
+        }
+      } catch (error) {
+        console.error('Create issue error:', error);
+        showToast('Failed to create issue', 'error');
+      }
+    } else if (parentType === 'issue') {
+      // Creating sub-issue - need to find epic and project IDs
+      let epicId = '';
+      let projectId = '';
+
+      for (const project of data.projects) {
+        const issue = project.issues?.find((i: Issue) => i.id === parentId);
+        if (issue) {
+          epicId = issue.epic_id;
+          projectId = project.id;
+          break;
+        }
+      }
+
+      if (!epicId || !projectId) {
+        showToast('Epic or project not found', 'error');
+        return;
+      }
+
+      formData.append('parentIssueId', parentId);
+      formData.append('epicId', epicId);
+      formData.append('projectId', projectId);
+
+      try {
+        const response = await fetch('?/createSubIssue', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          await invalidateAll();
+          showToast('Sub-issue created', 'success');
+        } else {
+          showToast('Failed to create sub-issue', 'error');
+        }
+      } catch (error) {
+        console.error('Create sub-issue error:', error);
+        showToast('Failed to create sub-issue', 'error');
+      }
+    }
+  }
+
+  function handleBulkAction(action: string) {
+    if (action === 'delete') {
+      // TODO: Implement bulk delete with confirmation
+      console.log('Bulk delete:', selectedIds);
+    }
+  }
 
   function openProjectSheetForCreate() {
     projectSheetMode = 'create';
     selectedProject = undefined;
     projectSheetOpen = true;
-  }
-
-  function openProjectSheetForEdit(project: Project) {
-    projectSheetMode = 'edit';
-    selectedProject = project;
-    projectSheetOpen = true;
-  }
-
-  function openEpicSheetForCreate(projectId: string) {
-    epicSheetMode = 'create';
-    selectedEpic = undefined;
-    epicCreateProjectId = projectId;
-    epicSheetOpen = true;
-  }
-
-  function openEpicSheetForEdit(epic: Epic) {
-    epicSheetMode = 'edit';
-    selectedEpic = epic;
-    epicCreateProjectId = undefined;
-    epicSheetOpen = true;
-  }
-
-  function navigateToProject(projectId: string) {
-    goto(`/projects/${projectId}`);
   }
 
   function showToast(message: string, type: 'success' | 'error') {
@@ -130,6 +255,11 @@
         create: 'Project created',
         update: 'Project updated',
         archive: 'Project archived',
+        createEpic: 'Epic created',
+        updateEpic: 'Epic updated',
+        createIssue: 'Issue created',
+        createSubIssue: 'Sub-issue created',
+        updateCell: 'Updated',
       };
       const message = messages[form.action as keyof typeof messages] || 'Success';
       showToast(message, 'success');
@@ -154,34 +284,19 @@
     <div class="text-center py-12">
       <p class="text-muted-foreground text-lg">No projects yet. Create your first project.</p>
     </div>
-  {:else if expandedProjectId}
-    <!-- Expanded project view -->
-    {@const expandedProject = data.projects.find((p) => p.id === expandedProjectId)}
-    {#if expandedProject}
-      <div class="transition-all duration-200">
-        <ExpandedProjectView
-          project={expandedProject}
-          {expandedEpicId}
-          {expandedIssueIds}
-          onToggleEpic={toggleEpic}
-          onToggleIssue={toggleIssue}
-          onClose={() => toggleProject(expandedProjectId)}
-        />
-      </div>
-    {/if}
   {:else}
-    <!-- List view with inline drill-down -->
-    <ProjectList
+    <!-- Tree Grid View -->
+    <TreeGrid
       projects={data.projects}
-      {expandedProjectId}
-      {expandedEpicId}
-      {expandedIssueIds}
-      onToggleProject={toggleProject}
-      onToggleEpic={toggleEpic}
-      onToggleIssue={toggleIssue}
-      onOpenProjectSheet={openProjectSheetForEdit}
-      onOpenEpicSheet={openEpicSheetForEdit}
-      onOpenIssueSheet={openIssueSheet}
+      {expandedIds}
+      {selectedIds}
+      {editMode}
+      onToggleExpand={toggleExpand}
+      onToggleSelect={toggleSelect}
+      onEditModeChange={handleEditModeChange}
+      onCellEdit={handleCellEdit}
+      onCreateChild={handleCreateChild}
+      onBulkAction={handleBulkAction}
     />
   {/if}
 </div>
