@@ -6,7 +6,13 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { parseProjectIds, parsePriorities, parseMilestones } from './url-helpers';
+import {
+  parseProjectIds,
+  parsePriorities,
+  parseMilestones,
+  parseStatuses,
+  parseStoryPoints,
+} from './url-helpers';
 
 describe('parseProjectIds', () => {
   it('returns empty array for null param', () => {
@@ -136,5 +142,138 @@ describe('parseMilestones', () => {
       milestoneIds: ['id1'],
       includeNoMilestone: true,
     });
+  });
+});
+
+describe('parseStatuses', () => {
+  it('returns empty array for null', () => {
+    expect(parseStatuses(null)).toEqual([]);
+  });
+
+  it('returns empty array for empty string', () => {
+    expect(parseStatuses('')).toEqual([]);
+  });
+
+  it('returns empty array for whitespace-only string', () => {
+    expect(parseStatuses('   ')).toEqual([]);
+  });
+
+  it('parses single valid status', () => {
+    expect(parseStatuses('todo')).toEqual(['todo']);
+    expect(parseStatuses('doing')).toEqual(['doing']);
+    expect(parseStatuses('in_review')).toEqual(['in_review']);
+    expect(parseStatuses('done')).toEqual(['done']);
+    expect(parseStatuses('canceled')).toEqual(['canceled']);
+  });
+
+  it('parses multiple valid statuses', () => {
+    expect(parseStatuses('todo,doing')).toEqual(['todo', 'doing']);
+    expect(parseStatuses('todo,in_review,done')).toEqual(['todo', 'in_review', 'done']);
+  });
+
+  it('filters out invalid status values', () => {
+    expect(parseStatuses('todo,invalid,doing')).toEqual(['todo', 'doing']);
+    expect(parseStatuses('invalid')).toEqual([]);
+    expect(parseStatuses('todo,bad,unknown,done')).toEqual(['todo', 'done']);
+  });
+
+  it('trims whitespace from status values', () => {
+    expect(parseStatuses('  todo  , doing  ')).toEqual(['todo', 'doing']);
+    expect(parseStatuses(' in_review , done ')).toEqual(['in_review', 'done']);
+  });
+
+  it('filters out empty strings from malformed input', () => {
+    expect(parseStatuses('todo,,doing')).toEqual(['todo', 'doing']);
+    expect(parseStatuses(',,,todo,,')).toEqual(['todo']);
+  });
+
+  it('preserves duplicate statuses', () => {
+    expect(parseStatuses('todo,todo,doing')).toEqual(['todo', 'todo', 'doing']);
+  });
+
+  it('handles all valid statuses together', () => {
+    expect(parseStatuses('todo,doing,in_review,done,canceled')).toEqual([
+      'todo',
+      'doing',
+      'in_review',
+      'done',
+      'canceled',
+    ]);
+  });
+});
+
+describe('parseStoryPoints', () => {
+  it('returns empty array for null', () => {
+    expect(parseStoryPoints(null)).toEqual([]);
+  });
+
+  it('returns empty array for empty string', () => {
+    expect(parseStoryPoints('')).toEqual([]);
+  });
+
+  it('returns empty array for whitespace-only string', () => {
+    expect(parseStoryPoints('   ')).toEqual([]);
+  });
+
+  it('parses single valid point value', () => {
+    expect(parseStoryPoints('1')).toEqual(['1']);
+    expect(parseStoryPoints('2')).toEqual(['2']);
+    expect(parseStoryPoints('3')).toEqual(['3']);
+    expect(parseStoryPoints('5')).toEqual(['5']);
+    expect(parseStoryPoints('8')).toEqual(['8']);
+    expect(parseStoryPoints('13')).toEqual(['13']);
+    expect(parseStoryPoints('21')).toEqual(['21']);
+  });
+
+  it('parses multiple valid point values', () => {
+    expect(parseStoryPoints('1,3,5')).toEqual(['1', '3', '5']);
+    expect(parseStoryPoints('5,8,13')).toEqual(['5', '8', '13']);
+  });
+
+  it('parses "none" special value', () => {
+    expect(parseStoryPoints('none')).toEqual(['none']);
+  });
+
+  it('parses point values and "none" together', () => {
+    expect(parseStoryPoints('none,5')).toEqual(['none', '5']);
+    expect(parseStoryPoints('1,none,8')).toEqual(['1', 'none', '8']);
+  });
+
+  it('filters out invalid point values', () => {
+    expect(parseStoryPoints('1,4,5')).toEqual(['1', '5']); // 4 is invalid
+    expect(parseStoryPoints('0,1,2')).toEqual(['1', '2']); // 0 is invalid
+    expect(parseStoryPoints('10,13,15')).toEqual(['13']); // 10 and 15 are invalid
+  });
+
+  it('trims whitespace from point values', () => {
+    expect(parseStoryPoints('  1  , 5  ')).toEqual(['1', '5']);
+    expect(parseStoryPoints(' none , 8 ')).toEqual(['none', '8']);
+  });
+
+  it('filters out empty strings from malformed input', () => {
+    expect(parseStoryPoints('1,,5')).toEqual(['1', '5']);
+    expect(parseStoryPoints(',,,none,,')).toEqual(['none']);
+  });
+
+  it('preserves duplicate point values', () => {
+    expect(parseStoryPoints('5,5,8')).toEqual(['5', '5', '8']);
+    expect(parseStoryPoints('none,none,1')).toEqual(['none', 'none', '1']);
+  });
+
+  it('handles all valid point values together', () => {
+    expect(parseStoryPoints('1,2,3,5,8,13,21')).toEqual(['1', '2', '3', '5', '8', '13', '21']);
+  });
+
+  it('handles all valid values including none', () => {
+    expect(parseStoryPoints('1,2,3,5,8,13,21,none')).toEqual([
+      '1',
+      '2',
+      '3',
+      '5',
+      '8',
+      '13',
+      '21',
+      'none',
+    ]);
   });
 });

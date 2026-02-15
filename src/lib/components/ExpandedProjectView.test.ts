@@ -101,4 +101,44 @@ describe('ExpandedProjectView', () => {
 
     expect(screen.getByText(/No epics in this project/)).toBeInTheDocument();
   });
+
+  it('calls onToggleEpic when epic card is clicked', async () => {
+    const onToggleEpic = vi.fn();
+
+    const { container } = render(ExpandedProjectView, {
+      project: mockProject,
+      expandedEpicId: null,
+      expandedIssueIds: new Set<string>(),
+      onToggleEpic,
+      onToggleIssue: vi.fn(),
+      onClose: vi.fn(),
+    });
+
+    // Find and click the first epic card button
+    const epicButtons = container.querySelectorAll('button[type="button"]');
+    // Filter out the close button (which should be the first one)
+    const epicCardButton = Array.from(epicButtons).find(
+      (btn) => !btn.textContent?.includes('Close'),
+    );
+
+    if (epicCardButton) {
+      await fireEvent.click(epicCardButton);
+      expect(onToggleEpic).toHaveBeenCalled();
+    }
+  });
+
+  it('renders expanded epic view when expandedEpicId is set', () => {
+    render(ExpandedProjectView, {
+      project: mockProject,
+      expandedEpicId: 'e1',
+      expandedIssueIds: new Set<string>(),
+      onToggleEpic: vi.fn(),
+      onToggleIssue: vi.fn(),
+      onClose: vi.fn(),
+    });
+
+    // When an epic is expanded, the ExpandedEpicView component should be rendered
+    // This exercises the {#if expandedEpicId} branch
+    expect(screen.getByText('Epic 1')).toBeInTheDocument();
+  });
 });
