@@ -13,9 +13,12 @@
   import type { Project, Epic, Issue } from '$lib/types';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import TreeLine from './TreeLine.svelte';
+  import { isLastChild } from '$lib/utils/tree-grid-helpers';
 
   interface Props {
     node: TreeNode;
+    allNodes: TreeNode[];
     isExpanded: boolean;
     indentation: string;
     fontWeight: string;
@@ -24,8 +27,16 @@
     onEdit: (value: string) => void;
   }
 
-  let { node, isExpanded, indentation, fontWeight, editMode, onToggleExpand, onEdit }: Props =
-    $props();
+  let {
+    node,
+    allNodes,
+    isExpanded,
+    indentation,
+    fontWeight,
+    editMode,
+    onToggleExpand,
+    onEdit,
+  }: Props = $props();
 
   // Get title based on node type
   const title = $derived.by(() => {
@@ -59,6 +70,9 @@
       return 'I';
     }
   });
+
+  // Compute if this node is the last child
+  const nodeIsLastChild = $derived(isLastChild(node, allNodes));
 
   let isEditing = $state(false);
   let editValue = $state(title);
@@ -97,7 +111,12 @@
   }
 </script>
 
-<div class="flex items-center gap-2" style="padding-left: {indentation}">
+<div class="relative flex items-center gap-2" style="padding-left: {indentation}">
+  <!-- Tree Lines (absolutely positioned within this cell) -->
+  <div class="absolute inset-0 pointer-events-none">
+    <TreeLine {node} isLastChild={nodeIsLastChild} {allNodes} />
+  </div>
+
   <!-- Chevron (only if node has children) -->
   {#if node.hasChildren}
     <button

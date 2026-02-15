@@ -16,8 +16,6 @@
   import StoryPointsCell from './cells/StoryPointsCell.svelte';
   import TotalPointsCell from './cells/TotalPointsCell.svelte';
   import ProgressCell from './cells/ProgressCell.svelte';
-  import TreeLine from './cells/TreeLine.svelte';
-  import { isLastChild } from '$lib/utils/tree-grid-helpers';
 
   interface Props {
     node: TreeNode;
@@ -55,9 +53,6 @@
     return 'font-medium';
   });
 
-  // Compute if this node is the last child
-  const nodeIsLastChild = $derived(isLastChild(node, allNodes));
-
   // Derive drag state classes for visual feedback
   const dragClasses = $derived.by(() => {
     const classes = [];
@@ -91,11 +86,6 @@
   data-node-level={node.level}
   ondblclick={handleDoubleClick}
 >
-  <!-- Tree Lines (absolutely positioned, spans full row) -->
-  <td class="absolute inset-0 pointer-events-none" colspan="8">
-    <TreeLine {node} isLastChild={nodeIsLastChild} {allNodes} />
-  </td>
-
   <!-- Drag Handle -->
   <td class="py-4 px-4">
     <DragHandleCell {editMode} />
@@ -110,6 +100,7 @@
   <td class="py-4 px-4">
     <TitleCell
       {node}
+      {allNodes}
       {isExpanded}
       indentation={calculateIndentation(node.level)}
       {fontWeight}

@@ -55,7 +55,7 @@
     {#if needsLine}
       <div
         class="absolute top-0 bottom-0 w-px bg-border-divider"
-        style="left: {level * 16 + 20}px"
+        style="left: {level * 16}px"
       ></div>
     {/if}
   {/each}
@@ -65,21 +65,21 @@
     <!-- Vertical line from top to middle (connects to parent above) -->
     <div
       class="absolute top-0 w-px bg-border-divider"
-      style="left: {(node.level - 1) * 16 + 20}px; height: 50%"
+      style="left: {(node.level - 1) * 16}px; height: 50%"
     ></div>
 
     <!-- Vertical line from middle to bottom (only if NOT last child) -->
     {#if !isLastChild}
       <div
         class="absolute w-px bg-border-divider"
-        style="left: {(node.level - 1) * 16 + 20}px; top: 50%; bottom: 0"
+        style="left: {(node.level - 1) * 16}px; top: 50%; bottom: 0"
       ></div>
     {/if}
 
     <!-- Horizontal line to chevron -->
     <div
       class="absolute h-px bg-border-divider"
-      style="top: 50%; left: {(node.level - 1) * 16 + 20}px; width: 12px"
+      style="top: 50%; left: {(node.level - 1) * 16}px; width: 12px"
     ></div>
   {/if}
 </div>
