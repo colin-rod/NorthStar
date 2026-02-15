@@ -132,7 +132,7 @@ describe('Autonumbering', () => {
 
       const { data: e1, error: error1 } = await supabase
         .from('epics')
-        .insert({ project_id: project?.id ?? '', name: 'Epic 1', status: 'active' })
+        .insert({ project_id: project?.id ?? '', name: 'Epic 1', status: 'active' } as any)
         .select()
         .single();
 
@@ -143,7 +143,7 @@ describe('Autonumbering', () => {
 
       const { data: e2, error: error2 } = await supabase
         .from('epics')
-        .insert({ project_id: project?.id ?? '', name: 'Epic 2', status: 'active' })
+        .insert({ project_id: project?.id ?? '', name: 'Epic 2', status: 'active' } as any)
         .select()
         .single();
 
@@ -164,20 +164,18 @@ describe('Autonumbering', () => {
 
       const { data: e1 } = await supabase
         .from('epics')
-        .insert({ project_id: project?.id ?? '', name: 'Epic A', status: 'active' })
+        .insert({ project_id: project?.id ?? '', name: 'Epic A', status: 'active' } as any)
         .select()
         .single();
 
       if (e1 && !e1.is_default) createdEpicIds.push(e1.id);
 
-      const { error } = await supabase
-        .from('epics')
-        .insert({
-          project_id: project?.id ?? '',
-          name: 'Epic B',
-          status: 'active',
-          number: e1?.number,
-        });
+      const { error } = await supabase.from('epics').insert({
+        project_id: project?.id ?? '',
+        name: 'Epic B',
+        status: 'active',
+        number: e1?.number,
+      } as any);
 
       expect(error).toBeDefined();
       expect(error?.message).toContain('unique');
@@ -194,7 +192,7 @@ describe('Autonumbering', () => {
 
       const { data: e1 } = await supabase
         .from('epics')
-        .insert({ project_id: project?.id ?? '', name: 'Epic Immutable', status: 'active' })
+        .insert({ project_id: project?.id ?? '', name: 'Epic Immutable', status: 'active' } as any)
         .select()
         .single();
 
@@ -223,7 +221,7 @@ describe('Autonumbering', () => {
 
       const { data: epic } = await supabase
         .from('epics')
-        .insert({ project_id: project?.id ?? '', name: 'Epic', status: 'active' })
+        .insert({ project_id: project?.id ?? '', name: 'Epic', status: 'active' } as any)
         .select()
         .single();
 
@@ -237,7 +235,7 @@ describe('Autonumbering', () => {
           title: 'Issue 1',
           status: 'todo',
           priority: 2,
-        })
+        } as any)
         .select()
         .single();
 
@@ -254,7 +252,7 @@ describe('Autonumbering', () => {
           title: 'Issue 2',
           status: 'todo',
           priority: 2,
-        })
+        } as any)
         .select()
         .single();
 
@@ -275,7 +273,7 @@ describe('Autonumbering', () => {
 
       const { data: epic } = await supabase
         .from('epics')
-        .insert({ project_id: project?.id ?? '', name: 'Epic', status: 'active' })
+        .insert({ project_id: project?.id ?? '', name: 'Epic', status: 'active' } as any)
         .select()
         .single();
 
@@ -289,7 +287,7 @@ describe('Autonumbering', () => {
           title: 'Issue A',
           status: 'todo',
           priority: 2,
-        })
+        } as any)
         .select()
         .single();
 
@@ -302,7 +300,7 @@ describe('Autonumbering', () => {
         status: 'todo',
         priority: 2,
         number: i1?.number,
-      });
+      } as any);
 
       expect(error).toBeDefined();
       expect(error?.message).toContain('unique');
@@ -319,7 +317,7 @@ describe('Autonumbering', () => {
 
       const { data: epic } = await supabase
         .from('epics')
-        .insert({ project_id: project?.id ?? '', name: 'Epic', status: 'active' })
+        .insert({ project_id: project?.id ?? '', name: 'Epic', status: 'active' } as any)
         .select()
         .single();
 
@@ -333,7 +331,7 @@ describe('Autonumbering', () => {
           title: 'Issue Immutable',
           status: 'todo',
           priority: 2,
-        })
+        } as any)
         .select()
         .single();
 
@@ -360,7 +358,7 @@ describe('Autonumbering', () => {
 
       const { data: epic } = await supabase
         .from('epics')
-        .insert({ project_id: project?.id ?? '', name: 'Epic', status: 'active' })
+        .insert({ project_id: project?.id ?? '', name: 'Epic', status: 'active' } as any)
         .select()
         .single();
 
@@ -376,7 +374,7 @@ describe('Autonumbering', () => {
             title: `Concurrent Issue ${i}`,
             status: 'todo',
             priority: 2,
-          })
+          } as any)
           .select()
           .single(),
       );

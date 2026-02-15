@@ -22,7 +22,12 @@
   import EpicTable from '$lib/components/EpicTable.svelte';
 
   interface Props {
-    projects: (Project & { counts: IssueCounts; metrics: ProjectMetrics })[];
+    projects: (Project & {
+      counts: IssueCounts;
+      metrics: ProjectMetrics;
+      epics: (Epic & { counts: IssueCounts; issues?: Issue[] })[];
+      issues: Issue[];
+    })[];
     expandedProjectId: string | null;
     expandedEpicId: string | null;
     expandedIssueIds: Set<string>;

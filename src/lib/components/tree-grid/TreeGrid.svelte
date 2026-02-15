@@ -67,12 +67,7 @@
   });
 
   // Filter to visible nodes based on expansion
-  let visibleNodes = $state(getVisibleNodes(allNodes, expandedIds));
-
-  // Update visibleNodes when allNodes or expandedIds change
-  $effect(() => {
-    visibleNodes = getVisibleNodes(allNodes, expandedIds);
-  });
+  let visibleNodes = $derived(getVisibleNodes(allNodes, expandedIds));
 
   // Drag-drop state
   let dragDropState = $state<DragDropState>({

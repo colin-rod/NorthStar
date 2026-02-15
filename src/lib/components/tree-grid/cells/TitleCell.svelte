@@ -64,6 +64,13 @@
   let isEditing = $state(false);
   let editValue = $state(title);
 
+  // Sync editValue when title changes (if not editing)
+  $effect(() => {
+    if (!isEditing) {
+      editValue = title;
+    }
+  });
+
   function startEditing() {
     if (!editMode) return;
     isEditing = true;

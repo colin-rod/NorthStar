@@ -46,7 +46,7 @@ function isDescendant(targetNode: TreeNode, sourceNode: TreeNode, allNodes: Tree
 
   while (current && current.parentId) {
     if (current.parentId === sourceNode.id) return true;
-    const parentId = current.parentId;
+    const parentId: string = current.parentId;
     current = allNodes.find((n) => n.id === parentId);
   }
 
