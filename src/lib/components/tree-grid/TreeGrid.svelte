@@ -124,6 +124,7 @@
 
   // Column definitions (per spec)
   const columns = [
+    { key: 'drag', header: '', width: '40px' },
     { key: 'select', header: '', width: '40px' },
     { key: 'title', header: 'Title', width: 'flex min-w-[340px]' },
     { key: 'status', header: 'Status', width: '140px' },

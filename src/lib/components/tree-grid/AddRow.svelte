@@ -56,7 +56,7 @@
 {#if isAdding}
   <!-- Input mode -->
   <tr class="border-b border-border-divider bg-surface-subtle/50">
-    <td class="py-2 px-4" colspan="7">
+    <td class="py-2 px-4" colspan="8">
       <div class="flex items-center gap-2" style="padding-left: {indentation}">
         <input
           type="text"
@@ -87,7 +87,7 @@
     class="border-b border-border-divider hover:bg-surface-subtle transition-colors cursor-pointer"
     onclick={startAdding}
   >
-    <td class="py-3 px-4" colspan="7">
+    <td class="py-3 px-4" colspan="8">
       <div
         class="flex items-center gap-2 text-foreground-secondary"
         style="padding-left: {indentation}"

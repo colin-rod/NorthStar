@@ -9,6 +9,7 @@
   import type { TreeNode, DragDropState } from '$lib/types/tree-grid';
   import { calculateIndentation } from '$lib/utils/tree-grid-helpers';
   import SelectionCell from './cells/SelectionCell.svelte';
+  import DragHandleCell from './cells/DragHandleCell.svelte';
   import TitleCell from './cells/TitleCell.svelte';
   import StatusCell from './cells/StatusCell.svelte';
   import MilestoneCell from './cells/MilestoneCell.svelte';
@@ -91,8 +92,13 @@
   ondblclick={handleDoubleClick}
 >
   <!-- Tree Lines (absolutely positioned, spans full row) -->
-  <td class="absolute inset-0 pointer-events-none" colspan="7">
+  <td class="absolute inset-0 pointer-events-none" colspan="8">
     <TreeLine {node} isLastChild={nodeIsLastChild} {allNodes} />
+  </td>
+
+  <!-- Drag Handle -->
+  <td class="py-4 px-4">
+    <DragHandleCell {editMode} />
   </td>
 
   <!-- Selection Checkbox -->

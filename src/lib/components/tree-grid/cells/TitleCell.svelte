@@ -13,7 +13,6 @@
   import type { Project, Epic, Issue } from '$lib/types';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
-  import GripVertical from '@lucide/svelte/icons/grip-vertical';
 
   interface Props {
     node: TreeNode;
@@ -99,13 +98,6 @@
 </script>
 
 <div class="flex items-center gap-2" style="padding-left: {indentation}">
-  <!-- Drag Handle (shows on hover in edit mode) -->
-  {#if editMode}
-    <GripVertical
-      class="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-grab flex-shrink-0"
-    />
-  {/if}
-
   <!-- Chevron (only if node has children) -->
   {#if node.hasChildren}
     <button
