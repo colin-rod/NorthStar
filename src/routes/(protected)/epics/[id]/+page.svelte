@@ -251,16 +251,6 @@
     </div>
   </div>
 
-  <!-- Inline Issue Form -->
-  {#if showInlineForm}
-    <InlineIssueForm
-      epicId={data.epic?.id || ''}
-      projectId={data.epic?.project_id || ''}
-      onCancel={() => (showInlineForm = false)}
-      onSuccess={() => (showInlineForm = false)}
-    />
-  {/if}
-
   <!-- Controls: Filters + Tabs grouped as one control layer -->
   <div class="space-y-3">
     <div class="flex gap-2 flex-wrap">
@@ -340,6 +330,16 @@
       </TabsContent>
     </Tabs>
   </div>
+
+  <!-- Inline Issue Form -->
+  {#if showInlineForm}
+    <InlineIssueForm
+      epicId={data.epic?.id || ''}
+      projectId={data.epic?.project_id || ''}
+      onCancel={() => (showInlineForm = false)}
+      onSuccess={() => (showInlineForm = false)}
+    />
+  {/if}
 </div>
 
 <!-- Issue Detail Sheet -->

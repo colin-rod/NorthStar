@@ -63,6 +63,11 @@
   // Filter to visible nodes based on expansion
   let visibleNodes = $derived(getVisibleNodes(allNodes, expandedIds));
 
+  // Collect all expanded parent nodes that can have children
+  let expandedParentsWithAddRow = $derived.by(() => {
+    return visibleNodes.filter((node) => expandedIds.has(node.id) && node.type !== 'sub-issue');
+  });
+
   // Column definitions (per spec)
   const columns = [
     { key: 'select', header: '', width: '40px' },
@@ -78,19 +83,6 @@
     if (onBulkAction) {
       onBulkAction(action);
     }
-  }
-
-  // Check if node should show "Add..." row
-  function shouldShowAddRow(node: TreeNode): boolean {
-    // Show add row if:
-    // 1. Node is expanded
-    // 2. Node is not a sub-issue (sub-issues can't have children)
-    return expandedIds.has(node.id) && node.type !== 'sub-issue';
-  }
-
-  // Get nodes that are immediate children of a parent
-  function getImmediateChildren(parentId: string): TreeNode[] {
-    return visibleNodes.filter((n) => n.parentId === parentId);
   }
 </script>
 
@@ -133,22 +125,17 @@
             {onToggleSelect}
             {onCellEdit}
           />
+        {/each}
 
-          <!-- Add Row (shown after expanded node's children) -->
-          {#if shouldShowAddRow(node)}
-            {@const children = getImmediateChildren(node.id)}
-            {@const childLevel = (node.level + 1) as 1 | 2 | 3}
-
-            <!-- Only show AddRow after last child -->
-            {#if children.length === 0 || visibleNodes.indexOf(node) + children.length === visibleNodes.indexOf(children[children.length - 1])}
-              <AddRow
-                parentNode={node}
-                level={childLevel}
-                indentation={calculateIndentation(childLevel)}
-                onCreate={(data) => onCreateChild(node.id, node.type, data)}
-              />
-            {/if}
-          {/if}
+        <!-- Add Rows (bottom of table) -->
+        {#each expandedParentsWithAddRow as parentNode (parentNode.id)}
+          {@const childLevel = (parentNode.level + 1) as 1 | 2 | 3}
+          <AddRow
+            {parentNode}
+            level={childLevel}
+            indentation={calculateIndentation(childLevel)}
+            onCreate={(data) => onCreateChild(parentNode.id, parentNode.type, data)}
+          />
         {/each}
       </tbody>
     </table>
