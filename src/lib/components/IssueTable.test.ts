@@ -30,6 +30,7 @@ describe('IssueTable', () => {
     const mockIssues: Issue[] = [
       {
         id: '1',
+        number: 1,
         title: 'B Task',
         status: 'todo',
         priority: 1,
@@ -44,6 +45,7 @@ describe('IssueTable', () => {
       },
       {
         id: '2',
+        number: 2,
         title: 'A Task',
         status: 'doing',
         priority: 0,

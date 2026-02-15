@@ -23,6 +23,7 @@ vi.mock('$app/navigation', () => ({
 describe('AddDependencyDialog', () => {
   const mockIssue: Issue = {
     id: 'issue-1',
+    number: 1,
     title: 'Test Issue',
     project_id: 'project-1',
     epic_id: 'epic-1',
@@ -127,6 +128,7 @@ describe('AddDependencyDialog', () => {
 describe('AddDependencyDialog - Component Rendering', () => {
   const mockProject = {
     id: 'proj-1',
+    number: 1,
     name: 'Test Project',
     user_id: 'user-1',
     created_at: '2024-01-01',
@@ -135,6 +137,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
   const mockEpic = {
     id: 'epic-1',
+    number: 1,
     name: 'Test Epic',
     project_id: 'proj-1',
     status: 'active' as const,
@@ -144,6 +147,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
   const mockIssue: Issue = {
     id: 'issue-1',
+    number: 1,
     title: 'Test Issue',
     project_id: 'project-1',
     epic_id: 'epic-1',

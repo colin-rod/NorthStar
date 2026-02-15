@@ -8,6 +8,7 @@ describe('IssueRow - Blocked State Display', () => {
   it('should display "Blocked (2)" when issue has 2 blocking dependencies', () => {
     const issue: Issue = {
       id: '1',
+      number: 1,
       title: 'Test Issue',
       status: 'todo',
       priority: 0,
@@ -20,6 +21,7 @@ describe('IssueRow - Blocked State Display', () => {
       created_at: new Date().toISOString(),
       project: {
         id: 'proj-1',
+        number: 1,
         name: 'Test Project',
         user_id: 'user-1',
         created_at: new Date().toISOString(),
@@ -27,6 +29,7 @@ describe('IssueRow - Blocked State Display', () => {
       },
       epic: {
         id: 'epic-1',
+        number: 1,
         name: 'Test Epic',
         project_id: 'proj-1',
         status: 'active',
@@ -39,6 +42,7 @@ describe('IssueRow - Blocked State Display', () => {
           depends_on_issue_id: 'dep-1',
           depends_on_issue: {
             id: 'dep-1',
+            number: 1,
             title: 'Dependency 1',
             status: 'todo',
             priority: 0,
@@ -56,6 +60,7 @@ describe('IssueRow - Blocked State Display', () => {
           depends_on_issue_id: 'dep-2',
           depends_on_issue: {
             id: 'dep-2',
+            number: 2,
             title: 'Dependency 2',
             status: 'doing',
             priority: 0,
@@ -79,6 +84,7 @@ describe('IssueRow - Blocked State Display', () => {
   it('should display "Blocked (1)" when issue has 1 blocking dependency', () => {
     const issue: Issue = {
       id: '1',
+      number: 1,
       title: 'Test Issue',
       status: 'todo',
       priority: 0,
@@ -91,6 +97,7 @@ describe('IssueRow - Blocked State Display', () => {
       created_at: new Date().toISOString(),
       project: {
         id: 'proj-1',
+        number: 1,
         name: 'Test Project',
         user_id: 'user-1',
         created_at: new Date().toISOString(),
@@ -98,6 +105,7 @@ describe('IssueRow - Blocked State Display', () => {
       },
       epic: {
         id: 'epic-1',
+        number: 1,
         name: 'Test Epic',
         project_id: 'proj-1',
         status: 'active',
@@ -110,6 +118,7 @@ describe('IssueRow - Blocked State Display', () => {
           depends_on_issue_id: 'dep-1',
           depends_on_issue: {
             id: 'dep-1',
+            number: 1,
             title: 'Dependency 1',
             status: 'in_review',
             priority: 0,
@@ -133,6 +142,7 @@ describe('IssueRow - Blocked State Display', () => {
   it('should NOT display blocked badge when issue has no blocking dependencies', () => {
     const issue: Issue = {
       id: '1',
+      number: 1,
       title: 'Test Issue',
       status: 'todo',
       priority: 0,
@@ -145,6 +155,7 @@ describe('IssueRow - Blocked State Display', () => {
       created_at: new Date().toISOString(),
       project: {
         id: 'proj-1',
+        number: 1,
         name: 'Test Project',
         user_id: 'user-1',
         created_at: new Date().toISOString(),
@@ -152,6 +163,7 @@ describe('IssueRow - Blocked State Display', () => {
       },
       epic: {
         id: 'epic-1',
+        number: 1,
         name: 'Test Epic',
         project_id: 'proj-1',
         status: 'active',
@@ -169,6 +181,7 @@ describe('IssueRow - Blocked State Display', () => {
   it('should NOT display blocked badge when all dependencies are satisfied', () => {
     const issue: Issue = {
       id: '1',
+      number: 1,
       title: 'Test Issue',
       status: 'todo',
       priority: 0,
@@ -181,6 +194,7 @@ describe('IssueRow - Blocked State Display', () => {
       created_at: new Date().toISOString(),
       project: {
         id: 'proj-1',
+        number: 1,
         name: 'Test Project',
         user_id: 'user-1',
         created_at: new Date().toISOString(),
@@ -188,6 +202,7 @@ describe('IssueRow - Blocked State Display', () => {
       },
       epic: {
         id: 'epic-1',
+        number: 1,
         name: 'Test Epic',
         project_id: 'proj-1',
         status: 'active',
@@ -200,6 +215,7 @@ describe('IssueRow - Blocked State Display', () => {
           depends_on_issue_id: 'dep-1',
           depends_on_issue: {
             id: 'dep-1',
+            number: 1,
             title: 'Dependency 1',
             status: 'done',
             priority: 0,
@@ -217,6 +233,7 @@ describe('IssueRow - Blocked State Display', () => {
           depends_on_issue_id: 'dep-2',
           depends_on_issue: {
             id: 'dep-2',
+            number: 2,
             title: 'Dependency 2',
             status: 'canceled',
             priority: 0,
@@ -241,6 +258,7 @@ describe('IssueRow - Blocked State Display', () => {
 describe('IssueRow - Additional Scenarios', () => {
   const baseIssue: Issue = {
     id: '1',
+    number: 1,
     title: 'Test Issue',
     status: 'todo',
     priority: 0,
@@ -253,6 +271,7 @@ describe('IssueRow - Additional Scenarios', () => {
     created_at: new Date().toISOString(),
     project: {
       id: 'proj-1',
+      number: 1,
       name: 'Test Project',
       user_id: 'user-1',
       created_at: new Date().toISOString(),
@@ -260,6 +279,7 @@ describe('IssueRow - Additional Scenarios', () => {
     },
     epic: {
       id: 'epic-1',
+      number: 1,
       name: 'Test Epic',
       project_id: 'proj-1',
       status: 'active',

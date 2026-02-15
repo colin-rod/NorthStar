@@ -11,6 +11,7 @@ describe('ExpandedProjectView', () => {
     issues?: Issue[];
   } = {
     id: 'p1',
+    number: 1,
     name: 'Test Project',
     user_id: 'user-1',
     created_at: new Date().toISOString(),
@@ -18,6 +19,7 @@ describe('ExpandedProjectView', () => {
     epics: [
       {
         id: 'e1',
+        number: 1,
         name: 'Epic 1',
         status: 'active',
         project_id: 'p1',
@@ -27,6 +29,7 @@ describe('ExpandedProjectView', () => {
       },
       {
         id: 'e2',
+        number: 2,
         name: 'Epic 2',
         status: 'active',
         project_id: 'p1',

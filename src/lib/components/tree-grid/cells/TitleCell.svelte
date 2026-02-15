@@ -39,6 +39,28 @@
     }
   });
 
+  // Get number based on node type
+  const number = $derived.by(() => {
+    if (node.type === 'project') {
+      return (node.data as Project).number;
+    } else if (node.type === 'epic') {
+      return (node.data as Epic).number;
+    } else {
+      return (node.data as Issue).number;
+    }
+  });
+
+  // Get prefix based on node type
+  const prefix = $derived.by(() => {
+    if (node.type === 'project') {
+      return 'P';
+    } else if (node.type === 'epic') {
+      return 'E';
+    } else {
+      return 'I';
+    }
+  });
+
   let isEditing = $state(false);
   let editValue = $state(title);
 
@@ -116,6 +138,8 @@
       role={editMode ? 'button' : undefined}
       tabindex={editMode ? 0 : undefined}
     >
+      <span class="text-muted-foreground font-mono text-sm">{prefix}-{number}</span>
+      <span class="mx-1 text-muted-foreground">·</span>
       {title}
     </span>
   {/if}

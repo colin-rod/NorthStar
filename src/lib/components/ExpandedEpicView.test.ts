@@ -7,6 +7,7 @@ import type { Epic, Issue } from '$lib/types';
 describe('ExpandedEpicView', () => {
   const mockEpic: Epic = {
     id: 'epic-1',
+    number: 1,
     name: 'Test Epic',
     status: 'active',
     project_id: 'project-1',
@@ -16,6 +17,7 @@ describe('ExpandedEpicView', () => {
 
   const mockProject = {
     id: 'project-1',
+    number: 1,
     name: 'Test Project',
     user_id: 'user-1',
     created_at: new Date().toISOString(),
@@ -25,6 +27,7 @@ describe('ExpandedEpicView', () => {
   const mockIssues: Issue[] = [
     {
       id: 'i1',
+      number: 1,
       title: 'Issue 1',
       epic_id: 'epic-1',
       project_id: 'project-1',
@@ -41,6 +44,7 @@ describe('ExpandedEpicView', () => {
     },
     {
       id: 'i2',
+      number: 2,
       title: 'Sub-issue 1',
       epic_id: 'epic-1',
       project_id: 'project-1',

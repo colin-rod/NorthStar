@@ -139,7 +139,11 @@
 
     <div class="flex-1 min-w-0">
       <!-- Title: 16px, weight 500 (medium bold-ish) -->
-      <h3 class="text-issue-title truncate">{issue.title}</h3>
+      <h3 class="text-issue-title truncate">
+        <span class="text-muted-foreground font-mono text-sm">I-{issue.number}</span>
+        <span class="mx-1 text-muted-foreground">·</span>
+        {issue.title}
+      </h3>
 
       <!-- Metadata: 13px, secondary color -->
       <p class="text-metadata mt-1 truncate">

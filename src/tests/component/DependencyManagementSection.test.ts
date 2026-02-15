@@ -25,6 +25,7 @@ vi.mock('$app/navigation', () => ({
 describe('DependencyManagementSection - Blocking Summary', () => {
   const createIssue = (id: string, title: string, status: IssueStatus): Issue => ({
     id,
+    number: parseInt(id.replace(/\D/g, '') || '1', 10),
     title,
     status,
     priority: 0,
@@ -37,6 +38,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     created_at: new Date().toISOString(),
     epic: {
       id: 'epic-1',
+      number: 1,
       name: 'Test Epic',
       project_id: 'proj-1',
       status: 'active',

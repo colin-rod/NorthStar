@@ -62,7 +62,11 @@
     <!-- Clickable Content Area -->
     <button onclick={onNavigate} class="flex-1 text-left min-w-0">
       <!-- Project Name: 16px, weight 500 (medium bold-ish) -->
-      <h3 class="text-issue-title truncate">{project.name}</h3>
+      <h3 class="text-issue-title truncate">
+        <span class="text-muted-foreground font-mono text-sm">P-{project.number}</span>
+        <span class="mx-1 text-muted-foreground">·</span>
+        {project.name}
+      </h3>
 
       <!-- Metadata Row: 13px, secondary color -->
       <p class="text-metadata mt-1 text-foreground-secondary">

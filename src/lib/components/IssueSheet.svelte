@@ -386,7 +386,15 @@
       <!-- Header -->
       <SheetHeader class="mb-6">
         <SheetTitle class="font-accent text-page-title">
-          {mode === 'create' ? 'New Issue' : 'Edit Issue'}
+          {#if mode === 'create'}
+            New Issue
+          {:else if issue}
+            <span class="text-muted-foreground font-mono text-base">I-{issue.number}</span>
+            <span class="mx-2 text-muted-foreground">·</span>
+            {issue.title}
+          {:else}
+            Edit Issue
+          {/if}
         </SheetTitle>
       </SheetHeader>
 

@@ -23,6 +23,7 @@ export interface User {
 export interface Project {
   id: string;
   user_id: string;
+  number: number;
   name: string;
   created_at: string;
   archived_at: string | null;
@@ -39,6 +40,7 @@ export interface Project {
 export interface Epic {
   id: string;
   project_id: string;
+  number: number;
   name: string;
   status: EpicStatus;
   is_default: boolean;
@@ -75,6 +77,7 @@ export interface Issue {
   id: string;
   project_id: string;
   epic_id: string;
+  number: number;
   parent_issue_id: string | null;
   milestone_id: string | null;
   title: string;

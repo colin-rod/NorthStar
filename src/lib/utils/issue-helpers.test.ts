@@ -29,6 +29,7 @@ const createIssue = (
   dependencies: Dependency[] = [],
 ): Issue => ({
   id,
+  number: parseInt(id, 36), // Convert id to a number
   project_id: 'project-1',
   epic_id: 'epic-1',
   parent_issue_id: null,
