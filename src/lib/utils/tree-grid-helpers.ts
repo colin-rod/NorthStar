@@ -217,3 +217,19 @@ export function getDescendantIssues(node: TreeNode, allNodes: TreeNode[]): TreeN
   const descendants = getDescendantNodes(node, allNodes);
   return descendants.filter((n) => n.type === 'issue' || n.type === 'sub-issue');
 }
+
+/**
+ * Determine if a node is the last child among its siblings
+ *
+ * @param node - Node to check
+ * @param visibleNodes - Array of visible nodes (already filtered by expansion)
+ * @returns True if node is the last child of its parent, false otherwise
+ */
+export function isLastChild(node: TreeNode, visibleNodes: TreeNode[]): boolean {
+  if (!node.parentId) return false; // Top-level nodes have no siblings in this context
+
+  const siblings = visibleNodes.filter((n) => n.parentId === node.parentId);
+  const nodeIndex = siblings.findIndex((n) => n.id === node.id);
+
+  return nodeIndex === siblings.length - 1;
+}

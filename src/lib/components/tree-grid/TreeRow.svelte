@@ -15,6 +15,8 @@
   import StoryPointsCell from './cells/StoryPointsCell.svelte';
   import TotalPointsCell from './cells/TotalPointsCell.svelte';
   import ProgressCell from './cells/ProgressCell.svelte';
+  import TreeLine from './cells/TreeLine.svelte';
+  import { isLastChild } from '$lib/utils/tree-grid-helpers';
 
   interface Props {
     node: TreeNode;
@@ -50,6 +52,9 @@
     return 'font-medium';
   });
 
+  // Compute if this node is the last child
+  const nodeIsLastChild = $derived(isLastChild(node, allNodes));
+
   // Handle double-click to open drawer
   function handleDoubleClick() {
     // TODO: Emit event to open drawer for this node
@@ -58,7 +63,7 @@
 </script>
 
 <tr
-  class="border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group {bgClass} {isSelected
+  class="relative border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group {bgClass} {isSelected
     ? 'bg-primary-tint'
     : ''}"
   data-node-id={node.id}
@@ -66,6 +71,11 @@
   data-node-level={node.level}
   ondblclick={handleDoubleClick}
 >
+  <!-- Tree Lines (absolutely positioned, spans full row) -->
+  <td class="absolute inset-0 pointer-events-none" colspan="7">
+    <TreeLine {node} isLastChild={nodeIsLastChild} {allNodes} />
+  </td>
+
   <!-- Selection Checkbox -->
   <td class="py-4 px-4">
     <SelectionCell checked={isSelected} onToggle={() => onToggleSelect(node.id)} />
