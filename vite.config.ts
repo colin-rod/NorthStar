@@ -14,6 +14,7 @@ export default defineConfig({
       '**/.svelte-kit/**',
       '**/build/**',
       '**/coverage/**',
+      'src/tests/integration/**',
     ],
     globals: true,
     environment: 'jsdom',
