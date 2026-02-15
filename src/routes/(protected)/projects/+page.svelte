@@ -297,6 +297,7 @@
       onCellEdit={handleCellEdit}
       onCreateChild={handleCreateChild}
       onBulkAction={handleBulkAction}
+      onShowToast={showToast}
     />
   {/if}
 </div>

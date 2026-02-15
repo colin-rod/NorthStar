@@ -6,7 +6,7 @@
    * Supports selection, expansion, and inline editing.
    */
 
-  import type { TreeNode } from '$lib/types/tree-grid';
+  import type { TreeNode, DragDropState } from '$lib/types/tree-grid';
   import { calculateIndentation } from '$lib/utils/tree-grid-helpers';
   import SelectionCell from './cells/SelectionCell.svelte';
   import TitleCell from './cells/TitleCell.svelte';
@@ -24,6 +24,7 @@
     isExpanded: boolean;
     isSelected: boolean;
     editMode: boolean;
+    dragDropState?: DragDropState;
     onToggleExpand: (id: string) => void;
     onToggleSelect: (id: string) => void;
     onCellEdit: (nodeId: string, field: string, value: any) => void;
@@ -35,6 +36,7 @@
     isExpanded,
     isSelected,
     editMode,
+    dragDropState,
     onToggleExpand,
     onToggleSelect,
     onCellEdit,
@@ -55,6 +57,23 @@
   // Compute if this node is the last child
   const nodeIsLastChild = $derived(isLastChild(node, allNodes));
 
+  // Derive drag state classes for visual feedback
+  const dragClasses = $derived.by(() => {
+    const classes = [];
+
+    if (node.isDragging) {
+      classes.push('opacity-40', 'scale-105', 'shadow-lg');
+    }
+
+    if (node.isValidDropTarget) {
+      classes.push('bg-primary/10', 'border-l-2', 'border-primary');
+    } else if (dragDropState?.draggingNodeId && !node.isValidDropTarget) {
+      classes.push('opacity-50');
+    }
+
+    return classes.join(' ');
+  });
+
   // Handle double-click to open drawer
   function handleDoubleClick() {
     // TODO: Emit event to open drawer for this node
@@ -63,9 +82,9 @@
 </script>
 
 <tr
-  class="relative border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group {bgClass} {isSelected
+  class="relative border-b border-border-divider hover:bg-surface-subtle transition-all duration-150 group {bgClass} {isSelected
     ? 'bg-primary-tint'
-    : ''}"
+    : ''} {dragClasses}"
   data-node-id={node.id}
   data-node-type={node.type}
   data-node-level={node.level}

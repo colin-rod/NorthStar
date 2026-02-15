@@ -2,11 +2,13 @@
  * Reorder Utilities
  *
  * Functions for calculating sort_order values when reordering lists.
+ * Includes reparenting logic for tree grid drag-and-drop.
  *
- * Used by: Epic detail page for issue reordering
+ * Used by: Epic detail page for issue reordering, Tree grid for drag-drop
  */
 
-import type { Issue } from '$lib/types';
+import type { Issue, Epic } from '$lib/types';
+import type { TreeNode } from '$lib/types/tree-grid';
 
 /**
  * Calculate new sort_order values for a reordered list
@@ -111,4 +113,76 @@ export function getNextSortOrder(issues: Issue[]): number {
 
   const maxOrder = Math.max(...issues.map((i) => i.sort_order ?? 0));
   return maxOrder + 1;
+}
+
+/**
+ * Reparent Update Result
+ *
+ * Contains all fields needed to update a node when reparenting to a new parent.
+ */
+export interface ReparentUpdate {
+  id: string;
+  newSortOrder: number;
+  newProjectId?: string;
+  newEpicId?: string;
+  newParentIssueId?: string;
+}
+
+/**
+ * Calculate updates needed for reparenting a node to a new parent
+ *
+ * Determines:
+ * - New sort_order (appended to end of new parent's children)
+ * - New project_id, epic_id, or parent_issue_id based on node type
+ *
+ * @param sourceNode - Node being moved
+ * @param newParentNode - New parent node
+ * @param allNodes - All nodes in the tree (for finding siblings)
+ * @returns Update object with new parent relationships and sort_order
+ */
+export function calculateReparentUpdates(
+  sourceNode: TreeNode,
+  newParentNode: TreeNode,
+  allNodes: TreeNode[],
+): ReparentUpdate {
+  // Find siblings (nodes with same parent as new parent)
+  const siblings = allNodes.filter((n) => n.parentId === newParentNode.id);
+
+  // Get max sort_order among siblings
+  const maxSortOrder = siblings.reduce((max, node) => {
+    const data = node.data as { sort_order?: number };
+    const sortOrder = data.sort_order ?? 0;
+    return Math.max(max, sortOrder);
+  }, -1);
+
+  const update: ReparentUpdate = {
+    id: sourceNode.id,
+    newSortOrder: maxSortOrder + 1,
+  };
+
+  // Epics: Update project_id
+  if (sourceNode.type === 'epic') {
+    update.newProjectId = newParentNode.id;
+  }
+
+  // Issues: Update epic_id (and maybe project_id if epic changed projects)
+  if (sourceNode.type === 'issue') {
+    update.newEpicId = newParentNode.id;
+
+    const newEpic = newParentNode.data as Epic;
+    if (newEpic.project_id) {
+      update.newProjectId = newEpic.project_id;
+    }
+  }
+
+  // Sub-issues: Update parent_issue_id (inherit epic/project from new parent issue)
+  if (sourceNode.type === 'sub-issue') {
+    update.newParentIssueId = newParentNode.id;
+
+    const newParentIssue = newParentNode.data as Issue;
+    update.newEpicId = newParentIssue.epic_id;
+    update.newProjectId = newParentIssue.project_id;
+  }
+
+  return update;
 }

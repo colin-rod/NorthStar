@@ -44,6 +44,12 @@ export interface TreeNode {
 
   /** Progress (rollup) - null for sub-issues */
   progress: Progress | null;
+
+  /** Drag-drop state: Whether this node is currently being dragged */
+  isDragging?: boolean;
+
+  /** Drag-drop state: Whether this node is a valid drop target for current drag */
+  isValidDropTarget?: boolean;
 }
 
 /**
@@ -101,6 +107,22 @@ export interface ColumnDef {
  * Editable field types
  */
 export type EditableField = 'title' | 'status' | 'milestone_id' | 'story_points' | 'priority';
+
+/**
+ * Drag-Drop State
+ *
+ * Tracks current drag operation and valid drop targets
+ */
+export interface DragDropState {
+  /** ID of the node currently being dragged (null if no drag in progress) */
+  draggingNodeId: string | null;
+
+  /** Type of the dragging node */
+  draggingNodeType: 'project' | 'epic' | 'issue' | 'sub-issue' | null;
+
+  /** Set of node IDs that are valid drop targets for the current drag */
+  validDropTargetIds: Set<string>;
+}
 
 /**
  * Type guards

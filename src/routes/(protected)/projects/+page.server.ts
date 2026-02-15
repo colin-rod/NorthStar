@@ -446,4 +446,108 @@ export const actions: Actions = {
 
     return { success: true, action: 'updateCell' };
   },
+
+  reorderNodes: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const updatesJson = formData.get('updates')?.toString();
+
+    if (!updatesJson) {
+      return fail(400, { error: 'Missing updates' });
+    }
+
+    const updates: { id: string; sort_order: number }[] = JSON.parse(updatesJson);
+
+    if (!updates || updates.length === 0) {
+      return fail(400, { error: 'Empty updates array' });
+    }
+
+    // Determine table based on first item
+    const firstId = updates[0].id;
+
+    // Check which table the ID belongs to
+    const { data: project } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', firstId)
+      .maybeSingle();
+
+    const { data: epic } = await supabase
+      .from('epics')
+      .select('id')
+      .eq('id', firstId)
+      .maybeSingle();
+
+    const table = project ? 'projects' : epic ? 'epics' : 'issues';
+
+    // Batch update sort_order
+    const promises = updates.map(({ id, sort_order }) =>
+      supabase.from(table).update({ sort_order }).eq('id', id),
+    );
+
+    const results = await Promise.all(promises);
+    const errors = results.filter((r) => r.error);
+
+    if (errors.length > 0) {
+      console.error('Reorder errors:', errors);
+      return fail(500, { error: 'Failed to reorder items' });
+    }
+
+    return { success: true, action: 'reorderNodes' };
+  },
+
+  reparentNode: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const updateJson = formData.get('update')?.toString();
+
+    if (!updateJson) {
+      return fail(400, { error: 'Missing update' });
+    }
+
+    const update: {
+      id: string;
+      newSortOrder: number;
+      newProjectId?: string;
+      newEpicId?: string;
+      newParentIssueId?: string;
+    } = JSON.parse(updateJson);
+
+    // Determine table and build update object
+    let table: string;
+    const updates: Record<string, string | number | undefined> = {
+      sort_order: update.newSortOrder,
+    };
+
+    if (update.newProjectId !== undefined && update.newEpicId === undefined) {
+      // Epic reparent (moving to different project)
+      table = 'epics';
+      updates.project_id = update.newProjectId;
+    } else if (update.newEpicId !== undefined && update.newParentIssueId === undefined) {
+      // Issue reparent (to different epic)
+      table = 'issues';
+      updates.epic_id = update.newEpicId;
+      if (update.newProjectId) updates.project_id = update.newProjectId;
+    } else if (update.newParentIssueId !== undefined) {
+      // Sub-issue reparent (to different parent issue)
+      table = 'issues';
+      updates.parent_issue_id = update.newParentIssueId;
+      updates.epic_id = update.newEpicId;
+      updates.project_id = update.newProjectId;
+    } else {
+      return fail(400, { error: 'Invalid reparent update' });
+    }
+
+    // Update the node
+    const { error } = await supabase.from(table).update(updates).eq('id', update.id);
+
+    if (error) {
+      console.error('Reparent error:', error);
+      return fail(500, { error: 'Failed to move item' });
+    }
+
+    return { success: true, action: 'reparentNode' };
+  },
 };

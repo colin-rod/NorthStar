@@ -12,7 +12,7 @@
    * - Quiet motion (150ms transitions)
    */
 
-  import type { TreeNode } from '$lib/types/tree-grid';
+  import type { TreeNode, DragDropState } from '$lib/types/tree-grid';
   import type { Project, Epic, Issue } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
@@ -21,6 +21,10 @@
   import AddRow from './AddRow.svelte';
   import { flattenTree, getVisibleNodes, calculateIndentation } from '$lib/utils/tree-grid-helpers';
   import { updateAllNodeRollups } from '$lib/utils/rollup-calculations';
+  import { dndzone } from 'svelte-dnd-action';
+  import { getValidDropTargets, isReparentDrop } from '$lib/utils/drag-drop-validation';
+  import { calculateNewSortOrders, calculateReparentUpdates } from '$lib/utils/reorder';
+  import { invalidateAll } from '$app/navigation';
 
   interface Props {
     projects: (Project & {
@@ -38,6 +42,7 @@
     onCellEdit: (nodeId: string, field: string, value: any) => void;
     onCreateChild: (parentId: string, parentType: string, data: { title: string }) => void;
     onBulkAction?: (action: string) => void;
+    onShowToast?: (message: string, type: 'success' | 'error') => void;
   }
 
   let {
@@ -51,6 +56,7 @@
     onCellEdit,
     onCreateChild,
     onBulkAction,
+    onShowToast,
   }: Props = $props();
 
   // Flatten tree into nodes and calculate rollups
@@ -61,7 +67,31 @@
   });
 
   // Filter to visible nodes based on expansion
-  let visibleNodes = $derived(getVisibleNodes(allNodes, expandedIds));
+  let visibleNodes = $state(getVisibleNodes(allNodes, expandedIds));
+
+  // Update visibleNodes when allNodes or expandedIds change
+  $effect(() => {
+    visibleNodes = getVisibleNodes(allNodes, expandedIds);
+  });
+
+  // Drag-drop state
+  let dragDropState = $state<DragDropState>({
+    draggingNodeId: null,
+    draggingNodeType: null,
+    validDropTargetIds: new Set(),
+  });
+
+  // Disable drag when edit mode is OFF
+  let dragDisabled = $derived(!editMode);
+
+  // Mark nodes with drag metadata
+  let nodesWithDragState = $derived.by(() => {
+    return visibleNodes.map((node) => ({
+      ...node,
+      isDragging: node.id === dragDropState.draggingNodeId,
+      isValidDropTarget: dragDropState.validDropTargetIds.has(node.id),
+    }));
+  });
 
   // Collect all expanded parent nodes that can have children
   let expandedParentsWithAddRow = $derived.by(() => {
@@ -78,6 +108,121 @@
     { key: 'total_sp', header: 'Total SP', width: '96px' },
     { key: 'progress', header: 'Progress', width: '140px' },
   ];
+
+  // Drag-drop handlers
+  function handleDragStart(e: any) {
+    const draggingNode = nodesWithDragState.find((n) => n.id === e.detail.info.id);
+
+    if (!draggingNode) return;
+
+    dragDropState = {
+      draggingNodeId: draggingNode.id,
+      draggingNodeType: draggingNode.type,
+      validDropTargetIds: getValidDropTargets(draggingNode, allNodes),
+    };
+  }
+
+  function handleDragEnd() {
+    // Clear drag state
+    dragDropState = {
+      draggingNodeId: null,
+      draggingNodeType: null,
+      validDropTargetIds: new Set(),
+    };
+  }
+
+  function handleDndConsider(e: any) {
+    // Update local visible nodes during drag (optimistic UI)
+    visibleNodes = e.detail.items;
+  }
+
+  async function handleDndFinalize(e: any) {
+    const { items, info } = e.detail;
+
+    const sourceNode = allNodes.find((n) => n.id === info.id);
+    if (!sourceNode) {
+      handleDragEnd();
+      return;
+    }
+
+    // Find the target node (node at drop position)
+    const dropIndex = items.findIndex((n: TreeNode) => n.id === info.id);
+    const targetNode = dropIndex > 0 ? items[dropIndex - 1] : items[0];
+
+    if (!targetNode) {
+      handleDragEnd();
+      return;
+    }
+
+    // Check if valid drop
+    if (!dragDropState.validDropTargetIds.has(targetNode.id)) {
+      // Invalid drop - revert to original order
+      visibleNodes = getVisibleNodes(allNodes, expandedIds);
+      handleDragEnd();
+      return;
+    }
+
+    // Determine if reparent or reorder
+    const isReparent = isReparentDrop(sourceNode, targetNode);
+
+    if (isReparent) {
+      // Reparent operation
+      const update = calculateReparentUpdates(sourceNode, targetNode, allNodes);
+      await submitReparent(update);
+    } else {
+      // Reorder operation (same parent)
+      const updates = calculateNewSortOrders(items.map((n: TreeNode) => n.data as any));
+      await submitReorder(
+        Array.from(updates.entries()).map(([id, sort_order]) => ({ id, sort_order })),
+      );
+    }
+
+    handleDragEnd();
+  }
+
+  async function submitReorder(updates: { id: string; sort_order: number }[]) {
+    const formData = new FormData();
+    formData.append('updates', JSON.stringify(updates));
+
+    try {
+      const response = await fetch('?/reorderNodes', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        await invalidateAll();
+        if (onShowToast) onShowToast('Reordered successfully', 'success');
+      } else {
+        if (onShowToast) onShowToast('Failed to reorder', 'error');
+      }
+    } catch (error) {
+      console.error('Reorder error:', error);
+      if (onShowToast) onShowToast('Failed to reorder', 'error');
+    }
+  }
+
+  async function submitReparent(update: any) {
+    const formData = new FormData();
+    formData.append('update', JSON.stringify(update));
+
+    try {
+      const response = await fetch('?/reparentNode', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        await invalidateAll();
+        if (onShowToast) onShowToast('Moved successfully', 'success');
+      } else {
+        if (onShowToast) onShowToast('Failed to move', 'error');
+      }
+    } catch (error) {
+      console.error('Reparent error:', error);
+      if (onShowToast) onShowToast('Failed to move', 'error');
+    }
+  }
 
   function handleBulkAction(action: string) {
     if (onBulkAction) {
@@ -113,14 +258,26 @@
       </thead>
 
       <!-- Body Rows -->
-      <tbody>
-        {#each visibleNodes as node (node.id)}
+      <tbody
+        use:dndzone={{
+          items: nodesWithDragState,
+          dragDisabled,
+          flipDurationMs: 150,
+          type: 'tree-nodes',
+        }}
+        ondragstart={handleDragStart}
+        ondragend={handleDragEnd}
+        onconsider={handleDndConsider}
+        onfinalize={handleDndFinalize}
+      >
+        {#each nodesWithDragState as node (node.id)}
           <TreeRow
             {node}
             {allNodes}
             isExpanded={expandedIds.has(node.id)}
             isSelected={selectedIds.has(node.id)}
             {editMode}
+            {dragDropState}
             {onToggleExpand}
             {onToggleSelect}
             {onCellEdit}
