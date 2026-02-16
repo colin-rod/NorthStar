@@ -5,8 +5,8 @@
    * Displays edit mode toggle and bulk action buttons when items are selected.
    */
 
-  import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import { Switch } from '$lib/components/ui/switch';
 
   interface Props {
     editMode: boolean;
@@ -20,36 +20,29 @@
 </script>
 
 <div class="flex items-center justify-between h-11 px-4 border-b border-border-divider bg-surface">
-  <!-- Left: Breadcrumb or Edit mode toggle -->
+  <!-- Left: Breadcrumb -->
   <div class="flex items-center gap-3">
     {#if breadcrumb}
       <div class="text-sm text-muted-foreground">
         {breadcrumb}
       </div>
     {/if}
-
-    <label class="flex items-center gap-2 cursor-pointer">
-      <input
-        type="checkbox"
-        checked={editMode}
-        onchange={(e) => onEditModeChange(e.currentTarget.checked)}
-        class="sr-only"
-      />
-      <div class="text-metadata {editMode ? 'text-primary' : 'text-foreground-muted'}">
-        Edit mode {editMode ? 'ON' : 'OFF'}
-      </div>
-    </label>
-
-    {#if editMode}
-      <Badge variant="default" class="text-xs">Editing</Badge>
-    {/if}
   </div>
 
-  <!-- Right: Bulk actions (if any selected) -->
-  <div class="flex items-center gap-2">
+  <!-- Right: Edit mode toggle + bulk actions -->
+  <div class="flex items-center gap-4">
+    <!-- Edit mode toggle -->
+    <div class="flex items-center gap-2">
+      <span class="text-metadata text-foreground-muted">Edit mode</span>
+      <Switch checked={editMode} onCheckedChange={onEditModeChange} />
+    </div>
+
+    <!-- Bulk actions (if any selected) -->
     {#if selectedCount > 0}
-      <span class="text-metadata text-foreground-secondary">{selectedCount} selected</span>
-      <Button size="sm" variant="outline" onclick={() => onBulkAction('delete')}>Delete</Button>
+      <div class="flex items-center gap-2">
+        <span class="text-metadata text-foreground-secondary">{selectedCount} selected</span>
+        <Button size="sm" variant="outline" onclick={() => onBulkAction('delete')}>Delete</Button>
+      </div>
     {/if}
   </div>
 </div>

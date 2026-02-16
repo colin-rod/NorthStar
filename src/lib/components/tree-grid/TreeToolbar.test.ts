@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 import TreeToolbar from './TreeToolbar.svelte';
 
 describe('TreeToolbar', () => {
-  it('should render edit mode toggle', () => {
+  it('should render edit mode label and switch', () => {
     render(TreeToolbar, {
       props: {
         editMode: false,
@@ -15,7 +15,13 @@ describe('TreeToolbar', () => {
       },
     });
 
-    expect(screen.getByText(/Edit mode/i)).toBeInTheDocument();
+    // Check for label
+    expect(screen.getByText('Edit mode')).toBeInTheDocument();
+
+    // Check for switch button (Switch renders as a button with role="switch")
+    const switchElement = screen.getByRole('switch');
+    expect(switchElement).toBeInTheDocument();
+    expect(switchElement).toHaveAttribute('aria-checked', 'false');
   });
 
   it('should show breadcrumb when provided', () => {
@@ -81,5 +87,35 @@ describe('TreeToolbar', () => {
 
     // Verify breadcrumb is displayed
     expect(screen.getByText(breadcrumb)).toBeInTheDocument();
+
+    // Verify edit mode label and switch are displayed
+    expect(screen.getByText('Edit mode')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeInTheDocument();
+  });
+
+  it('should toggle switch state when editMode prop changes', () => {
+    const { rerender } = render(TreeToolbar, {
+      props: {
+        editMode: false,
+        selectedCount: 0,
+        breadcrumb: '',
+        onEditModeChange: () => {},
+        onBulkAction: () => {},
+      },
+    });
+
+    const switchElement = screen.getByRole('switch');
+    expect(switchElement).toHaveAttribute('aria-checked', 'false');
+
+    // Update editMode prop
+    rerender({
+      editMode: true,
+      selectedCount: 0,
+      breadcrumb: '',
+      onEditModeChange: () => {},
+      onBulkAction: () => {},
+    });
+
+    expect(switchElement).toHaveAttribute('aria-checked', 'true');
   });
 });

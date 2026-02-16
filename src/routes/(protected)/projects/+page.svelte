@@ -60,16 +60,26 @@
 
     if (isProject) {
       if (expandedProjectId === id) {
+        // Collapsing project - clear both project and epic
         url.searchParams.delete('project');
         url.searchParams.delete('epic');
       } else {
+        // Expanding a different project - set new project, clear epic
         url.searchParams.set('project', id);
         url.searchParams.delete('epic');
       }
     } else if (isEpic) {
+      // Find parent project for this epic
+      const parentProject = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === id));
+
       if (expandedEpicId === id) {
+        // Collapsing epic - just remove epic param, keep project expanded
         url.searchParams.delete('epic');
       } else {
+        // Expanding epic - ensure parent project is also in URL
+        if (parentProject && !expandedProjectId) {
+          url.searchParams.set('project', parentProject.id);
+        }
         url.searchParams.set('epic', id);
       }
     }
