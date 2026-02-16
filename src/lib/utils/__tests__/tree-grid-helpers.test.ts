@@ -192,14 +192,14 @@ describe('flattenTree', () => {
       type: 'epic',
       level: 1,
       parentId: 'project1',
-      hasChildren: false,
+      hasChildren: true, // Always true for epics to enable inline issue creation
     });
     expect(result[2]).toMatchObject({
       id: 'epic2',
       type: 'epic',
       level: 1,
       parentId: 'project1',
-      hasChildren: false,
+      hasChildren: true, // Always true for epics to enable inline issue creation
     });
   });
 

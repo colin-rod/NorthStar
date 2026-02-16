@@ -11,16 +11,23 @@
   interface Props {
     editMode: boolean;
     selectedCount: number;
+    breadcrumb: string;
     onEditModeChange: (enabled: boolean) => void;
     onBulkAction: (action: string) => void;
   }
 
-  let { editMode, selectedCount, onEditModeChange, onBulkAction }: Props = $props();
+  let { editMode, selectedCount, breadcrumb, onEditModeChange, onBulkAction }: Props = $props();
 </script>
 
 <div class="flex items-center justify-between h-11 px-4 border-b border-border-divider bg-surface">
-  <!-- Left: Edit mode toggle -->
+  <!-- Left: Breadcrumb or Edit mode toggle -->
   <div class="flex items-center gap-3">
+    {#if breadcrumb}
+      <div class="text-sm text-muted-foreground">
+        {breadcrumb}
+      </div>
+    {/if}
+
     <label class="flex items-center gap-2 cursor-pointer">
       <input
         type="checkbox"

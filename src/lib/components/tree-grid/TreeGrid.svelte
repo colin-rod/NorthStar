@@ -25,6 +25,7 @@
   import { getValidDropTargets, isReparentDrop } from '$lib/utils/drag-drop-validation';
   import { calculateNewSortOrders, calculateReparentUpdates } from '$lib/utils/reorder';
   import { invalidateAll } from '$app/navigation';
+  import { buildBreadcrumb } from '$lib/utils/breadcrumb';
 
   interface Props {
     projects: (Project & {
@@ -68,6 +69,13 @@
 
   // Filter to visible nodes based on expansion
   let visibleNodes = $derived(getVisibleNodes(allNodes, expandedIds));
+
+  // Get the first (and only) expanded ID for breadcrumb
+  // Note: Current design allows only 1 expanded item at a time
+  let expandedId = $derived(expandedIds.size > 0 ? Array.from(expandedIds)[0] : null);
+
+  // Compute breadcrumb for expanded node
+  let breadcrumb = $derived(buildBreadcrumb(expandedId, allNodes));
 
   // Drag-drop state
   let dragDropState = $state<DragDropState>({
@@ -260,6 +268,7 @@
   <!-- Toolbar -->
   <TreeToolbar
     {editMode}
+    {breadcrumb}
     selectedCount={selectedIds.size}
     {onEditModeChange}
     onBulkAction={handleBulkAction}
@@ -320,6 +329,20 @@
               indentation={calculateIndentation(childLevel)}
               onCreate={(data) => onCreateChild(parentNode.id, parentNode.type, data)}
             />
+          {:else if node.type === 'epic' && expandedIds.has(node.id)}
+            <!-- Show AddRow after expanded epic with no visible children -->
+            {@const hasVisibleChildren = nodesWithDragState.some(
+              (n) => n.parentId === node.id && n.type === 'issue',
+            )}
+            {#if !hasVisibleChildren}
+              {@const childLevel = 2}
+              <AddRow
+                parentNode={node}
+                level={childLevel}
+                indentation={calculateIndentation(childLevel)}
+                onCreate={(data) => onCreateChild(node.id, node.type, data)}
+              />
+            {/if}
           {/if}
         {/each}
       </tbody>

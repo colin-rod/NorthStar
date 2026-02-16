@@ -119,7 +119,8 @@ function createEpicNode(
   epicIssues: Issue[],
   allProjectIssues: Issue[],
 ): TreeNode {
-  const hasChildren = epicIssues.length > 0;
+  // Always true for epics to enable inline issue creation even when empty
+  const hasChildren = true;
 
   return {
     id: epic.id,
