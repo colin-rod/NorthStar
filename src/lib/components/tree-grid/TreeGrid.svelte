@@ -70,9 +70,19 @@
   // Filter to visible nodes based on expansion
   let visibleNodes = $derived(getVisibleNodes(allNodes, expandedIds));
 
-  // Get the first (and only) expanded ID for breadcrumb
-  // Note: Current design allows only 1 expanded item at a time
-  let expandedId = $derived(expandedIds.size > 0 ? Array.from(expandedIds)[0] : null);
+  // Get the deepest expanded node for breadcrumb
+  // When multiple nodes are expanded (e.g., project + epic), use the deepest one
+  // so breadcrumb traces up from deepest level to root
+  let expandedId = $derived.by(() => {
+    if (expandedIds.size === 0) return null;
+
+    // Find the deepest expanded node by level (0=project, 1=epic, 2=issue, 3=sub-issue)
+    const deepestNode = allNodes
+      .filter((n) => expandedIds.has(n.id))
+      .sort((a, b) => b.level - a.level)[0];
+
+    return deepestNode?.id || null;
+  });
 
   // Compute breadcrumb for expanded node
   let breadcrumb = $derived(buildBreadcrumb(expandedId, allNodes));
