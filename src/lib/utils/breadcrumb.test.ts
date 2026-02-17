@@ -48,7 +48,7 @@ describe('buildBreadcrumb', () => {
     hasChildren: true,
     data: mockProject,
     counts: { ready: 0, doing: 0, blocked: 0, inReview: 0, done: 0, canceled: 0 },
-    metrics: { activeStoryPoints: 0, totalStoryPoints: 0 },
+    metrics: { totalIssues: 0, activeStoryPoints: 0, totalStoryPoints: 0 },
     totalPoints: 0,
     progress: null,
   };
@@ -61,7 +61,7 @@ describe('buildBreadcrumb', () => {
     hasChildren: true,
     data: mockEpic,
     counts: { ready: 0, doing: 0, blocked: 0, inReview: 0, done: 0, canceled: 0 },
-    metrics: { activeStoryPoints: 0, totalStoryPoints: 0 },
+    metrics: { totalIssues: 0, activeStoryPoints: 0, totalStoryPoints: 0 },
     totalPoints: 0,
     progress: null,
   };
@@ -74,7 +74,7 @@ describe('buildBreadcrumb', () => {
     hasChildren: false,
     data: mockIssue,
     counts: { ready: 0, doing: 0, blocked: 0, inReview: 0, done: 0, canceled: 0 },
-    metrics: { activeStoryPoints: 0, totalStoryPoints: 0 },
+    metrics: { totalIssues: 0, activeStoryPoints: 0, totalStoryPoints: 0 },
     totalPoints: null,
     progress: null,
   };

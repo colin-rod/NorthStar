@@ -20,6 +20,13 @@
 
   let isAdding = $state(false);
   let title = $state('');
+  let inputEl = $state<HTMLInputElement | null>(null);
+
+  $effect(() => {
+    if (isAdding && inputEl) {
+      inputEl.focus();
+    }
+  });
 
   const placeholders = {
     1: '+ Add epic',
@@ -61,10 +68,10 @@
         <input
           type="text"
           bind:value={title}
+          bind:this={inputEl}
           onkeydown={handleKeydown}
           placeholder="Enter title..."
           class="flex-1 px-2 py-1 text-sm border border-accent rounded focus:outline-none focus:ring-1 focus:ring-accent"
-          autofocus
         />
         <button
           onclick={handleSubmit}

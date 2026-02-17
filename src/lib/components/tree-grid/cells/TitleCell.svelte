@@ -76,6 +76,13 @@
 
   let isEditing = $state(false);
   let editValue = $state('');
+  let editInputEl = $state<HTMLInputElement | null>(null);
+
+  $effect(() => {
+    if (isEditing && editInputEl) {
+      editInputEl.focus();
+    }
+  });
 
   // Sync editValue when title changes (if not editing)
   $effect(() => {
@@ -144,15 +151,20 @@
     <input
       type="text"
       bind:value={editValue}
+      bind:this={editInputEl}
       onkeydown={handleKeydown}
       onblur={saveEdit}
       class="flex-1 px-2 py-1 text-sm border border-accent rounded focus:outline-none focus:ring-1 focus:ring-accent {fontWeight}"
-      autofocus
     />
   {:else}
     <span
       class="text-issue-title {fontWeight} truncate flex-1 {editMode ? 'cursor-text' : ''}"
       onclick={startEditing}
+      onkeydown={editMode
+        ? (e) => {
+            if (e.key === 'Enter' || e.key === ' ') startEditing();
+          }
+        : undefined}
       role={editMode ? 'button' : undefined}
       tabindex={editMode ? 0 : undefined}
     >

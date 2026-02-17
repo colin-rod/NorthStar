@@ -26,7 +26,7 @@ describe('computeIssueCounts', () => {
         status: 'todo',
         priority: 0,
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
     ];
 
     const result = computeIssueCounts(issues);
@@ -59,7 +59,7 @@ describe('computeIssueCounts', () => {
             },
           },
         ],
-      } as Issue,
+      } as unknown as Issue,
     ];
 
     const result = computeIssueCounts(issues);
@@ -92,7 +92,7 @@ describe('computeIssueCounts', () => {
             },
           },
         ],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '2',
         title: 'Blocked doing issue',
@@ -109,7 +109,7 @@ describe('computeIssueCounts', () => {
             },
           },
         ],
-      } as Issue,
+      } as unknown as Issue,
     ];
 
     const result = computeIssueCounts(issues);
@@ -131,31 +131,31 @@ describe('computeIssueCounts', () => {
         title: 'Todo',
         status: 'todo',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '2',
         title: 'Doing',
         status: 'doing',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '3',
         title: 'In Review',
         status: 'in_review',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '4',
         title: 'Done',
         status: 'done',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '5',
         title: 'Canceled',
         status: 'canceled',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
     ];
 
     const result = computeIssueCounts(issues);
@@ -177,7 +177,7 @@ describe('computeIssueCounts', () => {
         title: 'Ready todo',
         status: 'todo',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '2',
         title: 'Blocked todo',
@@ -193,13 +193,13 @@ describe('computeIssueCounts', () => {
             },
           },
         ],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '4',
         title: 'Unblocked doing',
         status: 'doing',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
     ];
 
     const result = computeIssueCounts(issues);
@@ -231,7 +231,7 @@ describe('computeIssueCounts', () => {
             },
           },
         ],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '3',
         title: 'Todo with canceled dependency',
@@ -247,7 +247,7 @@ describe('computeIssueCounts', () => {
             },
           },
         ],
-      } as Issue,
+      } as unknown as Issue,
     ];
 
     const result = computeIssueCounts(issues);
@@ -269,19 +269,19 @@ describe('computeIssueCounts', () => {
         title: 'Done 1',
         status: 'done',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '2',
         title: 'Done 2',
         status: 'done',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
       {
         id: '3',
         title: 'Done 3',
         status: 'done',
         dependencies: [],
-      } as Issue,
+      } as unknown as Issue,
     ];
 
     const result = computeIssueCounts(issues);
