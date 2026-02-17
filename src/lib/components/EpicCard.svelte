@@ -52,12 +52,17 @@
         <div class="flex items-center justify-between gap-3">
           <!-- Epic name: section header weight -->
           <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
-          <!-- Summary pill and status badge -->
+          <!-- Summary pill, milestone, and status badge -->
           <div class="flex items-center gap-2 shrink-0">
             {#if headerProgress.total > 0}
               <Badge variant="outline" class="text-xs"
                 >{headerProgress.completed}/{headerProgress.total}</Badge
               >
+            {/if}
+            {#if epic.milestone}
+              <Badge variant="outline" class="text-xs text-foreground-secondary">
+                {epic.milestone.name}
+              </Badge>
             {/if}
             <Badge variant={getStatusVariant(epic.status)} class="text-xs">
               {epic.status}
@@ -123,12 +128,17 @@
         <div class="flex items-center justify-between gap-3">
           <!-- Epic name: section header weight -->
           <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
-          <!-- Summary pill and status badge -->
+          <!-- Summary pill, milestone, and status badge -->
           <div class="flex items-center gap-2 shrink-0">
             {#if headerProgress.total > 0}
               <Badge variant="outline" class="text-xs"
                 >{headerProgress.completed}/{headerProgress.total}</Badge
               >
+            {/if}
+            {#if epic.milestone}
+              <Badge variant="outline" class="text-xs text-foreground-secondary">
+                {epic.milestone.name}
+              </Badge>
             {/if}
             <Badge variant={getStatusVariant(epic.status)} class="text-xs">
               {epic.status}

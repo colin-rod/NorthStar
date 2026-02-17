@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Epic, Attachment } from '$lib/types';
+  import type { Epic, Attachment, Milestone } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import { computeProgress } from '$lib/utils/issue-counts';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
@@ -12,19 +12,22 @@
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
+  import MilestonePicker from '$lib/components/MilestonePicker.svelte';
 
   interface Props {
     open: boolean;
     epic: Epic | null;
     counts: IssueCounts | null;
     userId?: string;
+    milestones?: Milestone[];
   }
 
-  let { open = $bindable(false), epic, counts, userId = '' }: Props = $props();
+  let { open = $bindable(false), epic, counts, userId = '', milestones = [] }: Props = $props();
 
   let localName = $state('');
   let localStatus = $state<'active' | 'done' | 'canceled'>('active');
   let localDescription = $state<string | null>(null);
+  let localMilestoneId = $state<string | null>(null);
   let attachments = $state<Attachment[]>([]);
   let saveError = $state<string | null>(null);
   let saveSuccess = $state(false);
@@ -49,6 +52,7 @@
     if (epic) {
       localName = epic.name;
       localStatus = epic.status;
+      localMilestoneId = epic.milestone_id ?? null;
       if (!descriptionDebounceTimer) {
         localDescription = epic.description ?? null;
       }
@@ -128,6 +132,11 @@
     descriptionDebounceTimer = setTimeout(() => {
       autoSave('description', localDescription ?? '');
     }, 1000);
+  }
+
+  function handleMilestoneChange(milestoneId: string | null) {
+    localMilestoneId = milestoneId;
+    autoSave('milestone_id', milestoneId ?? '');
   }
 
   async function uploadImage(file: File): Promise<string> {
@@ -210,6 +219,18 @@
             <option value="done">Done</option>
             <option value="canceled">Canceled</option>
           </select>
+        </section>
+
+        <!-- Milestone -->
+        <section>
+          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+            Milestone
+          </h3>
+          <MilestonePicker
+            selectedMilestoneId={localMilestoneId}
+            {milestones}
+            onChange={handleMilestoneChange}
+          />
         </section>
 
         <!-- Description -->

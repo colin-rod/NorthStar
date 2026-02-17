@@ -479,6 +479,7 @@
   epic={selectedEpicForDetail}
   counts={selectedEpicCounts}
   userId={data.session?.user?.id ?? ''}
+  milestones={data.milestones ?? []}
 />
 
 <!-- Issue sheet (using store) -->

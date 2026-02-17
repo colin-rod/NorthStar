@@ -50,10 +50,12 @@ export interface Epic {
   status: EpicStatus;
   is_default: boolean;
   sort_order: number | null;
+  milestone_id?: string | null;
 
   // Relations
   project?: Project;
   issues?: Issue[];
+  milestone?: Milestone;
 }
 
 export type EpicStatus = 'active' | 'done' | 'canceled';

@@ -25,12 +25,13 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
   // For each project, load epics with issues and dependencies
   const projectsWithData = await Promise.all(
     (projects || []).map(async (project) => {
-      // Load epics with nested issues
+      // Load epics with nested issues and milestone
       const { data: epics } = await supabase
         .from('epics')
         .select(
           `
           *,
+          milestone:milestones(*),
           issues(
             *,
             dependencies!dependencies_issue_id_fkey(
@@ -74,8 +75,15 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     }),
   );
 
+  // Load milestones for EpicDetailSheet milestone picker
+  const { data: milestones } = await supabase
+    .from('milestones')
+    .select('*')
+    .order('due_date', { ascending: true, nullsFirst: false });
+
   return {
     projects: projectsWithData,
+    milestones: milestones || [],
   };
 };
 
@@ -281,6 +289,12 @@ export const actions: Actions = {
     const description = formData.get('description');
     if (description !== null) {
       updates.description = description.toString() === '' ? null : description.toString();
+    }
+
+    // Milestone (optional, empty string → clear)
+    const milestoneId = formData.get('milestone_id');
+    if (milestoneId !== null) {
+      updates.milestone_id = milestoneId.toString() === '' ? null : milestoneId.toString();
     }
 
     if (Object.keys(updates).length === 0) {

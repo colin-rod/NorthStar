@@ -22,12 +22,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     throw error(404, 'Project not found');
   }
 
-  // Load epics with issues and dependencies
+  // Load epics with issues, dependencies, and milestone
   const { data: epics, error: epicsError } = await locals.supabase
     .from('epics')
     .select(
       `
       *,
+      milestone:milestones(*),
       issues(
         *,
         dependencies!dependencies_issue_id_fkey(
@@ -43,6 +44,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   if (epicsError) {
     console.error('Error loading epics:', epicsError);
   }
+
+  // Load milestones for milestone picker in EpicDetailSheet
+  const { data: milestones } = await locals.supabase
+    .from('milestones')
+    .select('*')
+    .order('due_date', { ascending: true, nullsFirst: false });
 
   // Compute counts for each epic
   const epicsWithCounts = (epics || []).map((epic) => ({
@@ -63,6 +70,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     project,
     epics: epicsWithCounts,
     issues: allIssues,
+    milestones: milestones || [],
     breadcrumbs: [
       { label: 'Projects', href: '/projects' },
       { label: project.name, href: `/projects/${project.id}`, current: true },
