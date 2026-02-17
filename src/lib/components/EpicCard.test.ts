@@ -15,6 +15,7 @@ describe('EpicCard', () => {
     status: 'active',
     is_default: false,
     sort_order: 0,
+    description: null,
   };
 
   const mockCounts: IssueCounts = {

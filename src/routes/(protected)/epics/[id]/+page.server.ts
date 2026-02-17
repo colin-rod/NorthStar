@@ -397,4 +397,65 @@ export const actions: Actions = {
 
     return { success: true, action: 'updateMilestone', milestone: data };
   },
+
+  /**
+   * Save attachment metadata after client-side upload to Supabase Storage
+   */
+  createAttachment: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const entityType = d.get('entity_type')?.toString();
+    const entityId = d.get('entity_id')?.toString();
+    const fileName = d.get('file_name')?.toString();
+    const fileSize = Number(d.get('file_size')?.toString() ?? '0');
+    const mimeType = d.get('mime_type')?.toString();
+    const storagePath = d.get('storage_path')?.toString();
+
+    if (!entityType || !entityId || !fileName || !mimeType || !storagePath) {
+      return fail(400, { error: 'Missing required attachment fields' });
+    }
+
+    const validEntityTypes = ['project', 'epic', 'issue'];
+    if (!validEntityTypes.includes(entityType)) {
+      return fail(400, { error: 'Invalid entity type' });
+    }
+
+    const { data, error } = await supabase
+      .from('attachments')
+      .insert({
+        user_id: session.user.id,
+        entity_type: entityType,
+        entity_id: entityId,
+        file_name: fileName,
+        file_size: fileSize,
+        mime_type: mimeType,
+        storage_path: storagePath,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to save attachment:', error);
+      return fail(500, { error: 'Failed to save attachment' });
+    }
+
+    return { success: true, attachment: data };
+  },
+
+  /**
+   * Delete attachment metadata (client handles storage file removal)
+   */
+  deleteAttachment: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const id = d.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Attachment ID is required' });
+
+    await supabase.from('attachments').delete().eq('id', id).eq('user_id', session.user.id);
+
+    return { success: true };
+  },
 };

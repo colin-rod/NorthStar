@@ -1,11 +1,15 @@
 <script lang="ts">
-  import type { Epic } from '$lib/types';
+  import type { Epic, Attachment } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import { computeProgress } from '$lib/utils/issue-counts';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { invalidateAll } from '$app/navigation';
+  import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+  import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import { supabase } from '$lib/supabase';
+  import { buildStoragePath } from '$lib/utils/attachment-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
 
@@ -13,17 +17,21 @@
     open: boolean;
     epic: Epic | null;
     counts: IssueCounts | null;
+    userId?: string;
   }
 
-  let { open = $bindable(false), epic, counts }: Props = $props();
+  let { open = $bindable(false), epic, counts, userId = '' }: Props = $props();
 
   let localName = $state('');
   let localStatus = $state<'active' | 'done' | 'canceled'>('active');
+  let localDescription = $state<string | null>(null);
+  let attachments = $state<Attachment[]>([]);
   let saveError = $state<string | null>(null);
   let saveSuccess = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
 
   let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let descriptionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
@@ -41,8 +49,20 @@
     if (epic) {
       localName = epic.name;
       localStatus = epic.status;
+      localDescription = epic.description ?? null;
       saveError = null;
       saveSuccess = false;
+
+      // Load attachments for this epic
+      supabase
+        .from('attachments')
+        .select('*')
+        .eq('entity_type', 'epic')
+        .eq('entity_id', epic.id)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          attachments = data ?? [];
+        });
     }
   });
 
@@ -99,6 +119,56 @@
     localStatus = value;
     autoSave('status', value);
   }
+
+  function handleDescriptionChange(html: string) {
+    localDescription = html;
+    if (descriptionDebounceTimer) clearTimeout(descriptionDebounceTimer);
+    descriptionDebounceTimer = setTimeout(() => {
+      autoSave('description', localDescription ?? '');
+    }, 1000);
+  }
+
+  async function uploadImage(file: File): Promise<string> {
+    if (!userId) throw new Error('User not authenticated');
+    const path = `${userId}/inline-images/${crypto.randomUUID()}-${file.name}`;
+    const { error } = await supabase.storage.from('attachments').upload(path, file);
+    if (error) throw new Error('Failed to upload image');
+    const { data } = supabase.storage.from('attachments').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function handleAttachmentUpload(file: File) {
+    if (!epic || !userId) return;
+    const path = buildStoragePath(userId, 'epic', epic.id, file.name);
+    const { error: uploadError } = await supabase.storage.from('attachments').upload(path, file);
+    if (uploadError) {
+      saveError = 'Failed to upload file';
+      setTimeout(() => {
+        saveError = null;
+      }, 5000);
+      return;
+    }
+    const formData = new FormData();
+    formData.append('entity_type', 'epic');
+    formData.append('entity_id', epic.id);
+    formData.append('file_name', file.name);
+    formData.append('file_size', String(file.size));
+    formData.append('mime_type', file.type);
+    formData.append('storage_path', path);
+    const res = await fetch('?/createAttachment', { method: 'POST', body: formData });
+    const result = await res.json();
+    if (res.ok && result.type === 'success') {
+      attachments = [...attachments, result.data.attachment];
+    }
+  }
+
+  async function handleAttachmentDelete(attachment: Attachment) {
+    await supabase.storage.from('attachments').remove([attachment.storage_path]);
+    const formData = new FormData();
+    formData.append('id', attachment.id);
+    await fetch('?/deleteAttachment', { method: 'POST', body: formData });
+    attachments = attachments.filter((a) => a.id !== attachment.id);
+  }
 </script>
 
 <Sheet bind:open>
@@ -138,6 +208,30 @@
             <option value="done">Done</option>
             <option value="canceled">Canceled</option>
           </select>
+        </section>
+
+        <!-- Description -->
+        <section>
+          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+            Description
+          </h3>
+          <RichTextEditor
+            content={localDescription}
+            onchange={handleDescriptionChange}
+            {uploadImage}
+          />
+        </section>
+
+        <!-- Attachments -->
+        <section>
+          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+            Attachments
+          </h3>
+          <AttachmentList
+            {attachments}
+            onUpload={handleAttachmentUpload}
+            onDelete={handleAttachmentDelete}
+          />
         </section>
 
         <!-- Progress -->

@@ -36,6 +36,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     story_points: null,
     sort_order: 1,
     created_at: new Date().toISOString(),
+    description: null,
     epic: {
       id: 'epic-1',
       number: 1,
@@ -44,6 +45,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
       status: 'active',
       is_default: false,
       sort_order: null,
+      description: null,
     },
   });
 

@@ -359,6 +359,7 @@
   counts={selectedProjectCounts}
   metrics={selectedProjectMetrics}
   epics={selectedProjectEpics}
+  userId={data.session?.user?.id ?? ''}
 />
 
 <!-- Epic create/edit sheet -->
@@ -374,6 +375,7 @@
   bind:open={epicDetailSheetOpen}
   epic={selectedEpicForDetail}
   counts={selectedEpicCounts}
+  userId={data.session?.user?.id ?? ''}
 />
 
 <!-- Issue sheet (using store) -->
@@ -385,6 +387,7 @@
   milestones={[]}
   projectIssues={data.projects.flatMap((p) => p.issues || [])}
   projects={data.projects}
+  userId={data.session?.user?.id ?? ''}
 />
 
 <!-- Simple toast-style feedback -->

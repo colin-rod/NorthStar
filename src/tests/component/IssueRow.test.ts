@@ -19,6 +19,7 @@ describe('IssueRow - Blocked State Display', () => {
       story_points: null,
       sort_order: 1,
       created_at: new Date().toISOString(),
+      description: null,
       project: {
         id: 'proj-1',
         number: 1,
@@ -26,6 +27,7 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        description: null,
       },
       epic: {
         id: 'epic-1',
@@ -35,6 +37,7 @@ describe('IssueRow - Blocked State Display', () => {
         status: 'active',
         is_default: false,
         sort_order: null,
+        description: null,
       },
       dependencies: [
         {
@@ -53,6 +56,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 1,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
         {
@@ -71,6 +75,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 2,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
       ],
@@ -95,6 +100,7 @@ describe('IssueRow - Blocked State Display', () => {
       story_points: null,
       sort_order: 1,
       created_at: new Date().toISOString(),
+      description: null,
       project: {
         id: 'proj-1',
         number: 1,
@@ -102,6 +108,7 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        description: null,
       },
       epic: {
         id: 'epic-1',
@@ -111,6 +118,7 @@ describe('IssueRow - Blocked State Display', () => {
         status: 'active',
         is_default: false,
         sort_order: null,
+        description: null,
       },
       dependencies: [
         {
@@ -129,6 +137,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 1,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
       ],
@@ -153,6 +162,7 @@ describe('IssueRow - Blocked State Display', () => {
       story_points: null,
       sort_order: 1,
       created_at: new Date().toISOString(),
+      description: null,
       project: {
         id: 'proj-1',
         number: 1,
@@ -160,6 +170,7 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        description: null,
       },
       epic: {
         id: 'epic-1',
@@ -169,6 +180,7 @@ describe('IssueRow - Blocked State Display', () => {
         status: 'active',
         is_default: false,
         sort_order: null,
+        description: null,
       },
       dependencies: [],
     };
@@ -192,6 +204,7 @@ describe('IssueRow - Blocked State Display', () => {
       story_points: null,
       sort_order: 1,
       created_at: new Date().toISOString(),
+      description: null,
       project: {
         id: 'proj-1',
         number: 1,
@@ -199,6 +212,7 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        description: null,
       },
       epic: {
         id: 'epic-1',
@@ -208,6 +222,7 @@ describe('IssueRow - Blocked State Display', () => {
         status: 'active',
         is_default: false,
         sort_order: null,
+        description: null,
       },
       dependencies: [
         {
@@ -226,6 +241,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 1,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
         {
@@ -244,6 +260,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 2,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
       ],
@@ -269,6 +286,7 @@ describe('IssueRow - Additional Scenarios', () => {
     story_points: null,
     sort_order: 1,
     created_at: new Date().toISOString(),
+    description: null,
     project: {
       id: 'proj-1',
       number: 1,
@@ -276,6 +294,7 @@ describe('IssueRow - Additional Scenarios', () => {
       user_id: 'user-1',
       created_at: new Date().toISOString(),
       archived_at: null,
+      description: null,
     },
     epic: {
       id: 'epic-1',
@@ -285,6 +304,7 @@ describe('IssueRow - Additional Scenarios', () => {
       status: 'active',
       is_default: false,
       sort_order: null,
+      description: null,
     },
     dependencies: [],
   };

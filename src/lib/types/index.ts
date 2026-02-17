@@ -25,6 +25,7 @@ export interface Project {
   user_id: string;
   number: number;
   name: string;
+  description: string | null;
   created_at: string;
   archived_at: string | null;
 
@@ -42,6 +43,7 @@ export interface Epic {
   project_id: string;
   number: number;
   name: string;
+  description: string | null;
   status: EpicStatus;
   is_default: boolean;
   sort_order: number | null;
@@ -81,6 +83,7 @@ export interface Issue {
   parent_issue_id: string | null;
   milestone_id: string | null;
   title: string;
+  description: string | null;
   status: IssueStatus;
   priority: number; // 0-3 (P0-P3)
   story_points: StoryPoints | null;
@@ -219,4 +222,22 @@ export interface IssueGroup {
   issueCount: number;
   totalStoryPoints: number;
   completionPercent: number; // % of done issues (excluding canceled)
+}
+
+/**
+ * Attachment
+ *
+ * File attachment for a project, epic, or issue.
+ * Stored in Supabase Storage; metadata stored in the attachments table.
+ */
+export interface Attachment {
+  id: string;
+  user_id: string;
+  entity_type: 'project' | 'epic' | 'issue';
+  entity_id: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  storage_path: string;
+  created_at: string;
 }

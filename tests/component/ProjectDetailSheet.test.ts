@@ -17,6 +17,7 @@ const mockProject: Project = {
   name: 'Test Project',
   created_at: '2024-01-01',
   archived_at: null,
+  description: null,
 };
 
 const mockCounts: IssueCounts = {
@@ -43,6 +44,7 @@ const mockEpics: Epic[] = [
     status: 'active',
     is_default: false,
     sort_order: 0,
+    description: null,
   },
   {
     id: 'e2',
@@ -52,6 +54,7 @@ const mockEpics: Epic[] = [
     status: 'done',
     is_default: false,
     sort_order: 1,
+    description: null,
   },
 ];
 

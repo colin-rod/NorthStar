@@ -19,7 +19,7 @@
    * - Collapsible sub-issues list
    */
 
-  import type { Issue, Epic, Milestone, IssueStatus, StoryPoints } from '$lib/types';
+  import type { Issue, Epic, Milestone, IssueStatus, StoryPoints, Attachment } from '$lib/types';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
@@ -31,6 +31,10 @@
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
   import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
+  import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+  import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import { supabase } from '$lib/supabase';
+  import { buildStoragePath } from '$lib/utils/attachment-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
 
@@ -43,6 +47,7 @@
     milestones = [],
     projectIssues = [],
     projects = [],
+    userId = '',
   }: {
     open: boolean;
     mode?: 'edit' | 'create';
@@ -51,6 +56,7 @@
     milestones: Milestone[];
     projectIssues: Issue[];
     projects?: { id: string; name: string }[];
+    userId?: string;
   } = $props();
 
   // Local state for form fields
@@ -72,6 +78,13 @@
   // Create mode state
   let selectedProjectId = $state('');
   let createLoading = $state(false);
+
+  // Description state
+  let localDescription = $state<string | null>(null);
+  let descriptionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Attachments state
+  let attachments = $state<Attachment[]>([]);
 
   // Debounce timer for title field
   let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -102,8 +115,22 @@
       localStoryPoints = issue.story_points;
       localEpicId = issue.epic_id;
       localMilestoneId = issue.milestone_id;
+      localDescription = issue.description ?? null;
       saveError = null;
       saveSuccess = false;
+
+      // Load attachments for this issue
+      if (mode === 'edit') {
+        supabase
+          .from('attachments')
+          .select('*')
+          .eq('entity_type', 'issue')
+          .eq('entity_id', issue.id)
+          .order('created_at', { ascending: true })
+          .then(({ data }) => {
+            attachments = data ?? [];
+          });
+      }
     }
   });
 
@@ -235,6 +262,60 @@
     } finally {
       loading = false;
     }
+  }
+
+  // Description auto-save (1000ms debounce)
+  function handleDescriptionChange(html: string) {
+    localDescription = html;
+    if (descriptionDebounceTimer) clearTimeout(descriptionDebounceTimer);
+    descriptionDebounceTimer = setTimeout(() => {
+      autoSave('description', localDescription ?? '');
+    }, 1000);
+  }
+
+  // Inline image upload (goes to public inline-images subfolder)
+  async function uploadImage(file: File): Promise<string> {
+    if (!userId) throw new Error('User not authenticated');
+    const path = `${userId}/inline-images/${crypto.randomUUID()}-${file.name}`;
+    const { error } = await supabase.storage.from('attachments').upload(path, file);
+    if (error) throw new Error('Failed to upload image');
+    const { data } = supabase.storage.from('attachments').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  // File attachment upload (client → storage → server action for metadata)
+  async function handleAttachmentUpload(file: File) {
+    if (!issue || !userId) return;
+    const path = buildStoragePath(userId, 'issue', issue.id, file.name);
+    const { error: uploadError } = await supabase.storage.from('attachments').upload(path, file);
+    if (uploadError) {
+      saveError = 'Failed to upload file';
+      setTimeout(() => {
+        saveError = null;
+      }, 5000);
+      return;
+    }
+    const formData = new FormData();
+    formData.append('entity_type', 'issue');
+    formData.append('entity_id', issue.id);
+    formData.append('file_name', file.name);
+    formData.append('file_size', String(file.size));
+    formData.append('mime_type', file.type);
+    formData.append('storage_path', path);
+    const res = await fetch('?/createAttachment', { method: 'POST', body: formData });
+    const result = await res.json();
+    if (res.ok && result.type === 'success') {
+      attachments = [...attachments, result.data.attachment];
+    }
+  }
+
+  // File attachment delete
+  async function handleAttachmentDelete(attachment: Attachment) {
+    await supabase.storage.from('attachments').remove([attachment.storage_path]);
+    const formData = new FormData();
+    formData.append('id', attachment.id);
+    await fetch('?/deleteAttachment', { method: 'POST', body: formData });
+    attachments = attachments.filter((a) => a.id !== attachment.id);
   }
 
   // Create issue form submission
@@ -545,6 +626,32 @@
                 </div>
               </div>
             </div>
+          </section>
+
+          <!-- Description Section -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              Description
+            </h3>
+            <RichTextEditor
+              content={localDescription}
+              onchange={handleDescriptionChange}
+              {uploadImage}
+              disabled={loading}
+            />
+          </section>
+
+          <!-- Attachments Section -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              Attachments
+            </h3>
+            <AttachmentList
+              {attachments}
+              onUpload={handleAttachmentUpload}
+              onDelete={handleAttachmentDelete}
+              disabled={loading}
+            />
           </section>
 
           <!-- Organization Section -->
