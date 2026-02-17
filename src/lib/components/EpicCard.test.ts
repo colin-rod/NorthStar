@@ -10,6 +10,7 @@ describe('EpicCard', () => {
   const mockEpic: Epic = {
     id: 'epic1',
     project_id: 'project1',
+    number: 1,
     name: 'Test Epic',
     status: 'active',
     is_default: false,

@@ -132,9 +132,11 @@ describe('flattenTree', () => {
     const projects: Project[] = [
       {
         id: 'project1',
+        number: 1,
         name: 'Test Project',
         user_id: 'user1',
         created_at: new Date().toISOString(),
+        archived_at: null,
       },
     ];
 
@@ -154,13 +156,16 @@ describe('flattenTree', () => {
     const projects = [
       {
         id: 'project1',
+        number: 1,
         name: 'Test Project',
         user_id: 'user1',
         created_at: new Date().toISOString(),
+        archived_at: null,
         epics: [
           {
             id: 'epic1',
             project_id: 'project1',
+            number: 1,
             name: 'Epic 1',
             status: 'active' as const,
             is_default: false,
@@ -169,6 +174,7 @@ describe('flattenTree', () => {
           {
             id: 'epic2',
             project_id: 'project1',
+            number: 2,
             name: 'Epic 2',
             status: 'active' as const,
             is_default: false,
@@ -207,13 +213,16 @@ describe('flattenTree', () => {
     const projects = [
       {
         id: 'project1',
+        number: 1,
         name: 'Test Project',
         user_id: 'user1',
         created_at: new Date().toISOString(),
+        archived_at: null,
         epics: [
           {
             id: 'epic1',
             project_id: 'project1',
+            number: 1,
             name: 'Epic 1',
             status: 'active' as const,
             is_default: false,
@@ -266,13 +275,16 @@ describe('flattenTree', () => {
     const projects = [
       {
         id: 'project1',
+        number: 1,
         name: 'Project 1',
         user_id: 'user1',
         created_at: new Date().toISOString(),
+        archived_at: null,
         epics: [
           {
             id: 'epic1',
             project_id: 'project1',
+            number: 1,
             name: 'Epic 1',
             status: 'active' as const,
             is_default: false,
@@ -294,9 +306,11 @@ describe('flattenTree', () => {
       },
       {
         id: 'project2',
+        number: 2,
         name: 'Project 2',
         user_id: 'user1',
         created_at: new Date().toISOString(),
+        archived_at: null,
         epics: [],
       },
     ];
@@ -314,13 +328,16 @@ describe('flattenTree', () => {
     const projects = [
       {
         id: 'project1',
+        number: 1,
         name: 'Project 1',
         user_id: 'user1',
         created_at: new Date().toISOString(),
+        archived_at: null,
         epics: [
           {
             id: 'epic1',
             project_id: 'project1',
+            number: 1,
             name: 'Epic 1',
             status: 'active' as const,
             is_default: false,

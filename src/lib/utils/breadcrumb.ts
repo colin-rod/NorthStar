@@ -34,7 +34,7 @@ export function buildBreadcrumb(expandedId: string | null, allNodes: TreeNode[])
   // Walk up to root
   while (currentNode) {
     path.unshift(currentNode); // Add to beginning
-    const parentId = currentNode.parentId;
+    const parentId: string | null = currentNode.parentId;
     currentNode = parentId ? allNodes.find((n) => n.id === parentId) : undefined;
   }
 

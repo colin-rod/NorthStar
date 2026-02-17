@@ -75,7 +75,7 @@
   const nodeIsLastChild = $derived(isLastChild(node, allNodes));
 
   let isEditing = $state(false);
-  let editValue = $state(title);
+  let editValue = $state('');
 
   // Sync editValue when title changes (if not editing)
   $effect(() => {
