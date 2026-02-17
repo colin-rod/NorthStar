@@ -71,6 +71,20 @@
     };
     return colors[status] || 'bg-status-todo';
   };
+
+
+  type PriorityVariant = 'priority-p0' | 'priority-p1' | 'priority-p2' | 'priority-p3';
+
+  function getPriorityVariant(priority: number): PriorityVariant {
+    const priorityMap: Record<number, PriorityVariant> = {
+      0: 'priority-p0',
+      1: 'priority-p1',
+      2: 'priority-p2',
+      3: 'priority-p3',
+    };
+
+    return priorityMap[priority] ?? 'priority-p3';
+  }
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -155,7 +169,7 @@
   <!-- Right side: Priority & Blocked indicators + Move buttons -->
   <div class="flex items-center gap-2 shrink-0">
     <!-- Priority Badge: light burnt orange tint per North spec -->
-    <Badge variant="default" class="text-xs">P{issue.priority}</Badge>
+    <Badge variant={getPriorityVariant(issue.priority)} class="text-xs">P{issue.priority}</Badge>
 
     <!-- Blocked Indicator: amber dot with count -->
     {#if blocked}

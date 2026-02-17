@@ -54,29 +54,17 @@
       .join(' ');
   }
 
-  // Get status badge variant
-  function getStatusVariant(
-    status: IssueStatus,
-  ):
-    | 'secondary'
-    | 'default'
-    | 'outline'
-    | 'destructive'
-    | 'status-todo'
-    | 'status-doing'
-    | 'status-in-review'
-    | 'status-done'
-    | 'status-blocked'
-    | 'status-canceled'
-    | undefined {
-    const variantMap: Record<IssueStatus, any> = {
-      todo: 'status-todo',
-      doing: 'status-doing',
-      in_review: 'status-in-review',
-      done: 'status-done',
-      canceled: 'status-canceled',
+  type PriorityVariant = 'priority-p0' | 'priority-p1' | 'priority-p2' | 'priority-p3';
+
+  function getPriorityVariant(priority: number): PriorityVariant {
+    const priorityMap: Record<number, PriorityVariant> = {
+      0: 'priority-p0',
+      1: 'priority-p1',
+      2: 'priority-p2',
+      3: 'priority-p3',
     };
-    return variantMap[status];
+
+    return priorityMap[priority] ?? 'priority-p3';
   }
 </script>
 
@@ -170,7 +158,7 @@
 
             <!-- Priority Cell -->
             <td class="px-3 py-4">
-              <Badge variant="default" class="text-xs">P{issue.priority}</Badge>
+              <Badge variant={getPriorityVariant(issue.priority)} class="text-xs">P{issue.priority}</Badge>
             </td>
 
             <!-- Milestone Cell -->
