@@ -168,7 +168,7 @@
       role={editMode ? 'button' : undefined}
       tabindex={editMode ? 0 : undefined}
     >
-      <span class="text-muted-foreground font-mono text-sm">{prefix}-{number}</span>
+      <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
       <span class="mx-1 text-muted-foreground">·</span>
       {title}
     </span>
