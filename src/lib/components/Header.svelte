@@ -9,6 +9,7 @@
    * - Subtle borders
    */
   import { enhance } from '$app/forms';
+  import { Search } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
   import Breadcrumbs, { type BreadcrumbItem } from '$lib/components/Breadcrumbs.svelte';
   import type { Session } from '@supabase/supabase-js';
@@ -41,6 +42,15 @@
 
     {#if session}
       <div class="flex items-center gap-4">
+        <a
+          href="/search"
+          aria-label="Search"
+          class="inline-flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors"
+        >
+          <Search class="w-5 h-5" />
+          <span class="text-body hidden sm:inline">Search</span>
+        </a>
+
         <!-- Email (hidden on mobile) -->
         <span class="text-metadata hidden sm:inline">
           {session.user.email}
