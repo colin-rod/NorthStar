@@ -4,9 +4,96 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Personal Issue Tracker** is a single-user project management application designed to manage multiple personal projects without team collaboration overhead. It provides hierarchical work breakdown (Projects → Epics → Issues → Sub-issues) with explicit dependency tracking and mobile-first editing.
+**NorthStar** is a single-user project management application designed to manage multiple personal projects without team collaboration overhead. It provides hierarchical work breakdown (Projects → Epics → Issues → Sub-issues) with explicit dependency tracking and mobile-first editing.
 
 **Core Purpose**: Clearly identify what to work on next, with dependencies never forgotten or implicit.
+
+## Coding Principles
+
+These principles guide all development work in NorthStar. They complement the TDD methodology described later and help avoid common pitfalls when building features.
+
+### Principle 1: Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing any feature:
+
+- State your assumptions explicitly. If uncertain, ask clarifying questions.
+- If multiple interpretations exist, present them rather than choosing silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+**NorthStar Example**: When asked to "add dependency cycle detection":
+
+- ❌ Don't assume: Silently implement PostgreSQL recursive CTE without asking where to show errors
+- ✅ Do clarify: "Should cycle errors appear during dependency creation (blocking), or as validation warnings in the UI? Should we show the cycle path to help users understand the issue?"
+
+### Principle 2: Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+**NorthStar Example**: When implementing issue status filters:
+
+- ❌ Don't overcomplicate: Create a flexible FilterBuilder class with chainable methods, configuration files, and support for custom filter expressions
+- ✅ Do simplify: Use Svelte's reactive `$:` statements to filter issues based on status equality: `$: filteredIssues = issues.filter(i => i.status === selectedStatus)`
+
+### Principle 3: Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+The test: Every changed line should trace directly to the user's request.
+
+**NorthStar Example**: When fixing a bug in issue sorting by priority:
+
+- ❌ Don't expand scope: Fix the sort bug AND convert the component to TypeScript AND add JSDoc comments AND refactor variable names AND update the entire file to use `const` instead of `let`
+- ✅ Do stay surgical: Change only the comparison function: `issues.sort((a, b) => a.priority - b.priority)` → `issues.sort((a, b) => b.priority - a.priority)` (P0 first)
+
+### Principle 4: Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform vague tasks into verifiable goals with explicit verification steps:
+
+- "Add validation" → "Write tests for invalid inputs (story points = 4), then make them pass"
+- "Fix the bug" → "Write a test that reproduces blocked state calculation error, then make it pass"
+- "Refactor X" → "Ensure all tests pass before and after refactoring"
+
+For multi-step tasks, state a brief plan with verification checkpoints.
+
+**NorthStar Example**: When implementing sub-issues feature:
+
+```
+1. Add parent_issue_id column → verify: migration applies without errors
+2. Update RLS policies for sub-issues → verify: test that sub-issues inherit parent's project access
+3. Add sub-issues UI in IssueSheet → verify: can create sub-issue, appears in parent's collapsible list
+4. Test epic inheritance → verify: sub-issue automatically gets parent's epic_id
+```
+
+---
+
+**For detailed examples across various scenarios, reference the `karpathy-principles` skill.**
+
+These principles work with TDD:
+
+- **Think Before Coding** → Write failing test first (TDD Red: understand requirements)
+- **Simplicity First** → Minimal code to pass test (TDD Green: avoid over-engineering)
+- **Surgical Changes** → Refactor only after tests pass (TDD Refactor: preserve working code)
+- **Goal-Driven Execution** → Test-driven verification loops (TDD: measurable success)
 
 ## Tech Stack
 
@@ -87,10 +174,12 @@ Projects (top-level containers)
 
 - Note: `in_review` counts as NOT done (still blocks)
 
-**Ready**: An issue that is:
+**Ready (displayed as "Todo" in UI)**: An issue that is:
 
 - Status = `todo`
 - NOT Blocked
+
+Note: The "Todo" tab on the home page shows only ready issues (todo AND not blocked). This is a computed state, not a stored status value.
 
 These states are computed dynamically, not stored in database.
 
@@ -114,6 +203,233 @@ These states are computed dynamically, not stored in database.
 - No self-dependencies
 
 ## Architecture Principles
+
+### Test-Driven Development (TDD)
+
+**This project follows strict Test-Driven Development practices.**
+
+#### Red-Green-Refactor Cycle
+
+**MANDATORY: All code changes MUST follow the TDD cycle:**
+
+1. **RED**: Write a failing test first
+   - Test must fail for the right reason (feature doesn't exist yet)
+   - Test should be minimal and focused on one behavior
+   - Run test to confirm it fails
+
+2. **GREEN**: Write minimal code to make the test pass
+   - Only write code needed to pass the current test
+   - Resist the urge to add extra features or abstractions
+   - Run test to confirm it passes
+
+3. **REFACTOR**: Improve code quality without changing behavior
+   - Remove duplication
+   - Improve naming and structure
+   - Extract reusable functions/components
+   - Run tests to ensure they still pass
+
+**Process Enforcement:**
+
+- NEVER write implementation code before writing a failing test
+- NEVER commit code without corresponding tests
+- NEVER skip the refactor step
+- Tests must be run and verified at each step
+
+#### Testing Strategy
+
+**Unit Tests** (Primary focus):
+
+- Test business logic in isolation
+- Test utility functions (dependency-graph.ts, issue-helpers.ts)
+- Test computed state logic (blocked, ready calculations)
+- Test validation functions (story points, status transitions)
+- Test database functions (cycle detection, triggers)
+
+**Integration Tests**:
+
+- Test SvelteKit server load functions
+- Test form actions with database interactions
+- Test RLS policies enforcement
+- Test Supabase client operations
+
+**Component Tests**:
+
+- Test Svelte component behavior and interactions
+- Test form validation and user input handling
+- Test conditional rendering based on props/state
+- Use Vitest + @testing-library/svelte
+
+**E2E Tests** (Minimal - use sparingly):
+
+- Test critical user flows only
+- Example: Create project → Create issue → Add dependency
+- Use Playwright for E2E testing
+
+#### Test Organization
+
+```
+tests/
+├── unit/
+│   ├── utils/
+│   │   ├── dependency-graph.test.ts
+│   │   └── issue-helpers.test.ts
+│   ├── stores/
+│   │   └── computed.test.ts
+│   └── validation/
+│       └── story-points.test.ts
+├── integration/
+│   ├── server/
+│   │   ├── load-functions.test.ts
+│   │   └── form-actions.test.ts
+│   └── database/
+│       ├── rls-policies.test.ts
+│       └── triggers.test.ts
+├── component/
+│   ├── IssueRow.test.ts
+│   ├── IssueSheet.test.ts
+│   └── DependencyGraph.test.ts
+└── e2e/
+    └── critical-flows.test.ts
+```
+
+#### Test Coverage Requirements
+
+- **Minimum 80% code coverage** for business logic
+- **100% coverage** for critical paths:
+  - Dependency cycle detection
+  - Data integrity rules
+  - Status computation (blocked, ready)
+  - RLS policies
+
+#### Testing Tools
+
+**Framework**: Vitest (fast, Vite-native)
+**Component Testing**: @testing-library/svelte
+**Mocking**: vi.mock() from Vitest
+**E2E**: Playwright (minimal use)
+**Database Testing**: Test against remote Supabase with test data cleanup
+
+#### Example TDD Workflow
+
+**Scenario: Add story point validation**
+
+1. **RED - Write failing test**:
+
+```typescript
+// tests/unit/validation/story-points.test.ts
+import { describe, it, expect } from 'vitest';
+import { validateStoryPoints } from '$lib/utils/validation';
+
+describe('validateStoryPoints', () => {
+  it('should accept valid story point values', () => {
+    expect(validateStoryPoints(1)).toBe(true);
+    expect(validateStoryPoints(5)).toBe(true);
+    expect(validateStoryPoints(null)).toBe(true);
+  });
+
+  it('should reject invalid story point values', () => {
+    expect(validateStoryPoints(4)).toBe(false);
+    expect(validateStoryPoints(10)).toBe(false);
+    expect(validateStoryPoints(-1)).toBe(false);
+  });
+});
+```
+
+Run: `npm run test` → Test fails (function doesn't exist)
+
+2. **GREEN - Implement minimal solution**:
+
+```typescript
+// src/lib/utils/validation.ts
+const VALID_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
+
+export function validateStoryPoints(value: number | null): boolean {
+  if (value === null) return true;
+  return VALID_STORY_POINTS.includes(value);
+}
+```
+
+Run: `npm run test` → Test passes
+
+3. **REFACTOR - Improve if needed**:
+
+```typescript
+// src/lib/utils/validation.ts
+const VALID_STORY_POINTS = new Set([1, 2, 3, 5, 8, 13, 21]);
+
+export function validateStoryPoints(value: number | null): boolean {
+  return value === null || VALID_STORY_POINTS.has(value);
+}
+```
+
+Run: `npm run test` → Test still passes
+
+#### TDD Anti-Patterns to Avoid
+
+**DON'T:**
+
+- Write implementation before tests
+- Write tests after implementation is complete
+- Skip tests for "simple" code
+- Write tests that just call the implementation
+- Mock everything (prefer real objects when possible)
+- Write tests that test implementation details
+
+**DO:**
+
+- Test behavior, not implementation
+- Write tests that describe requirements
+- Use descriptive test names that explain intent
+- Keep tests simple and focused
+- Prefer integration tests over heavy mocking
+- Run tests frequently (every few minutes)
+
+#### Database Testing Strategy
+
+**Challenge**: No local Supabase (remote-only development)
+
+**Approach**:
+
+1. Use a dedicated test database in Supabase (separate project or schema)
+2. Set test environment variables in `.env.test.local`
+3. Clean up test data after each test run
+4. Use transactions and rollbacks where possible
+5. Seed minimal test data before test suites
+
+**Example**:
+
+```typescript
+// tests/setup.ts
+import { createClient } from '@supabase/supabase-js';
+
+export async function setupTestDatabase() {
+  const supabase = createClient(process.env.TEST_SUPABASE_URL!, process.env.TEST_SUPABASE_KEY!);
+  // Seed test data
+  await supabase.from('projects').insert({ name: 'Test Project' });
+}
+
+export async function cleanupTestDatabase() {
+  // Delete test data
+}
+```
+
+#### When to Write Tests
+
+**Always write tests FIRST for:**
+
+- New features
+- Bug fixes (write test that reproduces bug, then fix)
+- Refactoring existing code
+- Complex business logic
+- Data validation rules
+- Security-critical code (RLS, auth)
+
+**Can skip tests for:**
+
+- Prototyping / spike work (must add tests before committing)
+- Pure UI styling changes (visual-only, no logic)
+- Configuration files
+- Build scripts
 
 ### Mobile-First
 
@@ -140,17 +456,17 @@ These states are computed dynamically, not stored in database.
 
 **Home View** (default):
 
-- Primary list showing "Ready" issues
-- Segmented filters: Ready, Doing, Blocked, Done
+- Primary list showing "Ready" issues (displayed as "Todo" tab)
+- Segmented filters: Todo, In Progress, Blocked, Done
 - Each row: title, project/epic, priority, blocked indicator
 
 **Project View**:
 
-- Epics list with counts (Ready, Blocked, Doing)
+- Epics list with counts (Ready, Blocked, In Progress)
 
 **Epic View**:
 
-- Flat issue list with filters (All, Todo, Doing, In Review, Blocked, Done, Canceled)
+- Flat issue list with filters (All, Todo, In Progress, In Review, Blocked, Done, Canceled)
 - Inline "Add issue" functionality
 
 **Issue Detail**:
@@ -208,6 +524,8 @@ story_points integer CHECK (story_points IN (1, 2, 3, 5, 8, 13, 21))
 sort_order integer
 created_at timestamptz DEFAULT now()
 ```
+
+**Note**: UI displays "In Progress" for `status='doing'` to use more conventional terminology. Database values remain unchanged.
 
 **dependencies**
 

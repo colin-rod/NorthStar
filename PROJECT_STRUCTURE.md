@@ -1,11 +1,11 @@
 # Project Structure
 
-This document explains the organization of the IssueTracker codebase.
+This document explains the organization of the NorthStar codebase.
 
 ## Directory Overview
 
 ```
-IssueTracker/
+NorthStar/
 ├── src/                          # Source code
 │   ├── lib/                      # Library code
 │   │   ├── components/           # Svelte components

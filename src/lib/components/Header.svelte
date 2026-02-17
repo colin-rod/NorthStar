@@ -9,10 +9,13 @@
    * - Subtle borders
    */
   import { enhance } from '$app/forms';
-  import Button from '$lib/components/ui/button.svelte';
+  import { Search } from '@lucide/svelte';
+  import { Button } from '$lib/components/ui/button';
+  import Breadcrumbs, { type BreadcrumbItem } from '$lib/components/Breadcrumbs.svelte';
   import type { Session } from '@supabase/supabase-js';
 
-  let { session }: { session: Session | null } = $props();
+  let { session, breadcrumbs = [] }: { session: Session | null; breadcrumbs?: BreadcrumbItem[] } =
+    $props();
 
   let loggingOut = $state(false);
 </script>
@@ -20,16 +23,34 @@
 <!-- North Design: Minimal header with subtle border -->
 <header class="border-b border-border-divider bg-surface">
   <div class="container mx-auto flex items-center justify-between px-4 py-4">
-    <!-- North wordmark with serif font per design spec -->
-    <a
-      href="/"
-      class="font-accent text-page-title text-foreground hover:text-primary transition-colors"
-    >
-      North
-    </a>
+    <div class="flex items-center gap-4">
+      <!-- North wordmark with serif font per design spec -->
+      <a
+        href="/"
+        class="font-accent text-page-title text-foreground hover:text-primary transition-colors md:hidden"
+      >
+        North
+      </a>
+
+      <!-- Breadcrumbs (desktop only) -->
+      {#if breadcrumbs.length > 0}
+        <div class="hidden md:block">
+          <Breadcrumbs items={breadcrumbs} />
+        </div>
+      {/if}
+    </div>
 
     {#if session}
       <div class="flex items-center gap-4">
+        <a
+          href="/search"
+          aria-label="Search"
+          class="inline-flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors"
+        >
+          <Search class="w-5 h-5" />
+          <span class="text-body hidden sm:inline">Search</span>
+        </a>
+
         <!-- Email (hidden on mobile) -->
         <span class="text-metadata hidden sm:inline">
           {session.user.email}

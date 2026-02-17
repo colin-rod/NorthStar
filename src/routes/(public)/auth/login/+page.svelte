@@ -1,18 +1,12 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import type { ActionData } from './$types';
-  import Card from '$lib/components/ui/card.svelte';
-  import CardHeader from '$lib/components/ui/card-header.svelte';
-  import CardContent from '$lib/components/ui/card-content.svelte';
-  import Tabs from '$lib/components/ui/tabs.svelte';
-  import TabsList from '$lib/components/ui/tabs-list.svelte';
-  import TabsTrigger from '$lib/components/ui/tabs-trigger.svelte';
-  import TabsContent from '$lib/components/ui/tabs-content.svelte';
-  import Input from '$lib/components/ui/input.svelte';
-  import Button from '$lib/components/ui/button.svelte';
-  import Label from '$lib/components/ui/label.svelte';
-  import Alert from '$lib/components/ui/alert.svelte';
-  import AlertDescription from '$lib/components/ui/alert-description.svelte';
+  import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
+  import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
+  import { Input } from '$lib/components/ui/input';
+  import { Button } from '$lib/components/ui/button';
+  import { Label } from '$lib/components/ui/label';
+  import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
   let { form }: { form: ActionData } = $props();
 
@@ -24,7 +18,7 @@
 <div class="container max-w-lg mx-auto px-4 py-8 md:py-16">
   <Card>
     <CardHeader>
-      <h1 class="text-2xl font-bold">Issue Tracker</h1>
+      <h1 class="font-accent text-page-title">NorthStar</h1>
       <p class="text-muted-foreground">Sign in to manage your projects</p>
     </CardHeader>
 
@@ -42,7 +36,7 @@
       {/if}
 
       <Tabs defaultValue="login">
-        <TabsList class="grid w-full grid-cols-3">
+        <TabsList class="grid grid-cols-3 mx-auto">
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="signup">Sign Up</TabsTrigger>
           <TabsTrigger value="magic">Magic Link</TabsTrigger>

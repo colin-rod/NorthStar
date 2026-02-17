@@ -5,7 +5,7 @@
 
 ## Overview
 
-North is the design system for the Personal Issue Tracker application. It emphasizes clarity, minimal visual noise, and thoughtful interaction design. The system is built to support focused work without distractions.
+North is the design system for the NorthStar application. It emphasizes clarity, minimal visual noise, and thoughtful interaction design. The system is built to support focused work without distractions.
 
 ## Brand Foundation
 

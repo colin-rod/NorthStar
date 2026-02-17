@@ -18,8 +18,8 @@
 <div class="min-h-screen flex items-center justify-center p-4">
   <Card class="w-full max-w-md">
     <CardHeader>
-      <h1 class="text-2xl font-bold">Create Account</h1>
-      <p class="text-muted-foreground">Sign up for Personal Issue Tracker</p>
+      <h1 class="font-accent text-page-title">Create Account</h1>
+      <p class="text-muted-foreground">Sign up for NorthStar</p>
     </CardHeader>
     <CardContent>
       <form method="POST" action="?/signup" class="space-y-4">
@@ -50,7 +50,7 @@
             type="password"
             placeholder="••••••••"
             required
-            minlength="6"
+            minlength={6}
           />
           <p class="text-xs text-muted-foreground">Minimum 6 characters</p>
         </div>

@@ -1,7 +1,7 @@
 /**
  * TypeScript Type Definitions
  *
- * All entity types for the Issue Tracker application.
+ * All entity types for the NorthStar application.
  *
  * Based on CLAUDE.md database schema.
  */
@@ -23,6 +23,7 @@ export interface User {
 export interface Project {
   id: string;
   user_id: string;
+  number: number;
   name: string;
   created_at: string;
   archived_at: string | null;
@@ -39,6 +40,7 @@ export interface Project {
 export interface Epic {
   id: string;
   project_id: string;
+  number: number;
   name: string;
   status: EpicStatus;
   is_default: boolean;
@@ -75,6 +77,7 @@ export interface Issue {
   id: string;
   project_id: string;
   epic_id: string;
+  number: number;
   parent_issue_id: string | null;
   milestone_id: string | null;
   title: string;
@@ -91,8 +94,8 @@ export interface Issue {
   parent_issue?: Issue;
   sub_issues?: Issue[];
   dependencies?: Dependency[]; // Issues this depends on
-  blocked_by?: Issue[]; // Issues blocking this one
-  blocking?: Issue[]; // Issues this one blocks
+  blocked_by?: Dependency[]; // Dependencies where this issue is blocked (with depends_on_issue populated)
+  blocking?: Dependency[]; // Dependencies where this issue blocks others (with issue populated)
 }
 
 export type IssueStatus = 'todo' | 'doing' | 'in_review' | 'done' | 'canceled';
@@ -190,4 +193,30 @@ export interface IssuePageData {
   issue: Issue;
   dependencies: Dependency[];
   subIssues: Issue[];
+}
+
+/**
+ * Enhanced Issues View Types
+ */
+
+export type GroupByMode = 'none' | 'project' | 'status' | 'priority' | 'milestone' | 'story_points';
+
+export type SortByColumn =
+  | 'priority'
+  | 'status'
+  | 'title'
+  | 'project'
+  | 'epic'
+  | 'milestone'
+  | 'story_points';
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface IssueGroup {
+  key: string; // Unique identifier for group (project_id, status value, priority number, etc.)
+  name: string; // Display name (project name, "P0", "Todo", etc.)
+  issues: Issue[];
+  issueCount: number;
+  totalStoryPoints: number;
+  completionPercent: number; // % of done issues (excluding canceled)
 }

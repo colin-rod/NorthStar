@@ -14,6 +14,16 @@ export default {
     },
     extend: {
       /* North Design System Extensions */
+      spacing: {
+        /* North spacing scale - enables p-north-lg, mb-north-xl, etc. */
+        'north-xs': '4px',
+        'north-sm': '8px',
+        'north-md': '12px',
+        'north-base': '16px',
+        'north-lg': '24px',
+        'north-xl': '32px',
+        'north-2xl': '48px',
+      },
       fontFamily: {
         ui: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         accent: ['Fraunces', 'Georgia', 'serif'],

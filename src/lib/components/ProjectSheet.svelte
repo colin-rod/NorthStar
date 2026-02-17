@@ -26,9 +26,9 @@
     SheetFooter,
     SheetTitle,
   } from '$lib/components/ui/sheet';
-  import Button from '$lib/components/ui/button.svelte';
-  import Input from '$lib/components/ui/input.svelte';
-  import Label from '$lib/components/ui/label.svelte';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
 
   interface Props {
     open: boolean;
@@ -38,9 +38,10 @@
 
   let { open = $bindable(false), mode, project }: Props = $props();
 
-  const action = mode === 'create' ? '?/createProject' : '?/updateProject';
-  const title = mode === 'create' ? 'New Project' : 'Edit Project';
-  const submitLabel = mode === 'create' ? 'Create Project' : 'Save Changes';
+  // Use $derived to make these reactive to mode changes
+  const action = $derived(mode === 'create' ? '?/createProject' : '?/updateProject');
+  const title = $derived(mode === 'create' ? 'New Project' : 'Edit Project');
+  const submitLabel = $derived(mode === 'create' ? 'Create Project' : 'Save Changes');
 </script>
 
 <Sheet bind:open>

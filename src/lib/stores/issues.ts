@@ -48,6 +48,14 @@ export function openIssueSheet(issue: Issue) {
 }
 
 /**
+ * Helper function to open issue sheet in create mode (no selected issue)
+ */
+export function openCreateIssueSheet() {
+  selectedIssue.set(null);
+  isIssueSheetOpen.set(true);
+}
+
+/**
  * Helper function to close issue sheet
  */
 export function closeIssueSheet() {

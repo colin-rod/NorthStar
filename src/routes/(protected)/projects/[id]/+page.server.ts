@@ -8,6 +8,8 @@ import { error } from '@sveltejs/kit';
 
 import type { PageServerLoad } from './$types';
 
+import { computeIssueCounts } from '$lib/utils/issue-counts';
+
 export const load: PageServerLoad = async ({ params, locals }) => {
   // Load project
   const { data: project, error: projectError } = await locals.supabase
@@ -20,13 +22,19 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     throw error(404, 'Project not found');
   }
 
-  // Load epics with issue counts
+  // Load epics with issues and dependencies
   const { data: epics, error: epicsError } = await locals.supabase
     .from('epics')
     .select(
       `
       *,
-      issues(*)
+      issues(
+        *,
+        dependencies!dependencies_issue_id_fkey(
+          depends_on_issue_id,
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*)
+        )
+      )
     `,
     )
     .eq('project_id', params.id)
@@ -36,8 +44,28 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     console.error('Error loading epics:', epicsError);
   }
 
+  // Compute counts for each epic
+  const epicsWithCounts = (epics || []).map((epic) => ({
+    ...epic,
+    counts: computeIssueCounts(epic.issues || []),
+  }));
+
+  // Flatten all issues from all epics for drill-down view
+  const allIssues = epicsWithCounts.flatMap((epic) =>
+    (epic.issues || []).map((issue: Record<string, unknown>) => ({
+      ...issue,
+      epic: { id: epic.id, name: epic.name, status: epic.status },
+      project: { id: project.id, name: project.name },
+    })),
+  );
+
   return {
     project,
-    epics: epics || [],
+    epics: epicsWithCounts,
+    issues: allIssues,
+    breadcrumbs: [
+      { label: 'Projects', href: '/projects' },
+      { label: project.name, href: `/projects/${project.id}`, current: true },
+    ],
   };
 };

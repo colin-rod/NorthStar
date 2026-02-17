@@ -12,7 +12,7 @@
           'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t border-border rounded-t-[20px]',
         left: 'data-[state=closed]:slide-out-to-start data-[state=open]:slide-in-from-start inset-y-0 start-0 h-full w-3/4 border-e border-border sm:max-w-sm rounded-e-lg',
         right:
-          'data-[state=closed]:slide-out-to-end data-[state=open]:slide-in-from-end inset-y-0 end-0 h-full w-3/4 border-s border-border sm:max-w-sm rounded-s-lg',
+          'data-[state=closed]:slide-out-to-end data-[state=open]:slide-in-from-end inset-y-0 end-0 h-full w-full border-s border-border sm:max-w-[600px] rounded-s-lg',
       },
     },
     defaultVariants: {
@@ -31,19 +31,29 @@
   import SheetOverlay from './sheet-overlay.svelte';
   import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
   import type { ComponentProps } from 'svelte';
+  import { useSwipeToDismiss } from '$lib/hooks/useSwipeToDismiss.svelte';
 
   let {
     ref = $bindable(null),
     class: className,
     side = 'bottom',
     portalProps,
+    onOpenChange,
     children,
     ...restProps
   }: WithoutChildrenOrChild<SheetPrimitive.ContentProps> & {
     portalProps?: WithoutChildrenOrChild<ComponentProps<typeof SheetPortal>>;
     side?: Side;
+    onOpenChange?: (open: boolean) => void;
     children: Snippet;
   } = $props();
+
+  // Enable swipe-to-dismiss for bottom sheet only
+  $effect(() => {
+    if (side === 'bottom' && ref && onOpenChange) {
+      useSwipeToDismiss(ref, () => onOpenChange(false));
+    }
+  });
 </script>
 
 <SheetPortal {...portalProps}>

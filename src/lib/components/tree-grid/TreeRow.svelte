@@ -1,0 +1,179 @@
+<script lang="ts">
+  /**
+   * TreeRow Component - Single Row in Tree Grid
+   *
+   * Renders a single row with level-based styling and all column cells.
+   * Supports selection, expansion, and inline editing.
+   */
+
+  import type { TreeNode, DragDropState } from '$lib/types/tree-grid';
+  import type { Issue } from '$lib/types';
+  import { calculateIndentation } from '$lib/utils/tree-grid-helpers';
+  import SelectionCell from './cells/SelectionCell.svelte';
+  import DragHandleCell from './cells/DragHandleCell.svelte';
+  import TitleCell from './cells/TitleCell.svelte';
+  import StatusCell from './cells/StatusCell.svelte';
+  import MilestoneCell from './cells/MilestoneCell.svelte';
+  import StoryPointsCell from './cells/StoryPointsCell.svelte';
+  import TotalPointsCell from './cells/TotalPointsCell.svelte';
+  import ProgressCell from './cells/ProgressCell.svelte';
+
+  interface Props {
+    node: TreeNode;
+    allNodes: TreeNode[];
+    isExpanded: boolean;
+    expandedIds: Set<string>;
+    isSelected: boolean;
+    editMode: boolean;
+    dragDropState?: DragDropState;
+    onToggleExpand: (id: string) => void;
+    onToggleSelect: (id: string) => void;
+    onCellEdit: (nodeId: string, field: string, value: any) => void;
+    onIssueClick?: (issue: Issue) => void;
+  }
+
+  let {
+    node,
+    allNodes,
+    isExpanded,
+    expandedIds,
+    isSelected,
+    editMode,
+    dragDropState,
+    onToggleExpand,
+    onToggleSelect,
+    onCellEdit,
+    onIssueClick,
+  }: Props = $props();
+
+  // Level-based background shading (per spec)
+  const bgClass = $derived.by(() => {
+    if (node.type === 'issue') return 'bg-surface-subtle/30';
+    return 'bg-surface';
+  });
+
+  // Typography weight per level
+  const fontWeight = $derived.by(() => {
+    if (node.type === 'project') return 'font-semibold';
+    return 'font-medium';
+  });
+
+  // Derive drag state classes for visual feedback
+  const dragClasses = $derived.by(() => {
+    const classes = [];
+
+    if (node.isDragging) {
+      classes.push('opacity-40', 'scale-105', 'shadow-lg');
+    }
+
+    if (node.isValidDropTarget) {
+      classes.push('bg-primary/10', 'border-l-2', 'border-primary');
+    } else if (dragDropState?.draggingNodeId && !node.isValidDropTarget) {
+      classes.push('opacity-50');
+    }
+
+    return classes.join(' ');
+  });
+
+  // Derive expansion state classes for visual feedback
+  const expansionClasses = $derived.by(() => {
+    const classes = [];
+
+    // If nothing is expanded, no special styling
+    if (expandedIds.size === 0) {
+      return '';
+    }
+
+    // Check if THIS row is expanded
+    if (isExpanded) {
+      // Highlighted: subtle background accent
+      classes.push('bg-primary/5', 'ring-1', 'ring-primary/20');
+      return classes.join(' ');
+    }
+
+    // Check if this row is a CHILD of an expanded row
+    if (node.parentId && expandedIds.has(node.parentId)) {
+      // Child of expanded row: keep full opacity
+      return '';
+    }
+
+    // Otherwise: dim this row
+    classes.push('opacity-60');
+    return classes.join(' ');
+  });
+
+  // Handle double-click to open drawer
+  function handleDoubleClick() {
+    // Only open drawer for issues and sub-issues
+    if ((node.type === 'issue' || node.type === 'sub-issue') && onIssueClick) {
+      onIssueClick(node.data as Issue);
+    }
+  }
+</script>
+
+<tr
+  class="relative border-b border-border-divider hover:bg-surface-subtle transition-all duration-150 group {bgClass} {isSelected
+    ? 'bg-primary-tint'
+    : ''} {dragClasses} {expansionClasses}"
+  data-node-id={node.id}
+  data-node-type={node.type}
+  data-node-level={node.level}
+  ondblclick={handleDoubleClick}
+>
+  <!-- Drag Handle -->
+  <td class="py-4 px-4">
+    <DragHandleCell {editMode} />
+  </td>
+
+  <!-- Selection Checkbox -->
+  <td class="py-4 px-4">
+    <SelectionCell checked={isSelected} onToggle={() => onToggleSelect(node.id)} />
+  </td>
+
+  <!-- Title with Indentation + Chevron -->
+  <td class="py-4 px-4">
+    <TitleCell
+      {node}
+      {allNodes}
+      {isExpanded}
+      indentation={calculateIndentation(node.level)}
+      {fontWeight}
+      {editMode}
+      onToggleExpand={() => onToggleExpand(node.id)}
+      onEdit={(value) => onCellEdit(node.id, 'title', value)}
+    />
+  </td>
+
+  <!-- Status -->
+  <td class="py-4 px-4">
+    <StatusCell {node} {editMode} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
+  </td>
+
+  <!-- Milestone -->
+  <td class="py-4 px-4">
+    <MilestoneCell
+      {node}
+      {editMode}
+      onEdit={(value) => onCellEdit(node.id, 'milestone_id', value)}
+    />
+  </td>
+
+  <!-- Story Points -->
+  <td class="py-4 px-4">
+    <StoryPointsCell
+      {node}
+      {editMode}
+      onEdit={(value) => onCellEdit(node.id, 'story_points', value)}
+    />
+  </td>
+
+  <!-- Total Story Points (Rollup) -->
+  <td class="py-4 px-4">
+    <TotalPointsCell {node} />
+  </td>
+
+  <!-- Progress -->
+  <td class="py-4 px-4">
+    <ProgressCell {node} />
+  </td>
+</tr>

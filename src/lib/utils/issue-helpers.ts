@@ -24,7 +24,11 @@ export function isBlocked(issue: Issue): boolean {
 
   // Check if any dependency is not done or canceled
   return issue.dependencies.some((dep) => {
-    return dep.depends_on_issue.status !== 'done' && dep.depends_on_issue.status !== 'canceled';
+    return (
+      dep.depends_on_issue &&
+      dep.depends_on_issue.status !== 'done' &&
+      dep.depends_on_issue.status !== 'canceled'
+    );
   });
 }
 
@@ -49,7 +53,9 @@ export function getBlockingDependencies(issue: Issue): Issue[] {
 
   return issue.dependencies
     .map((dep) => dep.depends_on_issue)
-    .filter((dep) => dep.status !== 'done' && dep.status !== 'canceled');
+    .filter((dep): dep is Issue => {
+      return dep !== undefined && dep.status !== 'done' && dep.status !== 'canceled';
+    });
 }
 
 /**
@@ -64,7 +70,9 @@ export function getSatisfiedDependencies(issue: Issue): Issue[] {
 
   return issue.dependencies
     .map((dep) => dep.depends_on_issue)
-    .filter((dep) => dep.status === 'done' || dep.status === 'canceled');
+    .filter((dep): dep is Issue => {
+      return dep !== undefined && (dep.status === 'done' || dep.status === 'canceled');
+    });
 }
 
 /**
