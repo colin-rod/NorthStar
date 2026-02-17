@@ -10,11 +10,15 @@
   import { goto, invalidateAll } from '$app/navigation';
   import TreeGrid from '$lib/components/tree-grid/TreeGrid.svelte';
   import ProjectSheet from '$lib/components/ProjectSheet.svelte';
+  import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
   import EpicSheet from '$lib/components/EpicSheet.svelte';
+  import EpicDetailSheet from '$lib/components/EpicDetailSheet.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import { Button } from '$lib/components/ui/button';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
+  import type { IssueCounts } from '$lib/utils/issue-counts';
+  import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { isIssueSheetOpen, selectedIssue, openIssueSheet } from '$lib/stores/issues';
 
   let { data }: { data: PageData } = $props();
@@ -45,6 +49,17 @@
   let epicSheetMode: 'create' | 'edit' = $state('create');
   let selectedEpic: Epic | undefined = $state(undefined);
   let epicCreateProjectId: string | undefined = $state(undefined);
+
+  // Detail sheet state (opened via double-click)
+  let projectDetailSheetOpen = $state(false);
+  let selectedProjectForDetail: Project | null = $state(null);
+  let selectedProjectCounts: IssueCounts | null = $state(null);
+  let selectedProjectMetrics: ProjectMetrics | null = $state(null);
+  let selectedProjectEpics: Epic[] = $state([]);
+
+  let epicDetailSheetOpen = $state(false);
+  let selectedEpicForDetail: Epic | null = $state(null);
+  let selectedEpicCounts: IssueCounts | null = $state(null);
 
   // Feedback state
   let feedbackMessage = $state('');
@@ -248,6 +263,25 @@
     projectSheetOpen = true;
   }
 
+  function handleProjectDoubleClick(
+    project: Project,
+    counts: IssueCounts,
+    metrics: ProjectMetrics,
+    epics: Epic[],
+  ) {
+    selectedProjectForDetail = project;
+    selectedProjectCounts = counts;
+    selectedProjectMetrics = metrics;
+    selectedProjectEpics = epics;
+    projectDetailSheetOpen = true;
+  }
+
+  function handleEpicDoubleClick(epic: Epic, counts: IssueCounts) {
+    selectedEpicForDetail = epic;
+    selectedEpicCounts = counts;
+    epicDetailSheetOpen = true;
+  }
+
   function showToast(message: string, type: 'success' | 'error') {
     feedbackMessage = message;
     feedbackType = type;
@@ -309,6 +343,8 @@
       onBulkAction={handleBulkAction}
       onShowToast={showToast}
       onIssueClick={openIssueSheet}
+      onProjectClick={handleProjectDoubleClick}
+      onEpicClick={handleEpicDoubleClick}
     />
   {/if}
 </div>
@@ -316,12 +352,28 @@
 <!-- Project create/edit sheet -->
 <ProjectSheet bind:open={projectSheetOpen} mode={projectSheetMode} project={selectedProject} />
 
+<!-- Project detail sheet (opened via double-click) -->
+<ProjectDetailSheet
+  bind:open={projectDetailSheetOpen}
+  project={selectedProjectForDetail}
+  counts={selectedProjectCounts}
+  metrics={selectedProjectMetrics}
+  epics={selectedProjectEpics}
+/>
+
 <!-- Epic create/edit sheet -->
 <EpicSheet
   bind:open={epicSheetOpen}
   mode={epicSheetMode}
   epic={selectedEpic}
   projectId={epicCreateProjectId}
+/>
+
+<!-- Epic detail sheet (opened via double-click) -->
+<EpicDetailSheet
+  bind:open={epicDetailSheetOpen}
+  epic={selectedEpicForDetail}
+  counts={selectedEpicCounts}
 />
 
 <!-- Issue sheet (using store) -->

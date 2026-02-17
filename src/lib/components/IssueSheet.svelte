@@ -644,7 +644,7 @@
                   {#each subIssues as subIssue (subIssue.id)}
                     <button
                       type="button"
-                      onclick={() => {
+                      ondblclick={() => {
                         issue = subIssue;
                         showSubIssueForm = false;
                       }}

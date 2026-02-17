@@ -45,6 +45,13 @@
     onBulkAction?: (action: string) => void;
     onShowToast?: (message: string, type: 'success' | 'error') => void;
     onIssueClick?: (issue: Issue) => void;
+    onProjectClick?: (
+      project: Project,
+      counts: IssueCounts,
+      metrics: ProjectMetrics,
+      epics: Epic[],
+    ) => void;
+    onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
   }
 
   let {
@@ -60,6 +67,8 @@
     onBulkAction,
     onShowToast,
     onIssueClick,
+    onProjectClick,
+    onEpicClick,
   }: Props = $props();
 
   // Flatten tree into nodes and calculate rollups
@@ -329,6 +338,8 @@
             {onToggleSelect}
             {onCellEdit}
             {onIssueClick}
+            {onProjectClick}
+            {onEpicClick}
           />
 
           <!-- Check if we should show AddRow after this node -->
