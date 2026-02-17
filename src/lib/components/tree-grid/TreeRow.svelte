@@ -7,6 +7,7 @@
    */
 
   import type { TreeNode, DragDropState } from '$lib/types/tree-grid';
+  import type { Issue } from '$lib/types';
   import { calculateIndentation } from '$lib/utils/tree-grid-helpers';
   import SelectionCell from './cells/SelectionCell.svelte';
   import DragHandleCell from './cells/DragHandleCell.svelte';
@@ -28,6 +29,7 @@
     onToggleExpand: (id: string) => void;
     onToggleSelect: (id: string) => void;
     onCellEdit: (nodeId: string, field: string, value: any) => void;
+    onIssueClick?: (issue: Issue) => void;
   }
 
   let {
@@ -41,6 +43,7 @@
     onToggleExpand,
     onToggleSelect,
     onCellEdit,
+    onIssueClick,
   }: Props = $props();
 
   // Level-based background shading (per spec)
@@ -101,8 +104,10 @@
 
   // Handle double-click to open drawer
   function handleDoubleClick() {
-    // TODO: Emit event to open drawer for this node
-    // This will be wired up when integrating with the page
+    // Only open drawer for issues and sub-issues
+    if ((node.type === 'issue' || node.type === 'sub-issue') && onIssueClick) {
+      onIssueClick(node.data as Issue);
+    }
   }
 </script>
 

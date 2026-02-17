@@ -44,6 +44,7 @@
     onCreateChild: (parentId: string, parentType: string, data: { title: string }) => void;
     onBulkAction?: (action: string) => void;
     onShowToast?: (message: string, type: 'success' | 'error') => void;
+    onIssueClick?: (issue: Issue) => void;
   }
 
   let {
@@ -58,6 +59,7 @@
     onCreateChild,
     onBulkAction,
     onShowToast,
+    onIssueClick,
   }: Props = $props();
 
   // Flatten tree into nodes and calculate rollups
@@ -326,6 +328,7 @@
             {onToggleExpand}
             {onToggleSelect}
             {onCellEdit}
+            {onIssueClick}
           />
 
           <!-- Check if we should show AddRow after this node -->

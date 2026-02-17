@@ -16,8 +16,9 @@
   import { goto } from '$app/navigation';
   import EpicCard from '$lib/components/EpicCard.svelte';
   import ExpandedEpicView from '$lib/components/ExpandedEpicView.svelte';
+  import IssueSheet from '$lib/components/IssueSheet.svelte';
   import { Button } from '$lib/components/ui/button';
-  import { openIssueSheet } from '$lib/stores/issues';
+  import { openIssueSheet, isIssueSheetOpen, selectedIssue } from '$lib/stores/issues';
   import type { Issue } from '$lib/types';
 
   let { data }: { data: PageData } = $props();
@@ -99,6 +100,17 @@
     {/if}
   </div>
 </div>
+
+<!-- Issue Detail Sheet -->
+<IssueSheet
+  bind:open={$isIssueSheetOpen}
+  mode={$selectedIssue ? 'edit' : 'create'}
+  issue={$selectedIssue}
+  epics={data.epics || []}
+  milestones={[]}
+  projectIssues={data.issues || []}
+  projects={[data.project]}
+/>
 
 <!-- TODO: Add project settings -->
 <!-- TODO: Add project statistics -->

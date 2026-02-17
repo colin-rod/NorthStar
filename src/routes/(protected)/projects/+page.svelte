@@ -308,6 +308,7 @@
       onCreateChild={handleCreateChild}
       onBulkAction={handleBulkAction}
       onShowToast={showToast}
+      onIssueClick={openIssueSheet}
     />
   {/if}
 </div>
