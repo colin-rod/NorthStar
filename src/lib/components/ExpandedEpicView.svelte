@@ -80,6 +80,17 @@
     }
     return counts;
   });
+
+  // Compute done sub-issue counts (done + canceled) for completion pill
+  let doneSubIssueCounts = $derived.by(() => {
+    const counts = new Map<string, number>();
+    for (const issue of epicIssues) {
+      if (issue.parent_issue_id && (issue.status === 'done' || issue.status === 'canceled')) {
+        counts.set(issue.parent_issue_id, (counts.get(issue.parent_issue_id) || 0) + 1);
+      }
+    }
+    return counts;
+  });
 </script>
 
 <div class="border rounded-lg p-north-lg bg-surface-base">
@@ -135,6 +146,7 @@
               onClick={() => onIssueClick(issue)}
               hasSubIssues={issuesWithSubIssues.has(issue.id)}
               subIssueCount={subIssueCounts.get(issue.id) || 0}
+              doneSubIssueCount={doneSubIssueCounts.get(issue.id) || 0}
               isExpanded={expandedIssueIds.has(issue.id)}
               isSubIssue={!!issue.parent_issue_id}
               onToggleExpand={() => onToggleIssue(issue.id)}

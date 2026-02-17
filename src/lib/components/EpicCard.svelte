@@ -37,6 +37,8 @@
     if (status === 'done') return 'status-done';
     return 'status-canceled';
   };
+
+  let headerProgress = $derived(computeProgress(counts));
 </script>
 
 <!-- North Design: Card with 10px radius, subtle border, minimal hover -->
@@ -50,10 +52,17 @@
         <div class="flex items-center justify-between gap-3">
           <!-- Epic name: section header weight -->
           <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
-          <!-- Status badge: subtle, not loud -->
-          <Badge variant={getStatusVariant(epic.status)} class="text-xs shrink-0">
-            {epic.status}
-          </Badge>
+          <!-- Summary pill and status badge -->
+          <div class="flex items-center gap-2 shrink-0">
+            {#if headerProgress.total > 0}
+              <Badge variant="outline" class="text-xs"
+                >{headerProgress.completed}/{headerProgress.total}</Badge
+              >
+            {/if}
+            <Badge variant={getStatusVariant(epic.status)} class="text-xs">
+              {epic.status}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -88,17 +97,16 @@
           </div>
         </div>
         <!-- Progress bar -->
-        {@const progress = computeProgress(counts)}
-        {#if progress.total > 0}
+        {#if headerProgress.total > 0}
           <div class="mt-3 flex items-center gap-2">
             <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
               <div
                 class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                style="width: {progress.percentage}%"
+                style="width: {headerProgress.percentage}%"
               ></div>
             </div>
             <span class="text-metadata text-foreground-secondary shrink-0">
-              {progress.percentage}%
+              {headerProgress.percentage}%
             </span>
           </div>
         {/if}
@@ -115,10 +123,17 @@
         <div class="flex items-center justify-between gap-3">
           <!-- Epic name: section header weight -->
           <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
-          <!-- Status badge: subtle, not loud -->
-          <Badge variant={getStatusVariant(epic.status)} class="text-xs shrink-0">
-            {epic.status}
-          </Badge>
+          <!-- Summary pill and status badge -->
+          <div class="flex items-center gap-2 shrink-0">
+            {#if headerProgress.total > 0}
+              <Badge variant="outline" class="text-xs"
+                >{headerProgress.completed}/{headerProgress.total}</Badge
+              >
+            {/if}
+            <Badge variant={getStatusVariant(epic.status)} class="text-xs">
+              {epic.status}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -153,17 +168,16 @@
           </div>
         </div>
         <!-- Progress bar -->
-        {@const progress = computeProgress(counts)}
-        {#if progress.total > 0}
+        {#if headerProgress.total > 0}
           <div class="mt-3 flex items-center gap-2">
             <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
               <div
                 class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                style="width: {progress.percentage}%"
+                style="width: {headerProgress.percentage}%"
               ></div>
             </div>
             <span class="text-metadata text-foreground-secondary shrink-0">
-              {progress.percentage}%
+              {headerProgress.percentage}%
             </span>
           </div>
         {/if}

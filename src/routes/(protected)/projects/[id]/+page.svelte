@@ -20,6 +20,7 @@
   import { Button } from '$lib/components/ui/button';
   import { openIssueSheet, isIssueSheetOpen, selectedIssue } from '$lib/stores/issues';
   import type { Issue } from '$lib/types';
+  import { Badge } from '$lib/components/ui/badge';
 
   let { data }: { data: PageData } = $props();
 
@@ -28,6 +29,10 @@
 
   // Component-local state for expanded issues (no persistence needed)
   let expandedIssueIds = $state<Set<string>>(new Set());
+
+  let doneEpics = $derived(
+    (data.epics || []).filter((e) => e.status === 'done' || e.status === 'canceled').length,
+  );
 
   function toggleEpic(epicId: string) {
     const url = new URL($page.url);
@@ -58,9 +63,10 @@
   <div class="flex items-center justify-between">
     <div>
       <h1 class="font-accent text-page-title">{data.project?.name || 'Project'}</h1>
-      <p class="text-muted-foreground">
-        {data.epics?.length || 0} epics
-      </p>
+      <div class="flex items-center gap-2 mt-1">
+        <p class="text-muted-foreground">{data.epics?.length || 0} epics</p>
+        <Badge variant="outline" class="text-xs">{doneEpics}/{data.epics?.length || 0}</Badge>
+      </div>
     </div>
     <Button>New Epic</Button>
   </div>

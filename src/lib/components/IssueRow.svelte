@@ -35,6 +35,7 @@
     dragDisabled?: boolean;
     hasSubIssues?: boolean;
     subIssueCount?: number;
+    doneSubIssueCount?: number;
     isExpanded?: boolean;
     isSubIssue?: boolean;
     onToggleExpand?: (() => void) | null;
@@ -48,6 +49,7 @@
     dragDisabled = $bindable(true),
     hasSubIssues = false,
     subIssueCount = 0,
+    doneSubIssueCount = 0,
     isExpanded = false,
     isSubIssue = false,
     onToggleExpand = null,
@@ -71,7 +73,6 @@
     };
     return colors[status] || 'bg-status-todo';
   };
-
 
   type PriorityVariant = 'priority-p0' | 'priority-p1' | 'priority-p2' | 'priority-p3';
 
@@ -137,9 +138,7 @@
         {:else}
           <ChevronRight class="h-4 w-4 text-muted-foreground" />
         {/if}
-        {#if subIssueCount > 0}
-          <span class="text-xs text-muted-foreground">({subIssueCount})</span>
-        {/if}
+        <Badge variant="outline" class="text-xs">{doneSubIssueCount}/{subIssueCount}</Badge>
       </div>
     {:else}
       <!-- Spacer for alignment when no chevron -->
