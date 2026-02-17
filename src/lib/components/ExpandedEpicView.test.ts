@@ -23,6 +23,7 @@ describe('ExpandedEpicView', () => {
     user_id: 'user-1',
     created_at: new Date().toISOString(),
     archived_at: null,
+    status: 'active' as const,
     description: null,
   };
 

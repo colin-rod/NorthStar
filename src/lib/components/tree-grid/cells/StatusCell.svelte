@@ -21,10 +21,9 @@
   let { node, editMode, compact = false, onEdit }: Props = $props();
 
   // Get status from node data
-  // Note: Projects don't currently have status in the schema
   const status = $derived.by(() => {
     if (node.type === 'project') {
-      return 'active'; // Default for projects
+      return (node.data as Project).status ?? 'active';
     }
     return (node.data as Epic | Issue).status;
   });

@@ -28,10 +28,13 @@ export interface Project {
   description: string | null;
   created_at: string;
   archived_at: string | null;
+  status: ProjectStatus;
 
   // Relations (populated via joins)
   epics?: Epic[];
 }
+
+export type ProjectStatus = 'active' | 'done' | 'canceled';
 
 /**
  * Epic

@@ -52,6 +52,7 @@
       epics: Epic[],
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
+    onContextMenu?: (node: import('$lib/types/tree-grid').TreeNode, event: MouseEvent) => void;
   }
 
   let {
@@ -69,6 +70,7 @@
     onIssueClick,
     onProjectClick,
     onEpicClick,
+    onContextMenu,
   }: Props = $props();
 
   // Flatten tree into nodes and calculate rollups
@@ -340,6 +342,7 @@
             {onIssueClick}
             {onProjectClick}
             {onEpicClick}
+            {onContextMenu}
           />
 
           <!-- Check if we should show AddRow after this node -->

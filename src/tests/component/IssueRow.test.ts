@@ -27,6 +27,7 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active',
         description: null,
       },
       epic: {
@@ -108,6 +109,7 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active',
         description: null,
       },
       epic: {
@@ -170,6 +172,7 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active',
         description: null,
       },
       epic: {
@@ -212,6 +215,7 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active',
         description: null,
       },
       epic: {
@@ -294,6 +298,7 @@ describe('IssueRow - Additional Scenarios', () => {
       user_id: 'user-1',
       created_at: new Date().toISOString(),
       archived_at: null,
+      status: 'active',
       description: null,
     },
     epic: {

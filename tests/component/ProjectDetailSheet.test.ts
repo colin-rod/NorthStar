@@ -17,6 +17,7 @@ const mockProject: Project = {
   name: 'Test Project',
   created_at: '2024-01-01',
   archived_at: null,
+  status: 'active',
   description: null,
 };
 

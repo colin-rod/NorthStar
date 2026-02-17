@@ -39,6 +39,7 @@
       epics: Epic[],
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
+    onContextMenu?: (node: TreeNode, event: MouseEvent) => void;
   }
 
   let {
@@ -55,6 +56,7 @@
     onIssueClick,
     onProjectClick,
     onEpicClick,
+    onContextMenu,
   }: Props = $props();
 
   // Level-based background shading (per spec)
@@ -113,6 +115,12 @@
     return classes.join(' ');
   });
 
+  // Handle right-click to open context menu
+  function handleContextMenuEvent(event: MouseEvent) {
+    event.preventDefault();
+    onContextMenu?.(node, event);
+  }
+
   // Handle double-click to open drawer
   function handleDoubleClick() {
     if ((node.type === 'issue' || node.type === 'sub-issue') && onIssueClick) {
@@ -135,6 +143,7 @@
   data-node-id={node.id}
   data-node-type={node.type}
   data-node-level={node.level}
+  oncontextmenu={handleContextMenuEvent}
   ondblclick={handleDoubleClick}
 >
   <!-- Drag Handle -->

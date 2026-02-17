@@ -20,6 +20,8 @@
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { isIssueSheetOpen, selectedIssue, openIssueSheet } from '$lib/stores/issues';
+  import ContextMenu from '$lib/components/ContextMenu.svelte';
+  import type { TreeNode } from '$lib/types/tree-grid';
 
   let { data }: { data: PageData } = $props();
 
@@ -60,6 +62,12 @@
   let epicDetailSheetOpen = $state(false);
   let selectedEpicForDetail: Epic | null = $state(null);
   let selectedEpicCounts: IssueCounts | null = $state(null);
+
+  // Context menu state
+  let contextMenuOpen = $state(false);
+  let contextMenuNode = $state<TreeNode | null>(null);
+  let contextMenuX = $state(0);
+  let contextMenuY = $state(0);
 
   // Feedback state
   let feedbackMessage = $state('');
@@ -282,6 +290,100 @@
     epicDetailSheetOpen = true;
   }
 
+  // --- Context menu handlers ---
+
+  function handleContextMenu(node: TreeNode, event: MouseEvent) {
+    contextMenuX = event.clientX;
+    contextMenuY = event.clientY;
+    contextMenuNode = node;
+    contextMenuOpen = true;
+  }
+
+  function handleContextMenuClose() {
+    contextMenuOpen = false;
+    contextMenuNode = null;
+  }
+
+  async function handleContextStatusChange(node: TreeNode, status: string) {
+    await handleCellEdit(node.id, 'status', status);
+  }
+
+  async function handleContextPriorityChange(node: TreeNode, priority: number) {
+    await handleCellEdit(node.id, 'priority', priority.toString());
+  }
+
+  async function handleContextStoryPointsChange(node: TreeNode, points: number) {
+    await handleCellEdit(node.id, 'story_points', points.toString());
+  }
+
+  function handleContextRename(node: TreeNode) {
+    if (node.type === 'project') {
+      selectedProjectForDetail = node.data as Project;
+      projectDetailSheetOpen = true;
+    } else if (node.type === 'epic') {
+      selectedEpicForDetail = node.data as Epic;
+      epicDetailSheetOpen = true;
+    }
+  }
+
+  function handleContextAddChild(node: TreeNode) {
+    if (node.type === 'project') {
+      epicCreateProjectId = node.id;
+      epicSheetMode = 'create';
+      selectedEpic = undefined;
+      epicSheetOpen = true;
+    } else if (node.type === 'epic') {
+      // Find the project for this epic
+      const project = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === node.id));
+      if (project) {
+        handleCreateChild(node.id, 'epic', { title: '' });
+      }
+    } else if (node.type === 'issue') {
+      handleCreateChild(node.id, 'issue', { title: '' });
+    }
+  }
+
+  async function handleContextArchive(node: TreeNode) {
+    const formData = new FormData();
+    formData.append('id', node.id);
+    try {
+      const response = await fetch('?/archiveProject', { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        showToast('Project archived', 'success');
+      } else {
+        showToast('Failed to archive project', 'error');
+      }
+    } catch {
+      showToast('Failed to archive project', 'error');
+    }
+  }
+
+  async function handleContextDelete(node: TreeNode) {
+    const actionMap: Record<string, string> = {
+      project: '?/deleteProject',
+      epic: '?/deleteEpic',
+      issue: '?/deleteIssue',
+      'sub-issue': '?/deleteIssue',
+    };
+    const action = actionMap[node.type];
+    if (!action) return;
+
+    const formData = new FormData();
+    formData.append('id', node.id);
+    try {
+      const response = await fetch(action, { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        showToast(`${node.type} deleted`, 'success');
+      } else {
+        showToast(`Failed to delete ${node.type}`, 'error');
+      }
+    } catch {
+      showToast(`Failed to delete ${node.type}`, 'error');
+    }
+  }
+
   function showToast(message: string, type: 'success' | 'error') {
     feedbackMessage = message;
     feedbackType = type;
@@ -345,6 +447,7 @@
       onIssueClick={openIssueSheet}
       onProjectClick={handleProjectDoubleClick}
       onEpicClick={handleEpicDoubleClick}
+      onContextMenu={handleContextMenu}
     />
   {/if}
 </div>
@@ -388,6 +491,22 @@
   projectIssues={data.projects.flatMap((p) => p.issues || [])}
   projects={data.projects}
   userId={data.session?.user?.id ?? ''}
+/>
+
+<!-- Right-click context menu -->
+<ContextMenu
+  node={contextMenuNode}
+  x={contextMenuX}
+  y={contextMenuY}
+  bind:open={contextMenuOpen}
+  onClose={handleContextMenuClose}
+  onRename={handleContextRename}
+  onStatusChange={handleContextStatusChange}
+  onAddChild={handleContextAddChild}
+  onArchive={handleContextArchive}
+  onDelete={handleContextDelete}
+  onPriorityChange={handleContextPriorityChange}
+  onStoryPointsChange={handleContextStoryPointsChange}
 />
 
 <!-- Simple toast-style feedback -->

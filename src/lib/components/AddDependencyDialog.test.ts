@@ -134,6 +134,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     user_id: 'user-1',
     created_at: '2024-01-01',
     archived_at: null,
+    status: 'active' as const,
     description: null,
   };
 

@@ -610,6 +610,64 @@ export const actions: Actions = {
     return { success: true, attachment: data };
   },
 
+  deleteProject: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Project ID is required' });
+
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', session.user.id);
+
+    if (error) {
+      console.error('Delete project error:', error);
+      return fail(500, { error: 'Failed to delete project' });
+    }
+
+    return { success: true, action: 'deleteProject' };
+  },
+
+  deleteEpic: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Epic ID is required' });
+
+    const { error } = await supabase.from('epics').delete().eq('id', id);
+
+    if (error) {
+      console.error('Delete epic error:', error);
+      return fail(500, { error: 'Failed to delete epic' });
+    }
+
+    return { success: true, action: 'deleteEpic' };
+  },
+
+  deleteIssue: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Issue ID is required' });
+
+    const { error } = await supabase.from('issues').delete().eq('id', id);
+
+    if (error) {
+      console.error('Delete issue error:', error);
+      return fail(500, { error: 'Failed to delete issue' });
+    }
+
+    return { success: true, action: 'deleteIssue' };
+  },
+
   /**
    * Delete attachment metadata (client handles storage file removal)
    */

@@ -16,6 +16,7 @@ describe('ExpandedProjectView', () => {
     user_id: 'user-1',
     created_at: new Date().toISOString(),
     archived_at: null,
+    status: 'active',
     description: null,
     epics: [
       {
