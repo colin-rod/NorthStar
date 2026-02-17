@@ -96,6 +96,20 @@ describe('EpicCard', () => {
       const button = container.querySelector('button');
       expect(button).toBeTruthy();
     });
+
+    it('should show summary pill with completed/total when there are issues', () => {
+      const onToggle = () => {};
+      render(EpicCard, {
+        props: {
+          epic: mockEpic,
+          counts: mockCounts, // total=12, completed(done+canceled)=5+0=5
+          onToggle,
+        },
+      });
+
+      // Summary pill shows completed/total (5 done + 0 canceled = 5 completed out of 12 total)
+      expect(screen.getByText('5/12')).toBeTruthy();
+    });
   });
 
   describe('Status variants', () => {

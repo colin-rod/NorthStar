@@ -49,7 +49,9 @@
     if (epic) {
       localName = epic.name;
       localStatus = epic.status;
-      localDescription = epic.description ?? null;
+      if (!descriptionDebounceTimer) {
+        localDescription = epic.description ?? null;
+      }
       saveError = null;
       saveSuccess = false;
 

@@ -50,7 +50,9 @@
   $effect(() => {
     if (project) {
       localName = project.name;
-      localDescription = project.description ?? null;
+      if (!descriptionDebounceTimer) {
+        localDescription = project.description ?? null;
+      }
       saveError = null;
       saveSuccess = false;
 

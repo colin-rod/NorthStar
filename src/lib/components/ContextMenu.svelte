@@ -44,7 +44,19 @@
     onStoryPointsChange,
   }: Props = $props();
 
+  let triggerRef: HTMLElement | null = $state(null);
   let deleteDialogOpen = $state(false);
+
+  // bits-ui positions the menu content based on the clientX/Y from the contextmenu
+  // browser event fired on the trigger — not from the trigger's DOM position.
+  // Dispatch a synthetic event so bits-ui captures the correct cursor coordinates.
+  $effect(() => {
+    if (open && triggerRef) {
+      triggerRef.dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: x, clientY: y }),
+      );
+    }
+  });
 
   const isProject = $derived(node?.type === 'project');
   const isEpic = $derived(node?.type === 'epic');
@@ -91,6 +103,7 @@
     }}
   >
     <CM.ContextMenuTrigger
+      bind:ref={triggerRef}
       style="position: fixed; left: {x}px; top: {y}px; width: 1px; height: 1px; pointer-events: none; z-index: -1;"
       aria-hidden="true"
     />

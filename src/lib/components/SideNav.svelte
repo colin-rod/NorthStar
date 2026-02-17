@@ -9,7 +9,7 @@
    * - Serif font for app wordmark
    * - Minimal, clean appearance
    */
-  import { Home, Folder, Settings } from '@lucide/svelte';
+  import { Home, Folder } from '@lucide/svelte';
 
   import { page } from '$app/stores';
   import { cn } from '$lib/utils';
@@ -18,7 +18,6 @@
   $: pathname = $page.url.pathname;
   $: isHome = pathname === '/';
   $: isProjects = pathname.startsWith('/projects');
-  $: isSettings = pathname === '/settings';
 </script>
 
 <!-- North Design: Clean sidebar with subtle styling -->
@@ -63,22 +62,6 @@
       >
         <Folder class="w-5 h-5" />
         <span class="text-body">Projects</span>
-      </a>
-
-      <a
-        href="/settings"
-        aria-label="Settings"
-        aria-current={isSettings ? 'page' : undefined}
-        style="display: flex; align-items: center; gap: 0.75rem;"
-        class={cn(
-          'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
-          isSettings
-            ? 'bg-primary-tint text-primary font-medium'
-            : 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground',
-        )}
-      >
-        <Settings class="w-5 h-5" />
-        <span class="text-body">Settings</span>
       </a>
     </div>
   </div>

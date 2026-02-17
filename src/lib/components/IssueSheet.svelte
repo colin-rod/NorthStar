@@ -115,7 +115,9 @@
       localStoryPoints = issue.story_points;
       localEpicId = issue.epic_id;
       localMilestoneId = issue.milestone_id;
-      localDescription = issue.description ?? null;
+      if (!descriptionDebounceTimer) {
+        localDescription = issue.description ?? null;
+      }
       saveError = null;
       saveSuccess = false;
 
