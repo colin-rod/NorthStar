@@ -28,6 +28,56 @@ describe('EpicCard', () => {
     canceled: 0,
   };
 
+  describe('Priority and milestone badges', () => {
+    it('should render priority badge in navigation mode when priority is set', () => {
+      render(EpicCard, {
+        props: {
+          epic: { ...mockEpic, priority: 0 },
+          counts: mockCounts,
+        },
+      });
+      expect(screen.getByText('P0')).toBeTruthy();
+    });
+
+    it('should render milestone badge in navigation mode when milestone is set', () => {
+      render(EpicCard, {
+        props: {
+          epic: {
+            ...mockEpic,
+            milestone: { id: 'm1', name: 'v1.0', user_id: 'u1', due_date: null },
+          },
+          counts: mockCounts,
+        },
+      });
+      expect(screen.getByText('v1.0')).toBeTruthy();
+    });
+
+    it('should render priority badge in drill-down mode when priority is set', () => {
+      render(EpicCard, {
+        props: {
+          epic: { ...mockEpic, priority: 2 },
+          counts: mockCounts,
+          onToggle: () => {},
+        },
+      });
+      expect(screen.getByText('P2')).toBeTruthy();
+    });
+
+    it('should render milestone badge in drill-down mode when milestone is set', () => {
+      render(EpicCard, {
+        props: {
+          epic: {
+            ...mockEpic,
+            milestone: { id: 'm1', name: 'Q1 Release', user_id: 'u1', due_date: null },
+          },
+          counts: mockCounts,
+          onToggle: () => {},
+        },
+      });
+      expect(screen.getByText('Q1 Release')).toBeTruthy();
+    });
+  });
+
   describe('Navigation mode (without onToggle)', () => {
     it('should render as link when onToggle is undefined', () => {
       const { container } = render(EpicCard, {

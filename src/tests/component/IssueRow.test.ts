@@ -363,6 +363,20 @@ describe('IssueRow - Additional Scenarios', () => {
     expect(screen.getByText('2/3')).toBeInTheDocument();
   });
 
+  it('should render sub-issue pill with all done (1/1)', () => {
+    render(IssueRow, {
+      props: {
+        issue: baseIssue,
+        hasSubIssues: true,
+        subIssueCount: 1,
+        doneSubIssueCount: 1,
+        isExpanded: false,
+      },
+    });
+
+    expect(screen.getByText('1/1')).toBeInTheDocument();
+  });
+
   it('should not render sub-issue pill when hasSubIssues is false', () => {
     render(IssueRow, {
       props: {
