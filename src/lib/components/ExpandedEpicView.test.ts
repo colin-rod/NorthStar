@@ -14,6 +14,7 @@ describe('ExpandedEpicView', () => {
     is_default: false,
     sort_order: 0,
     description: null,
+    priority: null,
   };
 
   const mockProject = {

@@ -147,6 +147,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     is_default: false,
     sort_order: null,
     description: null,
+    priority: null,
   };
 
   const mockIssue: Issue = {

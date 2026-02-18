@@ -52,11 +52,21 @@
         <div class="flex items-center justify-between gap-3">
           <!-- Epic name: section header weight -->
           <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
-          <!-- Summary pill, milestone, and status badge -->
+          <!-- Summary pill, priority, milestone, and status badge -->
           <div class="flex items-center gap-2 shrink-0">
             {#if headerProgress.total > 0}
               <Badge variant="outline" class="text-xs"
                 >{headerProgress.completed}/{headerProgress.total}</Badge
+              >
+            {/if}
+            {#if epic.priority !== null && epic.priority !== undefined}
+              <Badge
+                variant={('priority-p' + epic.priority) as
+                  | 'priority-p0'
+                  | 'priority-p1'
+                  | 'priority-p2'
+                  | 'priority-p3'}
+                class="text-xs">P{epic.priority}</Badge
               >
             {/if}
             {#if epic.milestone}
@@ -128,11 +138,21 @@
         <div class="flex items-center justify-between gap-3">
           <!-- Epic name: section header weight -->
           <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
-          <!-- Summary pill, milestone, and status badge -->
+          <!-- Summary pill, priority, milestone, and status badge -->
           <div class="flex items-center gap-2 shrink-0">
             {#if headerProgress.total > 0}
               <Badge variant="outline" class="text-xs"
                 >{headerProgress.completed}/{headerProgress.total}</Badge
+              >
+            {/if}
+            {#if epic.priority !== null && epic.priority !== undefined}
+              <Badge
+                variant={('priority-p' + epic.priority) as
+                  | 'priority-p0'
+                  | 'priority-p1'
+                  | 'priority-p2'
+                  | 'priority-p3'}
+                class="text-xs">P{epic.priority}</Badge
               >
             {/if}
             {#if epic.milestone}

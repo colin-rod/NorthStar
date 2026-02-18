@@ -297,6 +297,16 @@ export const actions: Actions = {
       updates.milestone_id = milestoneId.toString() === '' ? null : milestoneId.toString();
     }
 
+    // Priority (optional, empty string → clear)
+    const priority = formData.get('priority');
+    if (priority !== null) {
+      const p = priority.toString() === '' ? null : Number(priority.toString());
+      if (p !== null && (isNaN(p) || p < 0 || p > 3)) {
+        return fail(400, { error: 'Invalid priority' });
+      }
+      updates.priority = p;
+    }
+
     if (Object.keys(updates).length === 0) {
       return fail(400, { error: 'No fields to update' });
     }

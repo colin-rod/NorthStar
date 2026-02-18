@@ -175,6 +175,7 @@ describe('flattenTree', () => {
             is_default: false,
             sort_order: 0,
             description: null,
+            priority: null,
           },
           {
             id: 'epic2',
@@ -185,6 +186,7 @@ describe('flattenTree', () => {
             is_default: false,
             sort_order: 1,
             description: null,
+            priority: null,
           },
         ],
       },
@@ -236,6 +238,7 @@ describe('flattenTree', () => {
             is_default: false,
             sort_order: 0,
             description: null,
+            priority: null,
           },
         ],
         issues: [
@@ -301,6 +304,7 @@ describe('flattenTree', () => {
             is_default: false,
             sort_order: 0,
             description: null,
+            priority: null,
           },
         ],
         issues: [
@@ -359,6 +363,7 @@ describe('flattenTree', () => {
             is_default: false,
             sort_order: 0,
             description: null,
+            priority: null,
           },
         ],
         issues: [

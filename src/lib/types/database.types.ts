@@ -86,6 +86,7 @@ export type Database = {
           milestone_id: string | null;
           name: string;
           number: number;
+          priority: number | null;
           project_id: string;
           sort_order: number | null;
           status: string;
@@ -99,6 +100,7 @@ export type Database = {
           milestone_id?: string | null;
           name: string;
           number?: number;
+          priority?: number | null;
           project_id: string;
           sort_order?: number | null;
           status: string;
@@ -112,6 +114,7 @@ export type Database = {
           milestone_id?: string | null;
           name?: string;
           number?: number;
+          priority?: number | null;
           project_id?: string;
           sort_order?: number | null;
           status?: string;

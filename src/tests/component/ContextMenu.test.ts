@@ -35,6 +35,7 @@ function makeEpic(overrides: Partial<Epic> = {}): Epic {
     status: 'active',
     is_default: false,
     sort_order: 0,
+    priority: null,
     ...overrides,
   };
 }

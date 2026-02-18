@@ -48,6 +48,7 @@ export interface Epic {
   name: string;
   description: string | null;
   status: EpicStatus;
+  priority: number | null; // 0-3 (P0-P3), nullable
   is_default: boolean;
   sort_order: number | null;
   milestone_id?: string | null;

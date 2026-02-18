@@ -46,6 +46,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
       is_default: false,
       sort_order: null,
       description: null,
+      priority: null,
     },
   });
 

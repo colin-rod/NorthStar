@@ -39,6 +39,7 @@ describe('IssueRow - Blocked State Display', () => {
         is_default: false,
         sort_order: null,
         description: null,
+        priority: null,
       },
       dependencies: [
         {
@@ -121,6 +122,7 @@ describe('IssueRow - Blocked State Display', () => {
         is_default: false,
         sort_order: null,
         description: null,
+        priority: null,
       },
       dependencies: [
         {
@@ -184,6 +186,7 @@ describe('IssueRow - Blocked State Display', () => {
         is_default: false,
         sort_order: null,
         description: null,
+        priority: null,
       },
       dependencies: [],
     };
@@ -227,6 +230,7 @@ describe('IssueRow - Blocked State Display', () => {
         is_default: false,
         sort_order: null,
         description: null,
+        priority: null,
       },
       dependencies: [
         {
@@ -310,6 +314,7 @@ describe('IssueRow - Additional Scenarios', () => {
       is_default: false,
       sort_order: null,
       description: null,
+      priority: null,
     },
     dependencies: [],
   };

@@ -28,6 +28,7 @@ describe('ExpandedProjectView', () => {
         is_default: false,
         sort_order: 0,
         description: null,
+        priority: null,
         counts: { ready: 2, blocked: 0, doing: 0, inReview: 0, done: 0, canceled: 0 },
       },
       {
@@ -39,6 +40,7 @@ describe('ExpandedProjectView', () => {
         is_default: false,
         sort_order: 1,
         description: null,
+        priority: null,
         counts: { ready: 1, blocked: 0, doing: 0, inReview: 0, done: 0, canceled: 0 },
       },
     ],

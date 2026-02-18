@@ -26,6 +26,7 @@ describe('buildBreadcrumb', () => {
     is_default: false,
     sort_order: 1,
     description: null,
+    priority: null,
   };
 
   const mockIssue: Issue = {

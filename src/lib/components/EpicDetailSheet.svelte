@@ -26,6 +26,7 @@
 
   let localName = $state('');
   let localStatus = $state<'active' | 'done' | 'canceled'>('active');
+  let localPriority = $state<number | null>(null);
   let localDescription = $state<string | null>(null);
   let localMilestoneId = $state<string | null>(null);
   let attachments = $state<Attachment[]>([]);
@@ -52,6 +53,7 @@
     if (epic) {
       localName = epic.name;
       localStatus = epic.status;
+      localPriority = epic.priority ?? null;
       localMilestoneId = epic.milestone_id ?? null;
       if (!descriptionDebounceTimer) {
         localDescription = epic.description ?? null;
@@ -124,6 +126,12 @@
     const value = (event.target as HTMLSelectElement).value as 'active' | 'done' | 'canceled';
     localStatus = value;
     autoSave('status', value);
+  }
+
+  function handlePriorityChange(event: Event) {
+    const raw = (event.target as HTMLSelectElement).value;
+    localPriority = raw === '' ? null : Number(raw);
+    autoSave('priority', raw);
   }
 
   function handleDescriptionChange(html: string) {
@@ -218,6 +226,24 @@
             <option value="active">Active</option>
             <option value="done">Done</option>
             <option value="canceled">Canceled</option>
+          </select>
+        </section>
+
+        <!-- Priority -->
+        <section>
+          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+            Priority
+          </h3>
+          <select
+            value={localPriority !== null ? String(localPriority) : ''}
+            onchange={handlePriorityChange}
+            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            <option value="">None</option>
+            <option value="0">P0 — Highest</option>
+            <option value="1">P1 — High</option>
+            <option value="2">P2 — Medium</option>
+            <option value="3">P3 — Low</option>
           </select>
         </section>
 

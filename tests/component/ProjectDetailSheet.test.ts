@@ -46,6 +46,7 @@ const mockEpics: Epic[] = [
     is_default: false,
     sort_order: 0,
     description: null,
+    priority: null,
   },
   {
     id: 'e2',
@@ -56,6 +57,7 @@ const mockEpics: Epic[] = [
     is_default: false,
     sort_order: 1,
     description: null,
+    priority: null,
   },
 ];
 
