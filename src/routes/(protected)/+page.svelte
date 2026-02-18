@@ -165,4 +165,5 @@
   milestones={data.milestones || []}
   projectIssues={data.issues || []}
   projects={data.projects || []}
+  userId={data.session?.user?.id ?? ''}
 />

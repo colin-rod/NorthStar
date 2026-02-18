@@ -15,6 +15,8 @@ describe('EpicCard', () => {
     status: 'active',
     is_default: false,
     sort_order: 0,
+    description: null,
+    priority: null,
   };
 
   const mockCounts: IssueCounts = {
@@ -25,6 +27,56 @@ describe('EpicCard', () => {
     done: 5,
     canceled: 0,
   };
+
+  describe('Priority and milestone badges', () => {
+    it('should render priority badge in navigation mode when priority is set', () => {
+      render(EpicCard, {
+        props: {
+          epic: { ...mockEpic, priority: 0 },
+          counts: mockCounts,
+        },
+      });
+      expect(screen.getByText('P0')).toBeTruthy();
+    });
+
+    it('should render milestone badge in navigation mode when milestone is set', () => {
+      render(EpicCard, {
+        props: {
+          epic: {
+            ...mockEpic,
+            milestone: { id: 'm1', name: 'v1.0', user_id: 'u1', due_date: null },
+          },
+          counts: mockCounts,
+        },
+      });
+      expect(screen.getByText('v1.0')).toBeTruthy();
+    });
+
+    it('should render priority badge in drill-down mode when priority is set', () => {
+      render(EpicCard, {
+        props: {
+          epic: { ...mockEpic, priority: 2 },
+          counts: mockCounts,
+          onToggle: () => {},
+        },
+      });
+      expect(screen.getByText('P2')).toBeTruthy();
+    });
+
+    it('should render milestone badge in drill-down mode when milestone is set', () => {
+      render(EpicCard, {
+        props: {
+          epic: {
+            ...mockEpic,
+            milestone: { id: 'm1', name: 'Q1 Release', user_id: 'u1', due_date: null },
+          },
+          counts: mockCounts,
+          onToggle: () => {},
+        },
+      });
+      expect(screen.getByText('Q1 Release')).toBeTruthy();
+    });
+  });
 
   describe('Navigation mode (without onToggle)', () => {
     it('should render as link when onToggle is undefined', () => {
@@ -94,6 +146,20 @@ describe('EpicCard', () => {
       // Should render as button
       const button = container.querySelector('button');
       expect(button).toBeTruthy();
+    });
+
+    it('should show summary pill with completed/total when there are issues', () => {
+      const onToggle = () => {};
+      render(EpicCard, {
+        props: {
+          epic: mockEpic,
+          counts: mockCounts, // total=12, completed(done+canceled)=5+0=5
+          onToggle,
+        },
+      });
+
+      // Summary pill shows completed/total (5 done + 0 canceled = 5 completed out of 12 total)
+      expect(screen.getByText('5/12')).toBeTruthy();
     });
   });
 

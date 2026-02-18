@@ -16,13 +16,13 @@
 </script>
 
 <div class="flex items-center">
-  <label class="flex items-center justify-center w-7 h-7 cursor-pointer">
+  <label class="flex items-center justify-center w-6 h-6 cursor-pointer">
     <input
       type="checkbox"
       {checked}
       {indeterminate}
       onchange={onToggle}
-      class="w-5 h-5 rounded border-border text-primary focus:ring-1 focus:ring-accent cursor-pointer"
+      class="w-4 h-4 rounded border-border text-primary focus:ring-1 focus:ring-accent cursor-pointer"
     />
   </label>
 </div>

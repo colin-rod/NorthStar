@@ -32,6 +32,7 @@ describe('AddDependencyDialog', () => {
     story_points: null,
     sort_order: 0,
     created_at: '2024-01-01',
+    description: null,
     parent_issue_id: null,
     milestone_id: null,
   };
@@ -133,6 +134,8 @@ describe('AddDependencyDialog - Component Rendering', () => {
     user_id: 'user-1',
     created_at: '2024-01-01',
     archived_at: null,
+    status: 'active' as const,
+    description: null,
   };
 
   const mockEpic = {
@@ -143,6 +146,8 @@ describe('AddDependencyDialog - Component Rendering', () => {
     status: 'active' as const,
     is_default: false,
     sort_order: null,
+    description: null,
+    priority: null,
   };
 
   const mockIssue: Issue = {
@@ -156,6 +161,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     story_points: null,
     sort_order: 0,
     created_at: '2024-01-01',
+    description: null,
     parent_issue_id: null,
     milestone_id: null,
     project: mockProject,

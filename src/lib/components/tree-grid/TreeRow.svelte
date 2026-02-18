@@ -7,7 +7,9 @@
    */
 
   import type { TreeNode, DragDropState } from '$lib/types/tree-grid';
-  import type { Issue } from '$lib/types';
+  import type { Issue, Project, Epic } from '$lib/types';
+  import type { IssueCounts } from '$lib/utils/issue-counts';
+  import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { calculateIndentation } from '$lib/utils/tree-grid-helpers';
   import SelectionCell from './cells/SelectionCell.svelte';
   import DragHandleCell from './cells/DragHandleCell.svelte';
@@ -30,6 +32,14 @@
     onToggleSelect: (id: string) => void;
     onCellEdit: (nodeId: string, field: string, value: any) => void;
     onIssueClick?: (issue: Issue) => void;
+    onProjectClick?: (
+      project: Project,
+      counts: IssueCounts,
+      metrics: ProjectMetrics,
+      epics: Epic[],
+    ) => void;
+    onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
+    onContextMenu?: (node: TreeNode, event: MouseEvent) => void;
   }
 
   let {
@@ -44,6 +54,9 @@
     onToggleSelect,
     onCellEdit,
     onIssueClick,
+    onProjectClick,
+    onEpicClick,
+    onContextMenu,
   }: Props = $props();
 
   // Level-based background shading (per spec)
@@ -102,11 +115,23 @@
     return classes.join(' ');
   });
 
+  // Handle right-click to open context menu
+  function handleContextMenuEvent(event: MouseEvent) {
+    event.preventDefault();
+    onContextMenu?.(node, event);
+  }
+
   // Handle double-click to open drawer
   function handleDoubleClick() {
-    // Only open drawer for issues and sub-issues
     if ((node.type === 'issue' || node.type === 'sub-issue') && onIssueClick) {
       onIssueClick(node.data as Issue);
+    } else if (node.type === 'project' && onProjectClick) {
+      const projectEpics = allNodes
+        .filter((n) => n.parentId === node.id && n.type === 'epic')
+        .map((n) => n.data as Epic);
+      onProjectClick(node.data as Project, node.counts, node.metrics, projectEpics);
+    } else if (node.type === 'epic' && onEpicClick) {
+      onEpicClick(node.data as Epic, node.counts);
     }
   }
 </script>
@@ -118,6 +143,7 @@
   data-node-id={node.id}
   data-node-type={node.type}
   data-node-level={node.level}
+  oncontextmenu={handleContextMenuEvent}
   ondblclick={handleDoubleClick}
 >
   <!-- Drag Handle -->

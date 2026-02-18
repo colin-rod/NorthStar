@@ -12,5 +12,15 @@ vi.mock('$lib/supabase', () => ({
       update: vi.fn(() => Promise.resolve({ data: null, error: null })),
       delete: vi.fn(() => Promise.resolve({ data: null, error: null })),
     })),
+    storage: {
+      from: vi.fn(() => ({
+        createSignedUrl: vi.fn(() =>
+          Promise.resolve({ data: { signedUrl: 'https://example.com/signed' }, error: null }),
+        ),
+        upload: vi.fn(() => Promise.resolve({ data: { path: 'test/path' }, error: null })),
+        remove: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://example.com/public' } })),
+      })),
+    },
   },
 }));

@@ -13,6 +13,8 @@ describe('ExpandedEpicView', () => {
     project_id: 'project-1',
     is_default: false,
     sort_order: 0,
+    description: null,
+    priority: null,
   };
 
   const mockProject = {
@@ -22,6 +24,8 @@ describe('ExpandedEpicView', () => {
     user_id: 'user-1',
     created_at: new Date().toISOString(),
     archived_at: null,
+    status: 'active' as const,
+    description: null,
   };
 
   const mockIssues: Issue[] = [
@@ -41,6 +45,7 @@ describe('ExpandedEpicView', () => {
       project: mockProject,
       epic: mockEpic,
       created_at: new Date().toISOString(),
+      description: null,
     },
     {
       id: 'i2',
@@ -58,6 +63,7 @@ describe('ExpandedEpicView', () => {
       project: mockProject,
       epic: mockEpic,
       created_at: new Date().toISOString(),
+      description: null,
     },
   ];
 

@@ -19,6 +19,7 @@ describe('IssueRow - Blocked State Display', () => {
       story_points: null,
       sort_order: 1,
       created_at: new Date().toISOString(),
+      description: null,
       project: {
         id: 'proj-1',
         number: 1,
@@ -26,6 +27,8 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active',
+        description: null,
       },
       epic: {
         id: 'epic-1',
@@ -35,6 +38,8 @@ describe('IssueRow - Blocked State Display', () => {
         status: 'active',
         is_default: false,
         sort_order: null,
+        description: null,
+        priority: null,
       },
       dependencies: [
         {
@@ -53,6 +58,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 1,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
         {
@@ -71,6 +77,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 2,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
       ],
@@ -95,6 +102,7 @@ describe('IssueRow - Blocked State Display', () => {
       story_points: null,
       sort_order: 1,
       created_at: new Date().toISOString(),
+      description: null,
       project: {
         id: 'proj-1',
         number: 1,
@@ -102,6 +110,8 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active',
+        description: null,
       },
       epic: {
         id: 'epic-1',
@@ -111,6 +121,8 @@ describe('IssueRow - Blocked State Display', () => {
         status: 'active',
         is_default: false,
         sort_order: null,
+        description: null,
+        priority: null,
       },
       dependencies: [
         {
@@ -129,6 +141,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 1,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
       ],
@@ -153,6 +166,7 @@ describe('IssueRow - Blocked State Display', () => {
       story_points: null,
       sort_order: 1,
       created_at: new Date().toISOString(),
+      description: null,
       project: {
         id: 'proj-1',
         number: 1,
@@ -160,6 +174,8 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active',
+        description: null,
       },
       epic: {
         id: 'epic-1',
@@ -169,6 +185,8 @@ describe('IssueRow - Blocked State Display', () => {
         status: 'active',
         is_default: false,
         sort_order: null,
+        description: null,
+        priority: null,
       },
       dependencies: [],
     };
@@ -192,6 +210,7 @@ describe('IssueRow - Blocked State Display', () => {
       story_points: null,
       sort_order: 1,
       created_at: new Date().toISOString(),
+      description: null,
       project: {
         id: 'proj-1',
         number: 1,
@@ -199,6 +218,8 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active',
+        description: null,
       },
       epic: {
         id: 'epic-1',
@@ -208,6 +229,8 @@ describe('IssueRow - Blocked State Display', () => {
         status: 'active',
         is_default: false,
         sort_order: null,
+        description: null,
+        priority: null,
       },
       dependencies: [
         {
@@ -226,6 +249,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 1,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
         {
@@ -244,6 +268,7 @@ describe('IssueRow - Blocked State Display', () => {
             story_points: null,
             sort_order: 2,
             created_at: new Date().toISOString(),
+            description: null,
           },
         },
       ],
@@ -269,6 +294,7 @@ describe('IssueRow - Additional Scenarios', () => {
     story_points: null,
     sort_order: 1,
     created_at: new Date().toISOString(),
+    description: null,
     project: {
       id: 'proj-1',
       number: 1,
@@ -276,6 +302,8 @@ describe('IssueRow - Additional Scenarios', () => {
       user_id: 'user-1',
       created_at: new Date().toISOString(),
       archived_at: null,
+      status: 'active',
+      description: null,
     },
     epic: {
       id: 'epic-1',
@@ -285,6 +313,8 @@ describe('IssueRow - Additional Scenarios', () => {
       status: 'active',
       is_default: false,
       sort_order: null,
+      description: null,
+      priority: null,
     },
     dependencies: [],
   };
@@ -310,12 +340,54 @@ describe('IssueRow - Additional Scenarios', () => {
         issue: baseIssue,
         hasSubIssues: true,
         subIssueCount: 3,
+        doneSubIssueCount: 0,
         isExpanded: false,
       },
     });
 
     expect(screen.getByLabelText('Expand sub-issues')).toBeInTheDocument();
-    expect(screen.getByText('(3)')).toBeInTheDocument();
+    expect(screen.getByText('0/3')).toBeInTheDocument();
+  });
+
+  it('should render sub-issue pill with correct done count', () => {
+    render(IssueRow, {
+      props: {
+        issue: baseIssue,
+        hasSubIssues: true,
+        subIssueCount: 3,
+        doneSubIssueCount: 2,
+        isExpanded: false,
+      },
+    });
+
+    expect(screen.getByText('2/3')).toBeInTheDocument();
+  });
+
+  it('should render sub-issue pill with all done (1/1)', () => {
+    render(IssueRow, {
+      props: {
+        issue: baseIssue,
+        hasSubIssues: true,
+        subIssueCount: 1,
+        doneSubIssueCount: 1,
+        isExpanded: false,
+      },
+    });
+
+    expect(screen.getByText('1/1')).toBeInTheDocument();
+  });
+
+  it('should not render sub-issue pill when hasSubIssues is false', () => {
+    render(IssueRow, {
+      props: {
+        issue: baseIssue,
+        hasSubIssues: false,
+        subIssueCount: 0,
+        doneSubIssueCount: 0,
+      },
+    });
+
+    expect(screen.queryByText(/\d+\/\d+/)).not.toBeInTheDocument();
   });
 
   it('should show expanded chevron when isExpanded is true', () => {
@@ -324,6 +396,7 @@ describe('IssueRow - Additional Scenarios', () => {
         issue: baseIssue,
         hasSubIssues: true,
         subIssueCount: 2,
+        doneSubIssueCount: 0,
         isExpanded: true,
       },
     });
@@ -435,6 +508,7 @@ describe('IssueRow - Additional Scenarios', () => {
         issue: baseIssue,
         hasSubIssues: true,
         subIssueCount: 2,
+        doneSubIssueCount: 0,
         isExpanded: false,
         onToggleExpand,
       },
@@ -468,6 +542,7 @@ describe('IssueRow - Additional Scenarios', () => {
         issue: baseIssue,
         hasSubIssues: true,
         subIssueCount: 2,
+        doneSubIssueCount: 0,
         isExpanded: false,
         onToggleExpand,
       },
@@ -491,6 +566,7 @@ describe('IssueRow - Additional Scenarios', () => {
         issue: baseIssue,
         hasSubIssues: true,
         subIssueCount: 2,
+        doneSubIssueCount: 0,
         isExpanded: false,
         onToggleExpand,
       },

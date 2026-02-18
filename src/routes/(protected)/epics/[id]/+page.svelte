@@ -349,6 +349,7 @@
   epics={data.epics || []}
   milestones={data.milestones || []}
   projectIssues={data.issues || []}
+  userId={data.session?.user?.id ?? ''}
 />
 
 <!-- Toast Feedback -->

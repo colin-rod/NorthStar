@@ -13,6 +13,8 @@ describe('buildBreadcrumb', () => {
     name: 'Personal Tasks',
     created_at: '2024-01-01',
     archived_at: null,
+    status: 'active',
+    description: null,
   };
 
   const mockEpic: Epic = {
@@ -23,6 +25,8 @@ describe('buildBreadcrumb', () => {
     status: 'active',
     is_default: false,
     sort_order: 1,
+    description: null,
+    priority: null,
   };
 
   const mockIssue: Issue = {
@@ -38,6 +42,7 @@ describe('buildBreadcrumb', () => {
     story_points: 8,
     sort_order: 1,
     created_at: '2024-01-01',
+    description: null,
   };
 
   const projectNode: TreeNode = {

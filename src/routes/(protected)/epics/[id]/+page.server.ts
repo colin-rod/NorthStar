@@ -397,4 +397,211 @@ export const actions: Actions = {
 
     return { success: true, action: 'updateMilestone', milestone: data };
   },
+
+  /**
+   * Save attachment metadata after client-side upload to Supabase Storage
+   */
+  createAttachment: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const entityType = d.get('entity_type')?.toString();
+    const entityId = d.get('entity_id')?.toString();
+    const fileName = d.get('file_name')?.toString();
+    const fileSize = Number(d.get('file_size')?.toString() ?? '0');
+    const mimeType = d.get('mime_type')?.toString();
+    const storagePath = d.get('storage_path')?.toString();
+
+    if (!entityType || !entityId || !fileName || !mimeType || !storagePath) {
+      return fail(400, { error: 'Missing required attachment fields' });
+    }
+
+    const validEntityTypes = ['project', 'epic', 'issue'];
+    if (!validEntityTypes.includes(entityType)) {
+      return fail(400, { error: 'Invalid entity type' });
+    }
+
+    const { data, error } = await supabase
+      .from('attachments')
+      .insert({
+        user_id: session.user.id,
+        entity_type: entityType,
+        entity_id: entityId,
+        file_name: fileName,
+        file_size: fileSize,
+        mime_type: mimeType,
+        storage_path: storagePath,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to save attachment:', error);
+      return fail(500, { error: 'Failed to save attachment' });
+    }
+
+    return { success: true, attachment: data };
+  },
+
+  /**
+   * Delete attachment metadata (client handles storage file removal)
+   */
+  deleteAttachment: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const id = d.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Attachment ID is required' });
+
+    await supabase.from('attachments').delete().eq('id', id).eq('user_id', session.user.id);
+
+    return { success: true };
+  },
+
+  /**
+   * Update an issue
+   */
+  updateIssue: async ({ request, locals: { supabase, session } }) => {
+    // 1. Auth check
+    if (!session) {
+      return fail(401, { error: 'Unauthorized' });
+    }
+
+    // 2. Parse form data
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) {
+      return fail(400, { error: 'Issue ID is required' });
+    }
+
+    // 3. Build update object from form data
+    const updates: Record<string, string | number | null> = {};
+
+    // Title
+    const title = formData.get('title')?.toString();
+    if (title !== undefined) {
+      if (title.trim().length === 0) {
+        return fail(400, { error: 'Issue title cannot be empty' });
+      }
+      updates.title = title.trim();
+    }
+
+    // Status
+    const status = formData.get('status')?.toString();
+    if (status !== undefined) {
+      const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+      if (!validStatuses.includes(status)) {
+        return fail(400, { error: 'Invalid status value' });
+      }
+      updates.status = status;
+    }
+
+    // Priority
+    const priority = formData.get('priority')?.toString();
+    if (priority !== undefined) {
+      const priorityNum = parseInt(priority);
+      if (isNaN(priorityNum) || priorityNum < 0 || priorityNum > 3) {
+        return fail(400, { error: 'Priority must be between 0 and 3' });
+      }
+      updates.priority = priorityNum;
+    }
+
+    // Story points
+    const storyPointsStr = formData.get('story_points')?.toString();
+    if (storyPointsStr !== undefined) {
+      if (storyPointsStr === '' || storyPointsStr === 'null') {
+        updates.story_points = null;
+      } else {
+        const storyPoints = parseInt(storyPointsStr);
+        if (isNaN(storyPoints)) {
+          return fail(400, { error: 'Invalid story points value' });
+        }
+        const validStoryPoints = [1, 2, 3, 5, 8, 13, 21];
+        if (!validStoryPoints.includes(storyPoints)) {
+          return fail(400, { error: 'Story points must be one of: 1, 2, 3, 5, 8, 13, 21' });
+        }
+        updates.story_points = storyPoints;
+      }
+    }
+
+    // Epic ID
+    const epicId = formData.get('epic_id')?.toString();
+    if (epicId !== undefined) {
+      // Check if this is a sub-issue (has parent_issue_id)
+      const { data: issue } = await supabase
+        .from('issues')
+        .select('parent_issue_id, project_id')
+        .eq('id', id)
+        .single();
+
+      if (!issue) {
+        return fail(404, { error: 'Issue not found' });
+      }
+
+      // Block epic changes for sub-issues
+      if (issue.parent_issue_id) {
+        return fail(400, {
+          error: 'Cannot change epic for sub-issues - they inherit from parent',
+        });
+      }
+
+      // Verify epic exists and belongs to same project as issue
+      const { data: epic, error: epicError } = await supabase
+        .from('epics')
+        .select('id, project_id')
+        .eq('id', epicId)
+        .eq('project_id', issue.project_id)
+        .single();
+
+      if (epicError || !epic) {
+        return fail(400, { error: 'Epic not found or does not belong to same project' });
+      }
+
+      updates.epic_id = epicId;
+    }
+
+    // Milestone ID
+    const milestoneId = formData.get('milestone_id')?.toString();
+    if (milestoneId !== undefined) {
+      if (milestoneId === '' || milestoneId === 'null') {
+        updates.milestone_id = null;
+      } else {
+        // Verify milestone exists
+        const { data: milestone, error: milestoneError } = await supabase
+          .from('milestones')
+          .select('id')
+          .eq('id', milestoneId)
+          .single();
+
+        if (milestoneError || !milestone) {
+          return fail(400, { error: 'Milestone not found' });
+        }
+
+        updates.milestone_id = milestoneId;
+      }
+    }
+
+    // Description (rich text HTML)
+    const description = formData.get('description');
+    if (description !== null) {
+      updates.description = description.toString() === '' ? null : description.toString();
+    }
+
+    // 4. Update issue in database
+    const { data, error: updateError } = await supabase
+      .from('issues')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Failed to update issue:', updateError);
+      return fail(500, { error: 'Failed to update issue' });
+    }
+
+    return { success: true, action: 'updateIssue', issue: data };
+  },
 };

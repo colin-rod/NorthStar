@@ -137,6 +137,8 @@ describe('flattenTree', () => {
         user_id: 'user1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active' as const,
+        description: null,
       },
     ];
 
@@ -161,6 +163,8 @@ describe('flattenTree', () => {
         user_id: 'user1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active' as const,
+        description: null,
         epics: [
           {
             id: 'epic1',
@@ -170,6 +174,8 @@ describe('flattenTree', () => {
             status: 'active' as const,
             is_default: false,
             sort_order: 0,
+            description: null,
+            priority: null,
           },
           {
             id: 'epic2',
@@ -179,6 +185,8 @@ describe('flattenTree', () => {
             status: 'active' as const,
             is_default: false,
             sort_order: 1,
+            description: null,
+            priority: null,
           },
         ],
       },
@@ -218,6 +226,8 @@ describe('flattenTree', () => {
         user_id: 'user1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active' as const,
+        description: null,
         epics: [
           {
             id: 'epic1',
@@ -227,6 +237,8 @@ describe('flattenTree', () => {
             status: 'active' as const,
             is_default: false,
             sort_order: 0,
+            description: null,
+            priority: null,
           },
         ],
         issues: [
@@ -280,6 +292,8 @@ describe('flattenTree', () => {
         user_id: 'user1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active' as const,
+        description: null,
         epics: [
           {
             id: 'epic1',
@@ -289,6 +303,8 @@ describe('flattenTree', () => {
             status: 'active' as const,
             is_default: false,
             sort_order: 0,
+            description: null,
+            priority: null,
           },
         ],
         issues: [
@@ -311,6 +327,8 @@ describe('flattenTree', () => {
         user_id: 'user1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active' as const,
+        description: null,
         epics: [],
       },
     ];
@@ -333,6 +351,8 @@ describe('flattenTree', () => {
         user_id: 'user1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        status: 'active' as const,
+        description: null,
         epics: [
           {
             id: 'epic1',
@@ -342,6 +362,8 @@ describe('flattenTree', () => {
             status: 'active' as const,
             is_default: false,
             sort_order: 0,
+            description: null,
+            priority: null,
           },
         ],
         issues: [

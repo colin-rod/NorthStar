@@ -16,6 +16,8 @@ describe('ExpandedProjectView', () => {
     user_id: 'user-1',
     created_at: new Date().toISOString(),
     archived_at: null,
+    status: 'active',
+    description: null,
     epics: [
       {
         id: 'e1',
@@ -25,6 +27,8 @@ describe('ExpandedProjectView', () => {
         project_id: 'p1',
         is_default: false,
         sort_order: 0,
+        description: null,
+        priority: null,
         counts: { ready: 2, blocked: 0, doing: 0, inReview: 0, done: 0, canceled: 0 },
       },
       {
@@ -35,6 +39,8 @@ describe('ExpandedProjectView', () => {
         project_id: 'p1',
         is_default: false,
         sort_order: 1,
+        description: null,
+        priority: null,
         counts: { ready: 1, blocked: 0, doing: 0, inReview: 0, done: 0, canceled: 0 },
       },
     ],

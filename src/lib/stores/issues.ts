@@ -65,6 +65,11 @@ export function closeIssueSheet() {
 }
 
 /**
+ * Nav search open state — shared between NavSearch and BottomNav
+ */
+export const navSearchOpen: Writable<boolean> = writable(false);
+
+/**
  * Helper function to update an issue in the store
  */
 export function updateIssue(updatedIssue: Issue) {

@@ -284,5 +284,39 @@ describe('useSwipeToDismiss', () => {
       expect(removeEventListenerSpy).toHaveBeenCalledWith('touchmove', expect.any(Function));
       expect(removeEventListenerSpy).toHaveBeenCalledWith('touchend', expect.any(Function));
     });
+
+    it('should cancel pending animation frame when a second touchmove fires', () => {
+      // Return a non-zero frame ID so the if(animationFrameId) branch is truthy
+      let frameId = 1;
+      vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+        cb(0);
+        return frameId++;
+      });
+      const cancelAnimationFrameSpy = vi.spyOn(window, 'cancelAnimationFrame');
+
+      const { container } = render(TestSwipeToDismissWrapper);
+      const target = container.querySelector('[data-testid="swipe-target"]')!;
+
+      // First touchmove sets animationFrameId to non-zero value
+      target.dispatchEvent(
+        new TouchEvent('touchstart', {
+          touches: [{ clientX: 100, clientY: 100 } as Touch],
+        }),
+      );
+      target.dispatchEvent(
+        new TouchEvent('touchmove', {
+          touches: [{ clientX: 100, clientY: 160 } as Touch],
+        }),
+      );
+
+      // Second touchmove should cancel the previous animationFrameId
+      target.dispatchEvent(
+        new TouchEvent('touchmove', {
+          touches: [{ clientX: 100, clientY: 200 } as Touch],
+        }),
+      );
+
+      expect(cancelAnimationFrameSpy).toHaveBeenCalled();
+    });
   });
 });

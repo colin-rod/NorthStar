@@ -9,15 +9,17 @@
    * - Subtle borders
    */
   import { enhance } from '$app/forms';
-  import { Search } from '@lucide/svelte';
-  import { Button } from '$lib/components/ui/button';
+  import { ChevronDown, Settings, LogOut } from '@lucide/svelte';
+  import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
   import Breadcrumbs, { type BreadcrumbItem } from '$lib/components/Breadcrumbs.svelte';
+  import NavSearch from '$lib/components/NavSearch.svelte';
   import type { Session } from '@supabase/supabase-js';
 
   let { session, breadcrumbs = [] }: { session: Session | null; breadcrumbs?: BreadcrumbItem[] } =
     $props();
 
   let loggingOut = $state(false);
+  let menuOpen = $state(false);
 </script>
 
 <!-- North Design: Minimal header with subtle border -->
@@ -42,36 +44,49 @@
 
     {#if session}
       <div class="flex items-center gap-4">
-        <a
-          href="/search"
-          aria-label="Search"
-          class="inline-flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors"
-        >
-          <Search class="w-5 h-5" />
-          <span class="text-body hidden sm:inline">Search</span>
-        </a>
+        <NavSearch />
 
-        <!-- Email (hidden on mobile) -->
-        <span class="text-metadata hidden sm:inline">
-          {session.user.email}
-        </span>
-
-        <!-- Logout button with North microcopy -->
-        <form
-          method="POST"
-          action="/?/logout"
-          use:enhance={() => {
-            loggingOut = true;
-            return async ({ update }) => {
-              await update();
-              loggingOut = false;
-            };
-          }}
-        >
-          <Button type="submit" variant="secondary" size="sm" disabled={loggingOut}>
-            {loggingOut ? 'Logging out...' : 'Logout'}
-          </Button>
-        </form>
+        <!-- User menu dropdown -->
+        <Popover bind:open={menuOpen}>
+          <PopoverTrigger
+            class="hidden sm:inline-flex items-center gap-1 text-metadata text-foreground-muted hover:text-foreground transition-colors"
+          >
+            {session.user.email}
+            <ChevronDown class="w-3 h-3" />
+          </PopoverTrigger>
+          <PopoverContent align="end" class="w-44 p-1">
+            <a
+              href="/settings"
+              onclick={() => (menuOpen = false)}
+              class="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-sm hover:bg-surface-subtle transition-colors text-foreground"
+            >
+              <Settings class="w-4 h-4" />
+              Settings
+            </a>
+            <div class="my-1 border-t border-border-divider"></div>
+            <form
+              method="POST"
+              action="/?/logout"
+              use:enhance={() => {
+                loggingOut = true;
+                menuOpen = false;
+                return async ({ update }) => {
+                  await update();
+                  loggingOut = false;
+                };
+              }}
+            >
+              <button
+                type="submit"
+                disabled={loggingOut}
+                class="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-sm hover:bg-surface-subtle transition-colors text-foreground disabled:opacity-50"
+              >
+                <LogOut class="w-4 h-4" />
+                {loggingOut ? 'Logging out...' : 'Logout'}
+              </button>
+            </form>
+          </PopoverContent>
+        </Popover>
       </div>
     {/if}
   </div>

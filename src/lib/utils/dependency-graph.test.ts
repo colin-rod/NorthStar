@@ -25,6 +25,7 @@ const createIssue = (id: string, title: string = `Issue ${id}`): Issue => ({
   story_points: null,
   sort_order: null,
   created_at: '2024-01-01T00:00:00Z',
+  description: null,
 });
 
 const createDependency = (issueId: string, dependsOnId: string): Dependency => ({
@@ -111,6 +112,18 @@ describe('topologicalSort', () => {
     const dependencies: Dependency[] = [];
     const sorted = topologicalSort(issues, dependencies);
     expect(sorted).toEqual(issues);
+  });
+
+  it('should handle dependency where depends_on_issue_id is not in the issue list', () => {
+    // Issue A depends on issue X, but X is not in the issues array
+    // This exercises the `|| []` fallback when reverseGraph.get() returns undefined
+    const issues = [createIssue('A')];
+    const dependencies: Dependency[] = [createDependency('A', 'X')];
+    // A has in-degree 1 (depends on X), X is not in the list
+    // Queue starts empty (no issue with degree 0), so sorted.length < issues.length → cycle detected (null)
+    const sorted = topologicalSort(issues, dependencies);
+    // A is never added to queue since its in-degree stays at 1 (X never gets processed)
+    expect(sorted).toBeNull();
   });
 });
 

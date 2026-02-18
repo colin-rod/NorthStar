@@ -163,6 +163,60 @@ describe('MilestonePicker', () => {
     expect(screen.queryByText(/\/0/)).not.toBeInTheDocument();
   });
 
+  it('should show progress bar when milestone has issues assigned', async () => {
+    const mockOnChange = vi.fn();
+
+    const mockIssues = [
+      {
+        id: 'issue-1',
+        number: 1,
+        project_id: 'project-1',
+        epic_id: 'epic-1',
+        parent_issue_id: null,
+        milestone_id: 'milestone-1',
+        title: 'Done issue',
+        status: 'done' as const,
+        priority: 1,
+        story_points: null,
+        sort_order: null,
+        created_at: '2024-01-01T00:00:00Z',
+        description: null,
+      },
+      {
+        id: 'issue-2',
+        number: 2,
+        project_id: 'project-1',
+        epic_id: 'epic-1',
+        parent_issue_id: null,
+        milestone_id: 'milestone-1',
+        title: 'Todo issue',
+        status: 'todo' as const,
+        priority: 1,
+        story_points: null,
+        sort_order: null,
+        created_at: '2024-01-01T00:00:00Z',
+        description: null,
+      },
+    ];
+
+    render(MilestonePicker, {
+      props: {
+        selectedMilestoneId: null,
+        milestones: mockMilestones,
+        issues: mockIssues,
+        disabled: false,
+        onChange: mockOnChange,
+      },
+    });
+
+    // Open popover
+    const trigger = screen.getByRole('button');
+    await fireEvent.click(trigger);
+
+    // Progress bar shows "completed/total" — 1 done out of 2 total for milestone-1
+    expect(screen.getByText('1/2')).toBeInTheDocument();
+  });
+
   it('should call onChange with null when "No milestone" is selected', async () => {
     const mockOnChange = vi.fn();
 

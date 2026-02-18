@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/svelte';
-import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/svelte';
+import { describe, it, expect, vi } from 'vitest';
 
 import TreeToolbar from './TreeToolbar.svelte';
 
@@ -117,5 +117,39 @@ describe('TreeToolbar', () => {
     });
 
     expect(switchElement).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('should show selected count and delete button when items are selected', () => {
+    render(TreeToolbar, {
+      props: {
+        editMode: false,
+        selectedCount: 3,
+        breadcrumb: '',
+        onEditModeChange: () => {},
+        onBulkAction: () => {},
+      },
+    });
+
+    expect(screen.getByText('3 selected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  });
+
+  it('should call onBulkAction with delete when delete button is clicked', async () => {
+    const onBulkAction = vi.fn();
+
+    render(TreeToolbar, {
+      props: {
+        editMode: false,
+        selectedCount: 2,
+        breadcrumb: '',
+        onEditModeChange: () => {},
+        onBulkAction,
+      },
+    });
+
+    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    await fireEvent.click(deleteButton);
+
+    expect(onBulkAction).toHaveBeenCalledWith('delete');
   });
 });

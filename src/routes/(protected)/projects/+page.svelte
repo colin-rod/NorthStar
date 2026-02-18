@@ -10,12 +10,18 @@
   import { goto, invalidateAll } from '$app/navigation';
   import TreeGrid from '$lib/components/tree-grid/TreeGrid.svelte';
   import ProjectSheet from '$lib/components/ProjectSheet.svelte';
+  import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
   import EpicSheet from '$lib/components/EpicSheet.svelte';
+  import EpicDetailSheet from '$lib/components/EpicDetailSheet.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import { Button } from '$lib/components/ui/button';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
+  import type { IssueCounts } from '$lib/utils/issue-counts';
+  import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { isIssueSheetOpen, selectedIssue, openIssueSheet } from '$lib/stores/issues';
+  import ContextMenu from '$lib/components/ContextMenu.svelte';
+  import type { TreeNode } from '$lib/types/tree-grid';
 
   let { data }: { data: PageData } = $props();
 
@@ -45,6 +51,23 @@
   let epicSheetMode: 'create' | 'edit' = $state('create');
   let selectedEpic: Epic | undefined = $state(undefined);
   let epicCreateProjectId: string | undefined = $state(undefined);
+
+  // Detail sheet state (opened via double-click)
+  let projectDetailSheetOpen = $state(false);
+  let selectedProjectForDetail: Project | null = $state(null);
+  let selectedProjectCounts: IssueCounts | null = $state(null);
+  let selectedProjectMetrics: ProjectMetrics | null = $state(null);
+  let selectedProjectEpics: Epic[] = $state([]);
+
+  let epicDetailSheetOpen = $state(false);
+  let selectedEpicForDetail: Epic | null = $state(null);
+  let selectedEpicCounts: IssueCounts | null = $state(null);
+
+  // Context menu state
+  let contextMenuOpen = $state(false);
+  let contextMenuNode = $state<TreeNode | null>(null);
+  let contextMenuX = $state(0);
+  let contextMenuY = $state(0);
 
   // Feedback state
   let feedbackMessage = $state('');
@@ -248,6 +271,136 @@
     projectSheetOpen = true;
   }
 
+  function handleProjectDoubleClick(
+    project: Project,
+    counts: IssueCounts,
+    metrics: ProjectMetrics,
+    epics: Epic[],
+  ) {
+    selectedProjectForDetail = project;
+    selectedProjectCounts = counts;
+    selectedProjectMetrics = metrics;
+    selectedProjectEpics = epics;
+    projectDetailSheetOpen = true;
+  }
+
+  function handleEpicDoubleClick(epic: Epic, counts: IssueCounts) {
+    selectedEpicForDetail = epic;
+    selectedEpicCounts = counts;
+    epicDetailSheetOpen = true;
+  }
+
+  // --- Context menu handlers ---
+
+  function handleContextMenu(node: TreeNode, event: MouseEvent) {
+    contextMenuX = event.clientX;
+    contextMenuY = event.clientY;
+    contextMenuNode = node;
+    contextMenuOpen = true;
+  }
+
+  function handleContextMenuClose() {
+    contextMenuOpen = false;
+    contextMenuNode = null;
+  }
+
+  async function handleContextStatusChange(node: TreeNode, status: string) {
+    await handleCellEdit(node.id, 'status', status);
+  }
+
+  async function handleContextPriorityChange(node: TreeNode, priority: number) {
+    await handleCellEdit(node.id, 'priority', priority.toString());
+  }
+
+  async function handleContextStoryPointsChange(node: TreeNode, points: number) {
+    await handleCellEdit(node.id, 'story_points', points.toString());
+  }
+
+  async function handleContextMilestoneChange(node: TreeNode, milestoneId: string | null) {
+    const formData = new FormData();
+    formData.append('id', node.id);
+    formData.append('milestone_id', milestoneId ?? '');
+    try {
+      const response = await fetch('?/updateEpic', { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        showToast('Milestone updated', 'success');
+      } else {
+        showToast('Failed to update milestone', 'error');
+      }
+    } catch {
+      showToast('Failed to update milestone', 'error');
+    }
+  }
+
+  function handleContextRename(node: TreeNode) {
+    if (node.type === 'project') {
+      selectedProjectForDetail = node.data as Project;
+      projectDetailSheetOpen = true;
+    } else if (node.type === 'epic') {
+      selectedEpicForDetail = node.data as Epic;
+      epicDetailSheetOpen = true;
+    }
+  }
+
+  function handleContextAddChild(node: TreeNode) {
+    if (node.type === 'project') {
+      epicCreateProjectId = node.id;
+      epicSheetMode = 'create';
+      selectedEpic = undefined;
+      epicSheetOpen = true;
+    } else if (node.type === 'epic') {
+      // Find the project for this epic
+      const project = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === node.id));
+      if (project) {
+        handleCreateChild(node.id, 'epic', { title: '' });
+      }
+    } else if (node.type === 'issue') {
+      handleCreateChild(node.id, 'issue', { title: '' });
+    }
+  }
+
+  async function handleContextArchive(node: TreeNode) {
+    const formData = new FormData();
+    formData.append('id', node.id);
+    try {
+      const response = await fetch('?/archiveProject', { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        showToast('Project archived', 'success');
+      } else {
+        showToast('Failed to archive project', 'error');
+      }
+    } catch {
+      showToast('Failed to archive project', 'error');
+    }
+  }
+
+  async function handleContextDelete(node: TreeNode) {
+    const actionMap: Record<string, string> = {
+      project: '?/deleteProject',
+      epic: '?/deleteEpic',
+      issue: '?/deleteIssue',
+      'sub-issue': '?/deleteIssue',
+    };
+    const action = actionMap[node.type];
+    if (!action) return;
+
+    const formData = new FormData();
+    formData.append('id', node.id);
+    try {
+      const response = await fetch(action, { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        showToast(`${node.type} deleted`, 'success');
+      } else {
+        showToast(`Failed to delete ${node.type}`, 'error');
+      }
+    } catch {
+      showToast(`Failed to delete ${node.type}`, 'error');
+    }
+  }
+
   function showToast(message: string, type: 'success' | 'error') {
     feedbackMessage = message;
     feedbackType = type;
@@ -309,6 +462,9 @@
       onBulkAction={handleBulkAction}
       onShowToast={showToast}
       onIssueClick={openIssueSheet}
+      onProjectClick={handleProjectDoubleClick}
+      onEpicClick={handleEpicDoubleClick}
+      onContextMenu={handleContextMenu}
     />
   {/if}
 </div>
@@ -316,12 +472,31 @@
 <!-- Project create/edit sheet -->
 <ProjectSheet bind:open={projectSheetOpen} mode={projectSheetMode} project={selectedProject} />
 
+<!-- Project detail sheet (opened via double-click) -->
+<ProjectDetailSheet
+  bind:open={projectDetailSheetOpen}
+  project={selectedProjectForDetail}
+  counts={selectedProjectCounts}
+  metrics={selectedProjectMetrics}
+  epics={selectedProjectEpics}
+  userId={data.session?.user?.id ?? ''}
+/>
+
 <!-- Epic create/edit sheet -->
 <EpicSheet
   bind:open={epicSheetOpen}
   mode={epicSheetMode}
   epic={selectedEpic}
   projectId={epicCreateProjectId}
+/>
+
+<!-- Epic detail sheet (opened via double-click) -->
+<EpicDetailSheet
+  bind:open={epicDetailSheetOpen}
+  epic={selectedEpicForDetail}
+  counts={selectedEpicCounts}
+  userId={data.session?.user?.id ?? ''}
+  milestones={data.milestones ?? []}
 />
 
 <!-- Issue sheet (using store) -->
@@ -333,6 +508,25 @@
   milestones={[]}
   projectIssues={data.projects.flatMap((p) => p.issues || [])}
   projects={data.projects}
+  userId={data.session?.user?.id ?? ''}
+/>
+
+<!-- Right-click context menu -->
+<ContextMenu
+  node={contextMenuNode}
+  x={contextMenuX}
+  y={contextMenuY}
+  bind:open={contextMenuOpen}
+  onClose={handleContextMenuClose}
+  onRename={handleContextRename}
+  onStatusChange={handleContextStatusChange}
+  onAddChild={handleContextAddChild}
+  onArchive={handleContextArchive}
+  onDelete={handleContextDelete}
+  onPriorityChange={handleContextPriorityChange}
+  onStoryPointsChange={handleContextStoryPointsChange}
+  milestones={data.milestones ?? []}
+  onMilestoneChange={handleContextMilestoneChange}
 />
 
 <!-- Simple toast-style feedback -->

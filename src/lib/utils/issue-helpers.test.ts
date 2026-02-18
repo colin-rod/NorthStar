@@ -40,6 +40,7 @@ const createIssue = (
   story_points: null,
   sort_order: null,
   created_at: '2024-01-01T00:00:00Z',
+  description: null,
   dependencies,
 });
 

@@ -41,6 +41,7 @@ describe('IssueTable', () => {
         parent_issue_id: null,
         milestone_id: null,
         created_at: '2024-01-01',
+        description: null,
         dependencies: [],
       },
       {
@@ -56,6 +57,7 @@ describe('IssueTable', () => {
         parent_issue_id: null,
         milestone_id: null,
         created_at: '2024-01-02',
+        description: null,
         dependencies: [],
       },
     ];

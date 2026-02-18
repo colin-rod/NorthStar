@@ -25,12 +25,13 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
   // For each project, load epics with issues and dependencies
   const projectsWithData = await Promise.all(
     (projects || []).map(async (project) => {
-      // Load epics with nested issues
+      // Load epics with nested issues and milestone
       const { data: epics } = await supabase
         .from('epics')
         .select(
           `
           *,
+          milestone:milestones(*),
           issues(
             *,
             dependencies!dependencies_issue_id_fkey(
@@ -74,8 +75,15 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     }),
   );
 
+  // Load milestones for EpicDetailSheet milestone picker
+  const { data: milestones } = await supabase
+    .from('milestones')
+    .select('*')
+    .order('due_date', { ascending: true, nullsFirst: false });
+
   return {
     projects: projectsWithData,
+    milestones: milestones || [],
   };
 };
 
@@ -133,9 +141,17 @@ export const actions: Actions = {
       return fail(400, { error: 'Project name must be 100 characters or less' });
     }
 
+    const updates: Record<string, unknown> = { name };
+
+    // Description (rich text HTML, optional field)
+    const description = formData.get('description');
+    if (description !== null) {
+      updates.description = description.toString() === '' ? null : description.toString();
+    }
+
     const { error } = await supabase
       .from('projects')
-      .update({ name })
+      .update(updates)
       .eq('id', id)
       .eq('user_id', session.user.id);
 
@@ -267,6 +283,28 @@ export const actions: Actions = {
         return fail(400, { error: 'Invalid status' });
       }
       updates.status = status;
+    }
+
+    // Description (rich text HTML, optional field)
+    const description = formData.get('description');
+    if (description !== null) {
+      updates.description = description.toString() === '' ? null : description.toString();
+    }
+
+    // Milestone (optional, empty string → clear)
+    const milestoneId = formData.get('milestone_id');
+    if (milestoneId !== null) {
+      updates.milestone_id = milestoneId.toString() === '' ? null : milestoneId.toString();
+    }
+
+    // Priority (optional, empty string → clear)
+    const priority = formData.get('priority');
+    if (priority !== null) {
+      const p = priority.toString() === '' ? null : Number(priority.toString());
+      if (p !== null && (isNaN(p) || p < 0 || p > 3)) {
+        return fail(400, { error: 'Invalid priority' });
+      }
+      updates.priority = p;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -549,5 +587,124 @@ export const actions: Actions = {
     }
 
     return { success: true, action: 'reparentNode' };
+  },
+
+  /**
+   * Save attachment metadata after client-side upload to Supabase Storage
+   */
+  createAttachment: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const entityType = d.get('entity_type')?.toString();
+    const entityId = d.get('entity_id')?.toString();
+    const fileName = d.get('file_name')?.toString();
+    const fileSize = Number(d.get('file_size')?.toString() ?? '0');
+    const mimeType = d.get('mime_type')?.toString();
+    const storagePath = d.get('storage_path')?.toString();
+
+    if (!entityType || !entityId || !fileName || !mimeType || !storagePath) {
+      return fail(400, { error: 'Missing required attachment fields' });
+    }
+
+    const validEntityTypes = ['project', 'epic', 'issue'];
+    if (!validEntityTypes.includes(entityType)) {
+      return fail(400, { error: 'Invalid entity type' });
+    }
+
+    const { data, error } = await supabase
+      .from('attachments')
+      .insert({
+        user_id: session.user.id,
+        entity_type: entityType,
+        entity_id: entityId,
+        file_name: fileName,
+        file_size: fileSize,
+        mime_type: mimeType,
+        storage_path: storagePath,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to save attachment:', error);
+      return fail(500, { error: 'Failed to save attachment' });
+    }
+
+    return { success: true, attachment: data };
+  },
+
+  deleteProject: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Project ID is required' });
+
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', session.user.id);
+
+    if (error) {
+      console.error('Delete project error:', error);
+      return fail(500, { error: 'Failed to delete project' });
+    }
+
+    return { success: true, action: 'deleteProject' };
+  },
+
+  deleteEpic: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Epic ID is required' });
+
+    const { error } = await supabase.from('epics').delete().eq('id', id);
+
+    if (error) {
+      console.error('Delete epic error:', error);
+      return fail(500, { error: 'Failed to delete epic' });
+    }
+
+    return { success: true, action: 'deleteEpic' };
+  },
+
+  deleteIssue: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Issue ID is required' });
+
+    const { error } = await supabase.from('issues').delete().eq('id', id);
+
+    if (error) {
+      console.error('Delete issue error:', error);
+      return fail(500, { error: 'Failed to delete issue' });
+    }
+
+    return { success: true, action: 'deleteIssue' };
+  },
+
+  /**
+   * Delete attachment metadata (client handles storage file removal)
+   */
+  deleteAttachment: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const id = d.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Attachment ID is required' });
+
+    await supabase.from('attachments').delete().eq('id', id).eq('user_id', session.user.id);
+
+    return { success: true };
   },
 };
