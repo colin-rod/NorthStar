@@ -9,9 +9,10 @@
    * - Subtle borders
    */
   import { enhance } from '$app/forms';
-  import { Search, ChevronDown, Settings, LogOut } from '@lucide/svelte';
+  import { ChevronDown, Settings, LogOut } from '@lucide/svelte';
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
   import Breadcrumbs, { type BreadcrumbItem } from '$lib/components/Breadcrumbs.svelte';
+  import NavSearch from '$lib/components/NavSearch.svelte';
   import type { Session } from '@supabase/supabase-js';
 
   let { session, breadcrumbs = [] }: { session: Session | null; breadcrumbs?: BreadcrumbItem[] } =
@@ -43,14 +44,7 @@
 
     {#if session}
       <div class="flex items-center gap-4">
-        <a
-          href="/search"
-          aria-label="Search"
-          class="inline-flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors"
-        >
-          <Search class="w-5 h-5" />
-          <span class="text-body hidden sm:inline">Search</span>
-        </a>
+        <NavSearch />
 
         <!-- User menu dropdown -->
         <Popover bind:open={menuOpen}>

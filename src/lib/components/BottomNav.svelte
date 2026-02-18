@@ -12,12 +12,12 @@
 
   import { page } from '$app/stores';
   import { cn } from '$lib/utils';
+  import { navSearchOpen } from '$lib/stores/issues';
 
   // Derive active states from current pathname
   $: pathname = $page.url.pathname;
   $: isHome = pathname === '/';
   $: isProjects = pathname.startsWith('/projects');
-  $: isSearch = pathname === '/search';
 </script>
 
 <!-- North Design: Minimal mobile nav with burnt orange active state -->
@@ -49,17 +49,16 @@
       <span class="text-xs font-medium">Projects</span>
     </a>
 
-    <a
-      href="/search"
+    <button
+      onclick={() => navSearchOpen.set(true)}
       aria-label="Search"
-      aria-current={isSearch ? 'page' : undefined}
       class={cn(
         'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
-        isSearch ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
+        $navSearchOpen ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
       <Search class="w-6 h-6" />
       <span class="text-xs font-medium">Search</span>
-    </a>
+    </button>
   </div>
 </nav>
