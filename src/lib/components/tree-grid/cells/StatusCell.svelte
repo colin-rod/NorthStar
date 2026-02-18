@@ -28,7 +28,13 @@
     return (node.data as Epic | Issue).status;
   });
 
-  const statusOptions = [
+  const projectEpicStatusOptions = [
+    { value: 'active', label: 'Active', color: 'bg-status-doing' },
+    { value: 'done', label: 'Done', color: 'bg-status-done' },
+    { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
+  ];
+
+  const issueStatusOptions = [
     { value: 'todo', label: 'Todo', color: 'bg-status-todo' },
     { value: 'doing', label: 'In Progress', color: 'bg-status-doing' },
     { value: 'in_review', label: 'In Review', color: 'bg-status-in-review' },
@@ -36,6 +42,10 @@
     { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
     // Note: 'blocked' is computed, not a stored status
   ];
+
+  const statusOptions = $derived(
+    node.type === 'project' || node.type === 'epic' ? projectEpicStatusOptions : issueStatusOptions,
+  );
 
   const currentOption = $derived(statusOptions.find((o) => o.value === status));
 </script>

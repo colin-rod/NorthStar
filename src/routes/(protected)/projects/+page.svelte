@@ -316,6 +316,23 @@
     await handleCellEdit(node.id, 'story_points', points.toString());
   }
 
+  async function handleContextMilestoneChange(node: TreeNode, milestoneId: string | null) {
+    const formData = new FormData();
+    formData.append('id', node.id);
+    formData.append('milestone_id', milestoneId ?? '');
+    try {
+      const response = await fetch('?/updateEpic', { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        showToast('Milestone updated', 'success');
+      } else {
+        showToast('Failed to update milestone', 'error');
+      }
+    } catch {
+      showToast('Failed to update milestone', 'error');
+    }
+  }
+
   function handleContextRename(node: TreeNode) {
     if (node.type === 'project') {
       selectedProjectForDetail = node.data as Project;
@@ -508,6 +525,8 @@
   onDelete={handleContextDelete}
   onPriorityChange={handleContextPriorityChange}
   onStoryPointsChange={handleContextStoryPointsChange}
+  milestones={data.milestones ?? []}
+  onMilestoneChange={handleContextMilestoneChange}
 />
 
 <!-- Simple toast-style feedback -->

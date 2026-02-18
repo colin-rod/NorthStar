@@ -14,6 +14,8 @@
   import { Button } from '$lib/components/ui/button';
   import type { TreeNode } from '$lib/types/tree-grid';
 
+  import type { Milestone } from '$lib/types';
+
   interface Props {
     node: TreeNode | null;
     x: number;
@@ -27,6 +29,8 @@
     onDelete?: (node: TreeNode) => void;
     onPriorityChange?: (node: TreeNode, priority: number) => void;
     onStoryPointsChange?: (node: TreeNode, points: number) => void;
+    milestones?: Milestone[];
+    onMilestoneChange?: (node: TreeNode, milestoneId: string | null) => void;
   }
 
   let {
@@ -42,6 +46,8 @@
     onDelete,
     onPriorityChange,
     onStoryPointsChange,
+    milestones = [],
+    onMilestoneChange,
   }: Props = $props();
 
   let triggerRef: HTMLElement | null = $state(null);
@@ -188,6 +194,30 @@
                 }}
               >
                 {s.label}
+              </CM.ContextMenuItem>
+            {/each}
+          </CM.ContextMenuSubContent>
+        </CM.ContextMenuSub>
+
+        <CM.ContextMenuSub>
+          <CM.ContextMenuSubTrigger>Milestone</CM.ContextMenuSubTrigger>
+          <CM.ContextMenuSubContent>
+            <CM.ContextMenuItem
+              onclick={() => {
+                onMilestoneChange?.(node!, null);
+                onClose();
+              }}
+            >
+              No Milestone
+            </CM.ContextMenuItem>
+            {#each milestones as m}
+              <CM.ContextMenuItem
+                onclick={() => {
+                  onMilestoneChange?.(node!, m.id);
+                  onClose();
+                }}
+              >
+                {m.name}
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
