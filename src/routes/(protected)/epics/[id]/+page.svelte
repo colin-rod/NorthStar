@@ -22,7 +22,12 @@
   import PriorityFilter from '$lib/components/PriorityFilter.svelte';
   import MilestoneFilter from '$lib/components/MilestoneFilter.svelte';
   import { Button } from '$lib/components/ui/button';
-  import { openIssueSheet } from '$lib/stores/issues';
+  import {
+    isIssueSheetOpen,
+    selectedIssue as selectedIssueStore,
+    openIssueSheet,
+    openCreateIssueSheet,
+  } from '$lib/stores/issues';
   import { isBlocked } from '$lib/utils/issue-helpers';
   import { calculateNewSortOrders, moveIssueUp, moveIssueDown } from '$lib/utils/reorder';
   import { dndzone } from 'svelte-dnd-action';
@@ -220,9 +225,7 @@
     }
   });
 
-  // Issue sheet state
-  let sheetOpen = $state(false);
-  let selectedIssue = $state<Issue | null>(null);
+  // Note: Using global stores for issue sheet state (isIssueSheetOpen, selectedIssueStore)
 </script>
 
 <div class="space-y-6">
@@ -245,8 +248,8 @@
       <Button onclick={() => (showAllSubIssues = !showAllSubIssues)} variant="outline">
         {showAllSubIssues ? 'Hide Sub-issues' : 'Show All Sub-issues'}
       </Button>
-      <Button onclick={() => (showInlineForm = !showInlineForm)}>
-        {showInlineForm ? 'Cancel' : 'Add Issue'}
+      <Button onclick={openCreateIssueSheet} class="bg-primary hover:bg-primary-hover text-white">
+        New Issue
       </Button>
     </div>
   </div>
@@ -344,11 +347,13 @@
 
 <!-- Issue Detail Sheet -->
 <IssueSheet
-  bind:open={sheetOpen}
-  issue={selectedIssue}
+  bind:open={$isIssueSheetOpen}
+  mode={$selectedIssueStore ? 'edit' : 'create'}
+  issue={$selectedIssueStore}
   epics={data.epics || []}
   milestones={data.milestones || []}
   projectIssues={data.issues || []}
+  projects={[{ id: data.epic?.project_id || '', name: data.epic?.project?.name || '' }]}
   userId={data.session?.user?.id ?? ''}
 />
 

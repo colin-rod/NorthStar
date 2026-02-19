@@ -9,9 +9,7 @@
   import { page } from '$app/stores';
   import { goto, invalidateAll } from '$app/navigation';
   import TreeGrid from '$lib/components/tree-grid/TreeGrid.svelte';
-  import ProjectSheet from '$lib/components/ProjectSheet.svelte';
   import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
-  import EpicSheet from '$lib/components/EpicSheet.svelte';
   import EpicDetailSheet from '$lib/components/EpicDetailSheet.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import { Button } from '$lib/components/ui/button';
@@ -19,7 +17,12 @@
   import type { Project, Epic, Issue } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
-  import { isIssueSheetOpen, selectedIssue, openIssueSheet } from '$lib/stores/issues';
+  import {
+    isIssueSheetOpen,
+    selectedIssue,
+    openIssueSheet,
+    openCreateIssueSheet,
+  } from '$lib/stores/issues';
   import ContextMenu from '$lib/components/ContextMenu.svelte';
   import type { TreeNode } from '$lib/types/tree-grid';
 
@@ -42,24 +45,18 @@
   let selectedIds = $state<Set<string>>(new Set());
   let editMode = $state(false);
 
-  // Sheet state management
-  let projectSheetOpen = $state(false);
-  let projectSheetMode: 'create' | 'edit' = $state('create');
-  let selectedProject: Project | undefined = $state(undefined);
-
-  let epicSheetOpen = $state(false);
-  let epicSheetMode: 'create' | 'edit' = $state('create');
-  let selectedEpic: Epic | undefined = $state(undefined);
-  let epicCreateProjectId: string | undefined = $state(undefined);
-
-  // Detail sheet state (opened via double-click)
+  // Project detail sheet state (handles both create and edit)
   let projectDetailSheetOpen = $state(false);
+  let projectDetailSheetMode: 'create' | 'edit' = $state('edit');
   let selectedProjectForDetail: Project | null = $state(null);
   let selectedProjectCounts: IssueCounts | null = $state(null);
   let selectedProjectMetrics: ProjectMetrics | null = $state(null);
   let selectedProjectEpics: Epic[] = $state([]);
 
+  // Epic detail sheet state (handles both create and edit)
   let epicDetailSheetOpen = $state(false);
+  let epicDetailSheetMode: 'create' | 'edit' = $state('edit');
+  let epicCreateProjectId: string | null = $state(null);
   let selectedEpicForDetail: Epic | null = $state(null);
   let selectedEpicCounts: IssueCounts | null = $state(null);
 
@@ -266,9 +263,12 @@
   }
 
   function openProjectSheetForCreate() {
-    projectSheetMode = 'create';
-    selectedProject = undefined;
-    projectSheetOpen = true;
+    projectDetailSheetMode = 'create';
+    selectedProjectForDetail = null;
+    selectedProjectCounts = null;
+    selectedProjectMetrics = null;
+    selectedProjectEpics = [];
+    projectDetailSheetOpen = true;
   }
 
   function handleProjectDoubleClick(
@@ -277,6 +277,7 @@
     metrics: ProjectMetrics,
     epics: Epic[],
   ) {
+    projectDetailSheetMode = 'edit';
     selectedProjectForDetail = project;
     selectedProjectCounts = counts;
     selectedProjectMetrics = metrics;
@@ -285,6 +286,7 @@
   }
 
   function handleEpicDoubleClick(epic: Epic, counts: IssueCounts) {
+    epicDetailSheetMode = 'edit';
     selectedEpicForDetail = epic;
     selectedEpicCounts = counts;
     epicDetailSheetOpen = true;
@@ -335,27 +337,34 @@
 
   function handleContextRename(node: TreeNode) {
     if (node.type === 'project') {
+      projectDetailSheetMode = 'edit';
       selectedProjectForDetail = node.data as Project;
+      // Would need to fetch counts/metrics/epics, but for rename we can use null
+      selectedProjectCounts = null;
+      selectedProjectMetrics = null;
+      selectedProjectEpics = [];
       projectDetailSheetOpen = true;
     } else if (node.type === 'epic') {
+      epicDetailSheetMode = 'edit';
       selectedEpicForDetail = node.data as Epic;
+      selectedEpicCounts = null;
       epicDetailSheetOpen = true;
     }
   }
 
   function handleContextAddChild(node: TreeNode) {
     if (node.type === 'project') {
+      // Add Epic to project
+      epicDetailSheetMode = 'create';
       epicCreateProjectId = node.id;
-      epicSheetMode = 'create';
-      selectedEpic = undefined;
-      epicSheetOpen = true;
+      selectedEpicForDetail = null;
+      selectedEpicCounts = null;
+      epicDetailSheetOpen = true;
     } else if (node.type === 'epic') {
-      // Find the project for this epic
-      const project = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === node.id));
-      if (project) {
-        handleCreateChild(node.id, 'epic', { title: '' });
-      }
+      // Add Issue to epic - open create issue sheet
+      openCreateIssueSheet();
     } else if (node.type === 'issue') {
+      // Add Sub-issue to issue - use inline form
       handleCreateChild(node.id, 'issue', { title: '' });
     }
   }
@@ -435,12 +444,21 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Projects</h1>
-    <Button
-      onclick={openProjectSheetForCreate}
-      class="bg-primary hover:bg-primary-hover text-white"
-    >
-      New Project
-    </Button>
+    <div class="flex gap-2">
+      <Button
+        onclick={openCreateIssueSheet}
+        variant="outline"
+        class="border-primary text-primary hover:bg-primary/10"
+      >
+        New Issue
+      </Button>
+      <Button
+        onclick={openProjectSheetForCreate}
+        class="bg-primary hover:bg-primary-hover text-white"
+      >
+        New Project
+      </Button>
+    </div>
   </div>
 
   {#if data.projects.length === 0}
@@ -469,12 +487,10 @@
   {/if}
 </div>
 
-<!-- Project create/edit sheet -->
-<ProjectSheet bind:open={projectSheetOpen} mode={projectSheetMode} project={selectedProject} />
-
-<!-- Project detail sheet (opened via double-click) -->
+<!-- Project detail sheet (handles both create and edit) -->
 <ProjectDetailSheet
   bind:open={projectDetailSheetOpen}
+  mode={projectDetailSheetMode}
   project={selectedProjectForDetail}
   counts={selectedProjectCounts}
   metrics={selectedProjectMetrics}
@@ -482,18 +498,12 @@
   userId={data.session?.user?.id ?? ''}
 />
 
-<!-- Epic create/edit sheet -->
-<EpicSheet
-  bind:open={epicSheetOpen}
-  mode={epicSheetMode}
-  epic={selectedEpic}
-  projectId={epicCreateProjectId}
-/>
-
-<!-- Epic detail sheet (opened via double-click) -->
+<!-- Epic detail sheet (handles both create and edit) -->
 <EpicDetailSheet
   bind:open={epicDetailSheetOpen}
+  mode={epicDetailSheetMode}
   epic={selectedEpicForDetail}
+  projectId={epicCreateProjectId ?? undefined}
   counts={selectedEpicCounts}
   userId={data.session?.user?.id ?? ''}
   milestones={data.milestones ?? []}

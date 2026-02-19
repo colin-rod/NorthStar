@@ -5,6 +5,7 @@
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
+  import { Button } from '$lib/components/ui/button';
   import { invalidateAll } from '$app/navigation';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
@@ -16,13 +17,23 @@
 
   interface Props {
     open: boolean;
+    mode?: 'create' | 'edit';
     epic: Epic | null;
+    projectId?: string;
     counts: IssueCounts | null;
     userId?: string;
     milestones?: Milestone[];
   }
 
-  let { open = $bindable(false), epic, counts, userId = '', milestones = [] }: Props = $props();
+  let {
+    open = $bindable(false),
+    mode = 'edit',
+    epic,
+    projectId,
+    counts,
+    userId = '',
+    milestones = [],
+  }: Props = $props();
 
   let localName = $state('');
   let localStatus = $state<'active' | 'done' | 'canceled'>('active');
@@ -32,6 +43,7 @@
   let attachments = $state<Attachment[]>([]);
   let saveError = $state<string | null>(null);
   let saveSuccess = $state(false);
+  let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
 
   let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -49,8 +61,9 @@
     }
   });
 
+  // Initialize local state when epic changes (edit mode)
   $effect(() => {
-    if (epic) {
+    if (mode === 'edit' && epic) {
       localName = epic.name;
       localStatus = epic.status;
       localPriority = epic.priority ?? null;
@@ -71,6 +84,27 @@
         .then(({ data }) => {
           attachments = data ?? [];
         });
+    }
+  });
+
+  // Initialize create mode defaults when sheet opens
+  $effect(() => {
+    if (mode === 'create' && open) {
+      localName = '';
+      localStatus = 'active';
+      localPriority = null;
+      localDescription = null;
+      localMilestoneId = null;
+      attachments = [];
+      saveError = null;
+      createLoading = false;
+    }
+  });
+
+  // Reset create mode state when sheet closes
+  $effect(() => {
+    if (!open && mode === 'create') {
+      createLoading = false;
     }
   });
 
@@ -188,157 +222,329 @@
     await fetch('?/deleteAttachment', { method: 'POST', body: formData });
     attachments = attachments.filter((a) => a.id !== attachment.id);
   }
+
+  // Create epic form submission
+  async function handleCreateSubmit(event: Event) {
+    event.preventDefault();
+
+    if (!localName.trim()) {
+      saveError = 'Epic name is required';
+      return;
+    }
+    if (!projectId) {
+      saveError = 'Project is required';
+      return;
+    }
+
+    createLoading = true;
+    saveError = null;
+
+    try {
+      const formData = new FormData();
+      formData.append('name', localName.trim());
+      formData.append('projectId', projectId);
+      formData.append('status', localStatus);
+      if (localPriority !== null) {
+        formData.append('priority', String(localPriority));
+      }
+      if (localMilestoneId) {
+        formData.append('milestone_id', localMilestoneId);
+      }
+      if (localDescription) {
+        formData.append('description', localDescription);
+      }
+
+      const response = await fetch('?/createEpic', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.type === 'success') {
+        await invalidateAll();
+        open = false;
+      } else {
+        saveError = result.data?.error || 'Failed to create epic';
+      }
+    } catch (error) {
+      console.error('Create epic error:', error);
+      saveError = 'Network error - please try again';
+    } finally {
+      createLoading = false;
+    }
+  }
 </script>
 
 <Sheet bind:open>
   <SheetContent side={sheetSide} class={sheetClass} bind:ref={sheetContentRef}>
-    {#if epic}
+    {#if mode === 'create' || epic}
+      <!-- Loading overlay -->
+      {#if createLoading}
+        <div
+          class="absolute inset-0 bg-background/50 flex items-center justify-center z-50 rounded-t-lg"
+        >
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      {/if}
+
       <SheetHeader class="mb-6">
         <SheetTitle class="text-xs uppercase font-medium text-foreground-muted tracking-wide">
-          E-{epic.number} · Epic
+          {#if mode === 'create'}
+            New Epic
+          {:else if epic}
+            E-{epic.number} · Epic
+          {:else}
+            Epic
+          {/if}
         </SheetTitle>
       </SheetHeader>
 
-      <div class="space-y-6">
-        <!-- Name -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-            Name
-          </h3>
-          <Input
-            value={localName}
-            oninput={handleNameInput}
-            placeholder="Epic name"
-            class="text-body"
-          />
-        </section>
-
-        <!-- Status -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-            Status
-          </h3>
-          <select
-            value={localStatus}
-            onchange={handleStatusChange}
-            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            <option value="active">Active</option>
-            <option value="done">Done</option>
-            <option value="canceled">Canceled</option>
-          </select>
-        </section>
-
-        <!-- Priority -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-            Priority
-          </h3>
-          <select
-            value={localPriority !== null ? String(localPriority) : ''}
-            onchange={handlePriorityChange}
-            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            <option value="">None</option>
-            <option value="0">P0 — Highest</option>
-            <option value="1">P1 — High</option>
-            <option value="2">P2 — Medium</option>
-            <option value="3">P3 — Low</option>
-          </select>
-        </section>
-
-        <!-- Milestone -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-            Milestone
-          </h3>
-          <MilestonePicker
-            selectedMilestoneId={localMilestoneId}
-            {milestones}
-            onChange={handleMilestoneChange}
-          />
-        </section>
-
-        <!-- Description -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-            Description
-          </h3>
-          <RichTextEditor
-            content={localDescription}
-            onchange={handleDescriptionChange}
-            {uploadImage}
-          />
-        </section>
-
-        <!-- Attachments -->
-        <section>
-          <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-            Attachments
-          </h3>
-          <AttachmentList
-            {attachments}
-            onUpload={handleAttachmentUpload}
-            onDelete={handleAttachmentDelete}
-          />
-        </section>
-
-        <!-- Progress -->
-        {#if counts}
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Progress
-            </h3>
-            <div class="grid grid-cols-3 gap-3 text-metadata">
-              <div class="flex items-center gap-2">
-                <Badge variant="default" class="text-xs">{counts.ready}</Badge>
-                <span class="text-foreground-secondary">Ready</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
-                <span class="text-foreground-secondary">Doing</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
-                <span class="text-foreground-secondary">In Review</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
-                <span class="text-foreground-secondary">Blocked</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Badge variant="status-done" class="text-xs">{counts.done}</Badge>
-                <span class="text-foreground-secondary">Done</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <Badge variant="status-canceled" class="text-xs">{counts.canceled}</Badge>
-                <span class="text-foreground-secondary">Canceled</span>
-              </div>
+      {#if mode === 'create'}
+        <!-- Create mode: form with submit button -->
+        <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
+          <!-- Error message -->
+          {#if saveError}
+            <div
+              class="p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 text-sm"
+            >
+              {saveError}
             </div>
-            {#if computeProgress(counts).total > 0}
-              <div class="mt-3 flex items-center gap-2">
-                <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-                  <div
-                    class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                    style="width: {computeProgress(counts).percentage}%"
-                  ></div>
-                </div>
-                <span class="text-metadata text-foreground-secondary shrink-0">
-                  {computeProgress(counts).percentage}%
-                </span>
-              </div>
-            {/if}
-          </section>
-        {/if}
+          {/if}
 
-        <!-- Save feedback -->
-        {#if saveError}
-          <p class="text-sm text-destructive">{saveError}</p>
-        {/if}
-        {#if saveSuccess}
-          <p class="text-sm text-foreground-secondary">Saved</p>
-        {/if}
-      </div>
+          <!-- Name -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Name
+            </h3>
+            <Input
+              value={localName}
+              oninput={(e) => {
+                localName = e.currentTarget.value;
+              }}
+              required
+              disabled={createLoading}
+              placeholder="Epic name"
+              class="text-body"
+            />
+          </section>
+
+          <!-- Status -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Status
+            </h3>
+            <select
+              bind:value={localStatus}
+              disabled={createLoading}
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="active">Active</option>
+              <option value="done">Done</option>
+              <option value="canceled">Canceled</option>
+            </select>
+          </section>
+
+          <!-- Priority -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Priority
+            </h3>
+            <select
+              value={localPriority !== null ? String(localPriority) : ''}
+              onchange={(e) => {
+                const raw = e.currentTarget.value;
+                localPriority = raw === '' ? null : Number(raw);
+              }}
+              disabled={createLoading}
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="">None</option>
+              <option value="0">P0 — Highest</option>
+              <option value="1">P1 — High</option>
+              <option value="2">P2 — Medium</option>
+              <option value="3">P3 — Low</option>
+            </select>
+          </section>
+
+          <!-- Milestone -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Milestone
+            </h3>
+            <MilestonePicker
+              selectedMilestoneId={localMilestoneId}
+              {milestones}
+              disabled={createLoading}
+              onChange={(id) => {
+                localMilestoneId = id;
+              }}
+            />
+          </section>
+
+          <!-- Description -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Description
+            </h3>
+            <RichTextEditor
+              content={localDescription}
+              onchange={(html) => {
+                localDescription = html;
+              }}
+              {uploadImage}
+              disabled={createLoading}
+            />
+          </section>
+
+          <!-- Submit Button -->
+          <Button type="submit" disabled={createLoading || !localName.trim()} class="w-full">
+            {createLoading ? 'Creating...' : 'Create Epic'}
+          </Button>
+        </form>
+      {:else}
+        <!-- Edit mode: auto-save behavior -->
+        <div class="space-y-6 pb-6">
+          <!-- Name -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Name
+            </h3>
+            <Input
+              value={localName}
+              oninput={handleNameInput}
+              placeholder="Epic name"
+              class="text-body"
+            />
+          </section>
+
+          <!-- Status -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Status
+            </h3>
+            <select
+              value={localStatus}
+              onchange={handleStatusChange}
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="active">Active</option>
+              <option value="done">Done</option>
+              <option value="canceled">Canceled</option>
+            </select>
+          </section>
+
+          <!-- Priority -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Priority
+            </h3>
+            <select
+              value={localPriority !== null ? String(localPriority) : ''}
+              onchange={handlePriorityChange}
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="">None</option>
+              <option value="0">P0 — Highest</option>
+              <option value="1">P1 — High</option>
+              <option value="2">P2 — Medium</option>
+              <option value="3">P3 — Low</option>
+            </select>
+          </section>
+
+          <!-- Milestone -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Milestone
+            </h3>
+            <MilestonePicker
+              selectedMilestoneId={localMilestoneId}
+              {milestones}
+              onChange={handleMilestoneChange}
+            />
+          </section>
+
+          <!-- Description -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Description
+            </h3>
+            <RichTextEditor
+              content={localDescription}
+              onchange={handleDescriptionChange}
+              {uploadImage}
+            />
+          </section>
+
+          <!-- Attachments -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Attachments
+            </h3>
+            <AttachmentList
+              {attachments}
+              onUpload={handleAttachmentUpload}
+              onDelete={handleAttachmentDelete}
+            />
+          </section>
+
+          <!-- Progress -->
+          {#if counts}
+            <section>
+              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+                Progress
+              </h3>
+              <div class="grid grid-cols-3 gap-3 text-metadata">
+                <div class="flex items-center gap-2">
+                  <Badge variant="default" class="text-xs">{counts.ready}</Badge>
+                  <span class="text-foreground-secondary">Ready</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
+                  <span class="text-foreground-secondary">Doing</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
+                  <span class="text-foreground-secondary">In Review</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
+                  <span class="text-foreground-secondary">Blocked</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Badge variant="status-done" class="text-xs">{counts.done}</Badge>
+                  <span class="text-foreground-secondary">Done</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Badge variant="status-canceled" class="text-xs">{counts.canceled}</Badge>
+                  <span class="text-foreground-secondary">Canceled</span>
+                </div>
+              </div>
+              {#if computeProgress(counts).total > 0}
+                <div class="mt-3 flex items-center gap-2">
+                  <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+                    <div
+                      class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+                      style="width: {computeProgress(counts).percentage}%"
+                    ></div>
+                  </div>
+                  <span class="text-metadata text-foreground-secondary shrink-0">
+                    {computeProgress(counts).percentage}%
+                  </span>
+                </div>
+              {/if}
+            </section>
+          {/if}
+
+          <!-- Save feedback -->
+          {#if saveError}
+            <p class="text-sm text-destructive">{saveError}</p>
+          {/if}
+          {#if saveSuccess}
+            <p class="text-sm text-foreground-secondary">Saved</p>
+          {/if}
+        </div>
+      {/if}
     {/if}
   </SheetContent>
 </Sheet>
