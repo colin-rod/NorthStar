@@ -339,8 +339,8 @@
     try {
       const formData = new FormData();
       formData.append('title', localTitle.trim());
-      formData.append('project_id', selectedProjectId);
-      formData.append('epic_id', localEpicId);
+      formData.append('projectId', selectedProjectId);
+      formData.append('epicId', localEpicId);
 
       const response = await fetch('?/createIssue', {
         method: 'POST',
