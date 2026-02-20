@@ -10,6 +10,8 @@
   import IssueList from '$lib/components/IssueList.svelte';
   import GroupedIssueList from '$lib/components/GroupedIssueList.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
+  import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
+  import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
   import ProjectFilter from '$lib/components/ProjectFilter.svelte';
   import PriorityFilter from '$lib/components/PriorityFilter.svelte';
   import MilestoneFilter from '$lib/components/MilestoneFilter.svelte';
@@ -24,8 +26,8 @@
     isIssueSheetOpen,
     openIssueSheet,
     openCreateIssueSheet,
+    projectSheetOpen,
   } from '$lib/stores/issues';
-  import { Button } from '$lib/components/ui/button';
 
   let { data }: { data: PageData } = $props();
 
@@ -106,12 +108,29 @@
   );
   let progressTitle = $derived(activeMilestone?.name || 'All Issues');
   let activeMilestoneDueDate = $derived(activeMilestone?.due_date || null);
+
+  // Project sheet state (triggered by NewButtonDropdown)
+  let projectDetailSheetOpen = $state(false);
+
+  // Sync store with local state for project sheet
+  $effect(() => {
+    if ($projectSheetOpen && !projectDetailSheetOpen) {
+      projectDetailSheetOpen = true;
+    }
+  });
+
+  // Sync local state back to store when sheet closes
+  $effect(() => {
+    if (!projectDetailSheetOpen && $projectSheetOpen) {
+      projectSheetOpen.set(false);
+    }
+  });
 </script>
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Issues</h1>
-    <Button onclick={openCreateIssueSheet}>+ New Issue</Button>
+    <NewButtonDropdown />
   </div>
 
   <!-- Filter Row -->
@@ -165,5 +184,16 @@
   milestones={data.milestones || []}
   projectIssues={data.issues || []}
   projects={data.projects || []}
+  userId={data.session?.user?.id ?? ''}
+/>
+
+<!-- Project Detail Sheet (for creation from home page) -->
+<ProjectDetailSheet
+  bind:open={projectDetailSheetOpen}
+  mode="create"
+  project={null}
+  counts={null}
+  metrics={null}
+  epics={[]}
   userId={data.session?.user?.id ?? ''}
 />
