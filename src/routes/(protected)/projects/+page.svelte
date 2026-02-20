@@ -22,6 +22,7 @@
     selectedIssue,
     openIssueSheet,
     openCreateIssueSheet,
+    projectSheetOpen,
   } from '$lib/stores/issues';
   import ContextMenu from '$lib/components/ContextMenu.svelte';
   import type { TreeNode } from '$lib/types/tree-grid';
@@ -70,6 +71,21 @@
   let feedbackMessage = $state('');
   let feedbackType: 'success' | 'error' = $state('success');
   let showFeedback = $state(false);
+
+  // Sync store with local state for project sheet
+  $effect(() => {
+    if ($projectSheetOpen && !projectDetailSheetOpen) {
+      // Store requested open - trigger create mode
+      openProjectSheetForCreate();
+    }
+  });
+
+  // Sync local state back to store when sheet closes
+  $effect(() => {
+    if (!projectDetailSheetOpen && $projectSheetOpen) {
+      projectSheetOpen.set(false);
+    }
+  });
 
   function toggleExpand(id: string) {
     const url = new URL($page.url);
