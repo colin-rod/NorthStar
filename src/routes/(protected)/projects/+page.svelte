@@ -12,7 +12,7 @@
   import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
   import EpicDetailSheet from '$lib/components/EpicDetailSheet.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
-  import { Button } from '$lib/components/ui/button';
+  import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
@@ -460,21 +460,7 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Projects</h1>
-    <div class="flex gap-2">
-      <Button
-        onclick={openCreateIssueSheet}
-        variant="outline"
-        class="border-primary text-primary hover:bg-primary/10"
-      >
-        New Issue
-      </Button>
-      <Button
-        onclick={openProjectSheetForCreate}
-        class="bg-primary hover:bg-primary-hover text-white"
-      >
-        New Project
-      </Button>
-    </div>
+    <NewButtonDropdown />
   </div>
 
   {#if data.projects.length === 0}
