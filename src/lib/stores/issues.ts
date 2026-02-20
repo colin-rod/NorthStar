@@ -40,6 +40,11 @@ export const selectedIssue: Writable<Issue | null> = writable(null);
 export const isIssueSheetOpen: Writable<boolean> = writable(false);
 
 /**
+ * Project sheet open state
+ */
+export const projectSheetOpen: Writable<boolean> = writable(false);
+
+/**
  * Helper function to open issue sheet
  */
 export function openIssueSheet(issue: Issue) {
@@ -62,6 +67,20 @@ export function closeIssueSheet() {
   isIssueSheetOpen.set(false);
   // Delay clearing selected issue for animation
   setTimeout(() => selectedIssue.set(null), 300);
+}
+
+/**
+ * Helper function to open project sheet in create mode
+ */
+export function openCreateProjectSheet() {
+  projectSheetOpen.set(true);
+}
+
+/**
+ * Helper function to close project sheet
+ */
+export function closeProjectSheet() {
+  projectSheetOpen.set(false);
 }
 
 /**
