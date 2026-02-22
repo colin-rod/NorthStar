@@ -2,15 +2,21 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
+import type { Project } from '$lib/types';
+import { filterTree } from '$lib/utils/filter-tree';
 import { computeIssueCounts } from '$lib/utils/issue-counts';
 import { computeProjectMetrics } from '$lib/utils/project-helpers';
+import { parseTreeFilterParams } from '$lib/utils/tree-filter-params';
 
-export const load: PageServerLoad = async ({ locals: { supabase, session } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase, session }, url }) => {
   if (!session) {
     redirect(303, '/auth/login');
   }
 
-  // Load all active projects
+  // Parse filter params from URL
+  const filterParams = parseTreeFilterParams(url.searchParams);
+
+  // Load all active projects (unfiltered)
   const { data: projects, error: projectsError } = await supabase
     .from('projects')
     .select('*')
@@ -19,7 +25,10 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
 
   if (projectsError) {
     console.error('Error loading projects:', projectsError);
-    return { projects: [] };
+    return {
+      projects: [],
+      filterParams,
+    };
   }
 
   // For each project, load epics with issues and dependencies
@@ -75,6 +84,15 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     }),
   );
 
+  // Apply server-side filters
+  const filteredProjects = filterTree(projectsWithData as Project[], {
+    projectStatus: filterParams.projectStatus,
+    epicStatus: filterParams.epicStatus,
+    issuePriority: filterParams.issuePriority,
+    issueStatus: filterParams.issueStatus,
+    issueStoryPoints: filterParams.issueStoryPoints,
+  }) as typeof projectsWithData;
+
   // Load milestones for EpicDetailSheet milestone picker
   const { data: milestones } = await supabase
     .from('milestones')
@@ -82,8 +100,9 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     .order('due_date', { ascending: true, nullsFirst: false });
 
   return {
-    projects: projectsWithData,
+    projects: filteredProjects,
     milestones: milestones || [],
+    filterParams,
   };
 };
 
