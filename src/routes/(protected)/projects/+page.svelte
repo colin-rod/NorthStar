@@ -14,6 +14,7 @@
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
   import FilterPanel from '$lib/components/FilterPanel.svelte';
+  import IssueGroupBySelector from '$lib/components/IssueGroupBySelector.svelte';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
@@ -482,6 +483,9 @@
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Projects</h1>
     <div class="flex gap-2 items-center">
+      <!-- Grouping Selector -->
+      <IssueGroupBySelector selectedGroupBy={data.filterParams.groupBy} />
+
       <!-- Filters Button -->
       <button
         onclick={toggleFilterPanel}

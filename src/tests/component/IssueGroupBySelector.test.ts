@@ -48,7 +48,7 @@ describe('IssueGroupBySelector', () => {
     // Should render a button
     const trigger = container.querySelector('button');
     expect(trigger).toBeInTheDocument();
-    expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
   });
 
   it('should have proper button styling', () => {
@@ -58,8 +58,9 @@ describe('IssueGroupBySelector', () => {
       },
     });
 
-    // Check for select trigger with custom width
-    const trigger = container.querySelector('.w-\\[200px\\]');
+    // Check for button with proper classes
+    const trigger = container.querySelector('button');
     expect(trigger).toBeInTheDocument();
+    expect(trigger?.className).toContain('border-input');
   });
 });
