@@ -13,6 +13,7 @@
   import EpicDetailSheet from '$lib/components/EpicDetailSheet.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
+  import FilterPanel from '$lib/components/FilterPanel.svelte';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
@@ -71,6 +72,26 @@
   let feedbackMessage = $state('');
   let feedbackType: 'success' | 'error' = $state('success');
   let showFeedback = $state(false);
+
+  // Filter panel state
+  let filterPanelOpen = $state(false);
+
+  function toggleFilterPanel() {
+    filterPanelOpen = !filterPanelOpen;
+  }
+
+  // Count active filters
+  let activeFilterCount = $derived.by(() => {
+    const { projectStatus, epicStatus, issuePriority, issueStatus, issueStoryPoints } =
+      data.filterParams;
+    return (
+      projectStatus.length +
+      epicStatus.length +
+      issuePriority.length +
+      issueStatus.length +
+      issueStoryPoints.length
+    );
+  });
 
   // Sync store with local state for project sheet
   $effect(() => {
@@ -460,12 +481,30 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Projects</h1>
-    <NewButtonDropdown />
+    <div class="flex gap-2 items-center">
+      <!-- Filters Button -->
+      <button
+        onclick={toggleFilterPanel}
+        class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+      >
+        Filters
+        {#if activeFilterCount > 0}
+          <span class="rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs">
+            {activeFilterCount}
+          </span>
+        {/if}
+        <span class="text-muted-foreground">{filterPanelOpen ? '▲' : '▼'}</span>
+      </button>
+      <NewButtonDropdown />
+    </div>
   </div>
+
+  <!-- Filter Panel -->
+  <FilterPanel filterParams={data.filterParams} open={filterPanelOpen} />
 
   {#if data.projects.length === 0}
     <div class="text-center py-12">
-      <p class="text-muted-foreground text-lg">No projects yet. Create your first project.</p>
+      <p class="text-muted-foreground text-lg">No projects match the current filters.</p>
     </div>
   {:else}
     <!-- Tree Grid View -->
