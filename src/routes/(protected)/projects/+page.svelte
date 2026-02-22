@@ -517,6 +517,7 @@
       {expandedIds}
       {selectedIds}
       {editMode}
+      groupBy={data.filterParams.groupBy}
       onToggleExpand={toggleExpand}
       onToggleSelect={toggleSelect}
       onEditModeChange={handleEditModeChange}
