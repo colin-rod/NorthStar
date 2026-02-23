@@ -156,18 +156,21 @@
       onblur={saveEdit}
       class="flex-1 px-2 py-1 text-sm border border-accent rounded focus:outline-none focus:ring-1 focus:ring-accent {fontWeight}"
     />
-  {:else}
-    <span
-      class="text-issue-title {fontWeight} truncate flex-1 {editMode ? 'cursor-text' : ''}"
+  {:else if editMode}
+    <button
+      type="button"
+      class="text-issue-title {fontWeight} truncate flex-1 cursor-text text-left bg-transparent border-0 p-0 hover:bg-transparent"
       onclick={startEditing}
-      onkeydown={editMode
-        ? (e) => {
-            if (e.key === 'Enter' || e.key === ' ') startEditing();
-          }
-        : undefined}
-      role={editMode ? 'button' : undefined}
-      tabindex={editMode ? 0 : undefined}
+      onkeydown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') startEditing();
+      }}
     >
+      <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
+      <span class="mx-1 text-muted-foreground">·</span>
+      {title}
+    </button>
+  {:else}
+    <span class="text-issue-title {fontWeight} truncate flex-1">
       <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
       <span class="mx-1 text-muted-foreground">·</span>
       {title}

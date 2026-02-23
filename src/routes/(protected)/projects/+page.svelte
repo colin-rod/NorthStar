@@ -258,7 +258,7 @@
       let projectId = '';
 
       for (const project of data.projects) {
-        const issue = project.issues?.find((i: Issue) => i.id === parentId);
+        const issue = project.epics?.flatMap((e) => e.issues || []).find((i) => i.id === parentId);
         if (issue) {
           epicId = issue.epic_id;
           projectId = project.id;
@@ -569,7 +569,7 @@
   issue={$selectedIssue}
   epics={data.projects.flatMap((p) => p.epics || [])}
   milestones={[]}
-  projectIssues={data.projects.flatMap((p) => p.issues || [])}
+  projectIssues={data.projects.flatMap((p) => p.epics?.flatMap((e) => e.issues || []) || [])}
   projects={data.projects}
   userId={data.session?.user?.id ?? ''}
 />

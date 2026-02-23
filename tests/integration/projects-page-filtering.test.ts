@@ -15,8 +15,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import FilterPanel from '$lib/components/FilterPanel.svelte';
 import type { Project } from '$lib/types';
-import { filterTree } from '$lib/utils/filter-tree';
-import { parseTreeFilterParams, buildTreeFilterUrl } from '$lib/utils/tree-filter-params';
+import { filterTree, type TreeFilters } from '$lib/utils/filter-tree';
+import {
+  parseTreeFilterParams,
+  buildTreeFilterUrl,
+  type TreeFilterParams,
+} from '$lib/utils/tree-filter-params';
 
 // Mock navigation modules
 vi.mock('$app/navigation', () => ({
@@ -241,15 +245,15 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
 
   describe('URL Building', () => {
     it('should build correct URL with all filter types', () => {
-      const filters = {
-        projectStatus: ['active', 'done'] as const,
-        epicStatus: ['active'] as const,
+      const filters: TreeFilterParams = {
+        projectStatus: ['active', 'done'],
+        epicStatus: ['active'],
         issuePriority: [0, 1],
-        issueStatus: ['todo', 'doing'] as const,
-        issueStoryPoints: [3, 5, null] as (number | null)[],
-        groupBy: 'priority' as const,
-        sortBy: 'status' as const,
-        sortDir: 'desc' as const,
+        issueStatus: ['todo', 'doing'],
+        issueStoryPoints: [3, 5, null],
+        groupBy: 'priority',
+        sortBy: 'status',
+        sortDir: 'desc',
       };
 
       const url = buildTreeFilterUrl(filters, '/projects');
@@ -312,7 +316,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
     });
 
     it('should filter projects by status', () => {
-      const filters = {
+      const filters: TreeFilters = {
         projectStatus: ['active'],
         epicStatus: [],
         issuePriority: [],
@@ -328,7 +332,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
     });
 
     it('should filter epics while preserving parent projects', () => {
-      const filters = {
+      const filters: TreeFilters = {
         projectStatus: [],
         epicStatus: ['active'],
         issuePriority: [],
@@ -362,7 +366,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
     });
 
     it('should filter issues by status', () => {
-      const filters = {
+      const filters: TreeFilters = {
         projectStatus: [],
         epicStatus: [],
         issuePriority: [],
@@ -396,7 +400,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
     });
 
     it('should apply cascading filters across all levels', () => {
-      const filters = {
+      const filters: TreeFilters = {
         projectStatus: ['active'],
         epicStatus: ['active'],
         issuePriority: [0, 1],
@@ -419,7 +423,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
     });
 
     it('should handle empty results gracefully', () => {
-      const filters = {
+      const filters: TreeFilters = {
         projectStatus: ['active'],
         epicStatus: ['active'],
         issuePriority: [0],
@@ -437,15 +441,15 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
 
   describe('FilterPanel Component Integration', () => {
     it('should render with correct filter params', () => {
-      const filterParams = {
-        projectStatus: ['active'] as const,
-        epicStatus: ['active'] as const,
+      const filterParams: TreeFilterParams = {
+        projectStatus: ['active'],
+        epicStatus: ['active'],
         issuePriority: [0, 1],
-        issueStatus: ['todo'] as const,
-        issueStoryPoints: [5] as (number | null)[],
-        groupBy: 'none' as const,
-        sortBy: 'priority' as const,
-        sortDir: 'asc' as const,
+        issueStatus: ['todo'],
+        issueStoryPoints: [5],
+        groupBy: 'none',
+        sortBy: 'priority',
+        sortDir: 'asc',
       };
 
       render(FilterPanel, {
@@ -561,7 +565,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
 
   describe('Edge Cases and Error Handling', () => {
     it('should handle projects with no epics', () => {
-      const filters = {
+      const filters: TreeFilters = {
         projectStatus: ['canceled'],
         epicStatus: [],
         issuePriority: [],
@@ -577,7 +581,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
     });
 
     it('should handle epics with no issues', () => {
-      const filters = {
+      const filters: TreeFilters = {
         projectStatus: ['done'],
         epicStatus: ['canceled'],
         issuePriority: [],
