@@ -6,6 +6,7 @@ import type { Project } from '$lib/types';
 import { filterTree } from '$lib/utils/filter-tree';
 import { computeIssueCounts } from '$lib/utils/issue-counts';
 import { computeProjectMetrics } from '$lib/utils/project-helpers';
+import { sortTree } from '$lib/utils/sort-tree';
 import { parseTreeFilterParams } from '$lib/utils/tree-filter-params';
 
 export const load: PageServerLoad = async ({ locals: { supabase, session }, url }) => {
@@ -93,6 +94,9 @@ export const load: PageServerLoad = async ({ locals: { supabase, session }, url 
     issueStoryPoints: filterParams.issueStoryPoints,
   }) as typeof projectsWithData;
 
+  // Apply sorting
+  const sortedProjects = sortTree(filteredProjects, filterParams.sortBy, filterParams.sortDir);
+
   // Load milestones for EpicDetailSheet milestone picker
   const { data: milestones } = await supabase
     .from('milestones')
@@ -100,7 +104,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, session }, url 
     .order('due_date', { ascending: true, nullsFirst: false });
 
   return {
-    projects: filteredProjects,
+    projects: sortedProjects,
     milestones: milestones || [],
     filterParams,
   };

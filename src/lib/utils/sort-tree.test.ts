@@ -212,7 +212,7 @@ describe('sortTree - Name/Title Sorting', () => {
     const projectB = createProject('B', 'Bravo');
 
     const projects = [projectC, projectA, projectB];
-    const sorted = sortTree(projects, 'name', 'asc');
+    const sorted = sortTree(projects, 'title', 'asc');
 
     expect(sorted.map((p) => p.name)).toEqual(['Alpha', 'Bravo', 'Charlie']);
   });
@@ -225,7 +225,7 @@ describe('sortTree - Name/Title Sorting', () => {
 
     project.epics = [epic1, epic2, epic3];
 
-    const sorted = sortTree([project], 'name', 'asc');
+    const sorted = sortTree([project], 'title', 'asc');
     expect(sorted[0].epics?.map((e) => e.name)).toEqual(['Alpha', 'Mike', 'Zebra']);
   });
 
@@ -482,7 +482,7 @@ describe('sortTree - Edge Cases', () => {
     const projectB = createProject('B', 'Project B');
 
     const projects = [projectA, projectB];
-    const sorted = sortTree(projects, 'name', 'asc');
+    const sorted = sortTree(projects, 'title', 'asc');
 
     expect(sorted.map((p) => p.id)).toEqual(['A', 'B']);
   });
@@ -494,7 +494,7 @@ describe('sortTree - Edge Cases', () => {
 
     project.epics = [epic1, epic2];
 
-    const sorted = sortTree([project], 'name', 'asc');
+    const sorted = sortTree([project], 'title', 'asc');
     expect(sorted[0].epics?.map((e) => e.name)).toEqual(['Alpha', 'Zebra']);
   });
 

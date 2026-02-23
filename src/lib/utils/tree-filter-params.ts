@@ -1,5 +1,11 @@
 // src/lib/utils/tree-filter-params.ts
-import type { ProjectStatus, EpicStatus, IssueStatus } from '$lib/types';
+import type {
+  ProjectStatus,
+  EpicStatus,
+  IssueStatus,
+  SortByColumn,
+  SortDirection,
+} from '$lib/types';
 
 export interface TreeFilterParams {
   projectStatus: ProjectStatus[];
@@ -8,8 +14,8 @@ export interface TreeFilterParams {
   issueStatus: IssueStatus[];
   issueStoryPoints: (number | null)[];
   groupBy: string;
-  sortBy: string;
-  sortDir: 'asc' | 'desc';
+  sortBy: SortByColumn;
+  sortDir: SortDirection;
 }
 
 const VALID_PROJECT_STATUSES: ProjectStatus[] = ['active', 'done', 'canceled'];
@@ -18,7 +24,16 @@ const VALID_ISSUE_STATUSES: IssueStatus[] = ['todo', 'doing', 'in_review', 'done
 const VALID_PRIORITIES = [0, 1, 2, 3];
 const VALID_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
 const VALID_GROUP_BY = ['none', 'priority', 'status', 'milestone', 'story_points'];
-const VALID_SORT_BY = ['priority', 'status', 'name', 'progress', 'story_points'];
+const VALID_SORT_BY: SortByColumn[] = [
+  'priority',
+  'status',
+  'title',
+  'project',
+  'epic',
+  'milestone',
+  'story_points',
+  'progress',
+];
 
 export function parseTreeFilterParams(params: URLSearchParams): TreeFilterParams {
   return {

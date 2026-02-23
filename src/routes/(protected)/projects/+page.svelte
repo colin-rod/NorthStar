@@ -15,6 +15,7 @@
   import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
   import FilterPanel from '$lib/components/FilterPanel.svelte';
   import IssueGroupBySelector from '$lib/components/IssueGroupBySelector.svelte';
+  import IssueSortBySelector from '$lib/components/IssueSortBySelector.svelte';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
@@ -485,6 +486,12 @@
     <div class="flex gap-2 items-center">
       <!-- Grouping Selector -->
       <IssueGroupBySelector selectedGroupBy={data.filterParams.groupBy} />
+
+      <!-- Sorting Selector -->
+      <IssueSortBySelector
+        selected={data.filterParams.sortBy}
+        direction={data.filterParams.sortDir}
+      />
 
       <!-- Filters Button -->
       <button

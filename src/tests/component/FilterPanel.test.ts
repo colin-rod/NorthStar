@@ -24,7 +24,7 @@ describe('FilterPanel', () => {
       issueStatus: [],
       issueStoryPoints: [],
       groupBy: 'none',
-      sortBy: 'priority',
+      sortBy: 'priority' as const,
       sortDir: 'asc' as const,
     },
     open: true,

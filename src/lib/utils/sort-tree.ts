@@ -5,10 +5,7 @@
  * Sorts at all three levels based on the selected mode.
  */
 
-import type { Project, Epic, Issue } from '$lib/types';
-
-export type SortByMode = 'priority' | 'status' | 'name' | 'title' | 'story_points' | 'progress';
-export type SortDirection = 'asc' | 'desc';
+import type { Project, Epic, Issue, SortByColumn, SortDirection } from '$lib/types';
 
 // Status sort order constants
 const PROJECT_STATUS_ORDER = { active: 0, done: 1, canceled: 2 } as const;
@@ -25,7 +22,7 @@ const ISSUE_STATUS_ORDER = { todo: 0, doing: 1, in_review: 2, done: 3, canceled:
  */
 export function sortTree(
   projects: Project[],
-  sortBy: SortByMode,
+  sortBy: SortByColumn,
   direction: SortDirection,
 ): Project[] {
   // Create deep copy to avoid mutation
@@ -55,7 +52,7 @@ export function sortTree(
  */
 function sortProjects(
   projects: Project[],
-  sortBy: SortByMode,
+  sortBy: SortByColumn,
   direction: SortDirection,
 ): Project[] {
   const sorted = [...projects].sort((a, b) => {
@@ -68,7 +65,6 @@ function sortProjects(
       case 'status':
         comparison = compareProjectStatus(a, b);
         break;
-      case 'name':
       case 'title':
         comparison = compareString(a.name, b.name);
         break;
@@ -89,7 +85,7 @@ function sortProjects(
 /**
  * Sort epics array
  */
-function sortEpics(epics: Epic[], sortBy: SortByMode, direction: SortDirection): Epic[] {
+function sortEpics(epics: Epic[], sortBy: SortByColumn, direction: SortDirection): Epic[] {
   const sorted = [...epics].sort((a, b) => {
     let comparison = 0;
 
@@ -100,7 +96,6 @@ function sortEpics(epics: Epic[], sortBy: SortByMode, direction: SortDirection):
       case 'status':
         comparison = compareEpicStatus(a, b);
         break;
-      case 'name':
       case 'title':
         comparison = compareString(a.name, b.name);
         break;
@@ -121,7 +116,7 @@ function sortEpics(epics: Epic[], sortBy: SortByMode, direction: SortDirection):
 /**
  * Sort issues array
  */
-function sortIssues(issues: Issue[], sortBy: SortByMode, direction: SortDirection): Issue[] {
+function sortIssues(issues: Issue[], sortBy: SortByColumn, direction: SortDirection): Issue[] {
   const sorted = [...issues].sort((a, b) => {
     let comparison = 0;
 
@@ -132,7 +127,6 @@ function sortIssues(issues: Issue[], sortBy: SortByMode, direction: SortDirectio
       case 'status':
         comparison = compareIssueStatus(a, b);
         break;
-      case 'name':
       case 'title':
         comparison = compareString(a.title, b.title);
         break;
