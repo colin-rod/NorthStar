@@ -72,24 +72,24 @@
 
 ---
 
-## Overall Statistics
+## Overall Statistics (Phases 1-4)
 
 ### Code Created:
 
-- **7 new utility files** (with tests)
-- **5 new components** (with tests)
-- **1 integration test suite**
+- **9 new utility files** (with tests)
+- **6 new components** (with tests)
+- **2 integration test suites**
 - **Modifications to 2 page files** (+page.svelte, +page.server.ts)
 
 ### Test Coverage:
 
-- **68 total tests passing**
-- **Unit tests:** 21 tests (utils)
-- **Component tests:** 21 tests
-- **Integration tests:** 26 tests
+- **156 total tests passing** (Phase 1-4)
+- **Unit tests:** 46 tests (utils)
+- **Component tests:** 31 tests
+- **Integration tests:** 79 tests (26 filtering + 53 sorting)
 - **0 failing tests**
 
-### Commits Made: 13
+### Commits Made: 18
 
 All following TDD red-green-refactor cycle with proper commit messages.
 
@@ -130,31 +130,87 @@ All following TDD red-green-refactor cycle with proper commit messages.
 7. View metrics (count, story points, completion %)
 8. URL updates with `?group_by=priority`
 
+### Sorting (Fully Functional):
+
+1. Click "Sort" dropdown next to "Group by"
+2. Select sort mode:
+   - **Priority** (default) - Projects/epics by highest priority issue, issues by own priority
+   - **Status** - Custom order (todo > doing > in_review > done > canceled)
+   - **Name** - Alphabetical sorting at all levels
+   - **Story Points** - Projects/epics by total, issues by own value
+   - **Progress** - Projects/epics by completion percentage
+3. Click direction toggle (↑/↓) to switch ascending/descending
+4. URL updates with `?sort_by=priority&sort_dir=asc`
+5. Sorting applies at all three hierarchy levels (Projects → Epics → Issues)
+6. Sorting works with filtering and grouping
+
 ---
 
 ## Implementation Complete ✅
 
-**All of Phases 1-3 are complete and production-ready!**
+**All of Phases 1-4 are complete and production-ready!**
 
 The projects page now has:
 
-- Multi-level filtering (Projects, Epics, Issues)
-- Issue grouping with expandable GroupHeaders
-- URL-based state for sharing filtered/grouped views
-- 68+ tests passing with comprehensive coverage
-- All code quality checks passing
+- **Multi-level filtering** (Projects, Epics, Issues) with 5 filter dimensions
+- **Issue grouping** with expandable GroupHeaders and metrics
+- **Context-aware sorting** at all three hierarchy levels with 5 sort modes
+- **URL-based state** for sharing filtered/grouped/sorted views
+- **156 tests passing** with comprehensive coverage
+- **All code quality checks passing** (type checks, linting, pre-commit hooks)
 
 ---
 
-## Phase 4 & 5 (Future)
+---
 
-**Phase 4: Sorting**
+## Phase 4: Sorting ✅ COMPLETE
 
-- Context-aware multi-level sorting
-- Sort at project/epic/issue levels
-- SortBySelector component
+**Tasks Completed:**
 
-**Phase 5: Polish**
+12. ✅ Context-Aware Sorting Logic (`sort-tree.ts`) - 25 tests passing
+13. ✅ IssueSortBySelector Component - 10 tests passing
+14. ✅ Sorting UI Integration in Projects Page
+15. ✅ Server-Side Sorting in +page.server.ts
+16. ✅ Integration Tests - 53 tests passing
+
+**Features Working:**
+
+- **5 Sort Modes:**
+  - Priority (context-aware: projects/epics by highest priority issue, issues by own priority)
+  - Status (custom order: todo > doing > in_review > done > canceled)
+  - Title/Name (case-insensitive alphabetical)
+  - Story Points (context-aware: projects/epics by total, issues by own value)
+  - Progress (projects/epics by completion percentage)
+- **Direction Toggle:** Ascending/Descending applies to all levels
+- **URL Parameters:** `sort_by` and `sort_dir` for deep-linking
+- **Server-Side Sorting:** Applied after filtering, before rendering
+- **Context-Aware:** Intelligently sorts at all three hierarchy levels
+- **Type-Safe:** Uses `SortByColumn` and `SortDirection` from central types
+
+**Test Coverage:**
+
+- Unit tests: 25 tests (sort-tree.ts logic)
+- Component tests: 10 tests (IssueSortBySelector)
+- Integration tests: 53 tests (end-to-end sorting)
+- **Total: 88 new tests passing**
+
+**Files Created/Modified:**
+
+- Created: `src/lib/utils/sort-tree.ts` (330 lines)
+- Created: `src/lib/utils/sort-tree.test.ts` (600 lines)
+- Created: `src/lib/components/IssueSortBySelector.svelte`
+- Created: `tests/component/IssueSortBySelector.test.ts`
+- Created: `tests/integration/projects-page-sorting.test.ts` (936 lines)
+- Modified: `src/routes/(protected)/projects/+page.svelte`
+- Modified: `src/routes/(protected)/projects/+page.server.ts`
+- Modified: `src/lib/utils/tree-filter-params.ts` (type safety)
+- Modified: `src/lib/types/index.ts` (added 'progress' to SortByColumn)
+
+**Commits Made:** 5 commits (all following TDD)
+
+---
+
+## Phase 5: Polish (Future)
 
 - Performance optimization
 - Accessibility improvements
