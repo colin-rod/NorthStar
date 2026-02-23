@@ -460,9 +460,26 @@ export async function cleanupTestDatabase() {
 - Segmented filters: Todo, In Progress, Blocked, Done
 - Each row: title, project/epic, priority, blocked indicator
 
-**Project View**:
+**Projects View** (`/projects`):
 
-- Epics list with counts (Ready, Blocked, In Progress)
+- Hierarchical tree grid: Projects → Epics → Issues → Sub-issues
+- **Multi-level filtering** (server-side):
+  - Project filters: status (active/done/canceled)
+  - Epic filters: status (active/done/canceled)
+  - Issue filters: priority (P0-P3), status, story points
+  - URL parameters: `?project_status=active&priority=0,1&status=todo`
+- **Issue grouping** (within expanded epics):
+  - Group by: Priority, Status, Story Points, Milestone, or None
+  - URL parameter: `?group_by=priority`
+  - Expandable GroupHeader rows with metrics (count, story points, completion %)
+- **Context-aware sorting** (server-side):
+  - 5 sort modes: Priority, Status, Name, Story Points, Progress
+  - Projects/Epics sorted by aggregate metrics (highest priority issue, total story points, completion %)
+  - Issues sorted by their own values
+  - Direction toggle (ascending/descending)
+  - URL parameters: `?sort_by=priority&sort_dir=asc`
+- Collapsible filter panel (preserves screen space)
+- URL-based state for sharing filtered/grouped/sorted views
 
 **Epic View**:
 
