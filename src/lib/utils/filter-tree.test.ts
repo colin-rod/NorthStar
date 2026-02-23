@@ -162,6 +162,96 @@ describe('filterTree', () => {
     expect(result[0].epics![0].issues![0].story_points).toBe(2);
   });
 
+  it('should exclude null story points when filter does not include null', () => {
+    const projectsWithNullSp: Project[] = [
+      {
+        ...mockProjects[0],
+        epics: [
+          {
+            ...mockProjects[0].epics![0],
+            issues: [
+              ...mockProjects[0].epics![0].issues!,
+              {
+                id: 'issue-3',
+                project_id: 'proj-1',
+                epic_id: 'epic-1',
+                title: 'No SP Issue',
+                status: 'todo',
+                priority: 2,
+                number: 3,
+                parent_issue_id: null,
+                milestone_id: null,
+                description: null,
+                story_points: null,
+                sort_order: 2,
+                created_at: '2024-01-01',
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const filters: TreeFilters = {
+      projectStatus: [],
+      epicStatus: [],
+      issuePriority: [],
+      issueStatus: [],
+      issueStoryPoints: [1, 2],
+    };
+
+    const result = filterTree(projectsWithNullSp, filters);
+
+    expect(result[0].epics![0].issues).toHaveLength(2);
+    expect(result[0].epics![0].issues!.every((i) => i.story_points !== null)).toBe(true);
+  });
+
+  it('should include null story points when filter includes null', () => {
+    const projectsWithNullSp: Project[] = [
+      {
+        ...mockProjects[0],
+        epics: [
+          {
+            ...mockProjects[0].epics![0],
+            issues: [
+              ...mockProjects[0].epics![0].issues!,
+              {
+                id: 'issue-3',
+                project_id: 'proj-1',
+                epic_id: 'epic-1',
+                title: 'No SP Issue',
+                status: 'todo',
+                priority: 2,
+                number: 3,
+                parent_issue_id: null,
+                milestone_id: null,
+                description: null,
+                story_points: null,
+                sort_order: 2,
+                created_at: '2024-01-01',
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const filters: TreeFilters = {
+      projectStatus: [],
+      epicStatus: [],
+      issuePriority: [],
+      issueStatus: [],
+      issueStoryPoints: [1, null],
+    };
+
+    const result = filterTree(projectsWithNullSp, filters);
+
+    expect(result[0].epics![0].issues).toHaveLength(2);
+    const ids = result[0].epics![0].issues!.map((i) => i.id);
+    expect(ids).toContain('issue-1');
+    expect(ids).toContain('issue-3');
+  });
+
   it('should apply cascading filters (project + epic + issue)', () => {
     const filters: TreeFilters = {
       projectStatus: ['active'],

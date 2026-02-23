@@ -469,6 +469,27 @@ describe('sortTree - Progress Sorting', () => {
 
     expect(sorted.map((p) => p.id)).toEqual(['B', 'A']); // 0%, 50%
   });
+
+  it('should return 0% progress for projects with empty epics (no issues)', () => {
+    const projectA = createProject('A', 'Project A');
+    const projectB = createProject('B', 'Project B');
+
+    const epicA1 = createEpic('A1', 'A', 'Epic A1');
+    const epicB1 = createEpic('B1', 'B', 'Epic B1');
+
+    // Project A: empty epic (no issues at all) → 0%
+    epicA1.issues = [];
+    projectA.epics = [epicA1];
+
+    // Project B: 1 done issue → 100%
+    epicB1.issues = [createIssue('B1-1', 'B1', 'B', 'Issue 1', 1, 'done', 5)];
+    projectB.epics = [epicB1];
+
+    const projects = [projectB, projectA];
+    const sorted = sortTree(projects, 'progress', 'asc');
+
+    expect(sorted.map((p) => p.id)).toEqual(['A', 'B']); // 0%, 100%
+  });
 });
 
 describe('sortTree - Edge Cases', () => {

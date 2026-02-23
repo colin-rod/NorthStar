@@ -71,6 +71,13 @@ describe('parseTreeFilterParams', () => {
     expect(result.issueStatus).toEqual([]);
     expect(result.groupBy).toBe('none');
   });
+
+  it('should filter out invalid story point values', () => {
+    const params = new URLSearchParams('story_points=1,99,4');
+    const result = parseTreeFilterParams(params);
+
+    expect(result.issueStoryPoints).toEqual([1]);
+  });
 });
 
 describe('buildTreeFilterUrl', () => {

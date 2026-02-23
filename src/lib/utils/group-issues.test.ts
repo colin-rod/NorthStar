@@ -97,4 +97,55 @@ describe('groupIssues', () => {
     expect(result[0].label).toBe('P0'); // P0 before P1
     expect(result[1].label).toBe('P1');
   });
+
+  it('should group by milestone', () => {
+    const issuesWithMilestones: Issue[] = [
+      {
+        ...mockIssues[0],
+        milestone_id: 'm1',
+        milestone: { id: 'm1', user_id: 'user-1', name: 'Sprint 1', due_date: null },
+      } as Issue,
+      {
+        ...mockIssues[1],
+        milestone_id: 'm1',
+        milestone: { id: 'm1', user_id: 'user-1', name: 'Sprint 1', due_date: null },
+      } as Issue,
+      {
+        ...mockIssues[2],
+        milestone_id: null,
+      } as Issue,
+    ];
+
+    const result = groupIssues(issuesWithMilestones, 'milestone');
+
+    expect(result).toHaveLength(2);
+    const sprintGroup = result.find((g) => g.label === 'Sprint 1');
+    const noMilestoneGroup = result.find((g) => g.label === 'No milestone');
+    expect(sprintGroup).toBeDefined();
+    expect(sprintGroup!.items).toHaveLength(2);
+    expect(noMilestoneGroup).toBeDefined();
+    expect(noMilestoneGroup!.items).toHaveLength(1);
+  });
+
+  it('should show "Unknown" for milestone with missing name', () => {
+    const issuesWithoutMilestoneName: Issue[] = [
+      {
+        ...mockIssues[0],
+        milestone_id: 'm1',
+        milestone: undefined,
+      } as Issue,
+    ];
+
+    const result = groupIssues(issuesWithoutMilestoneName, 'milestone');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].label).toBe('Unknown');
+  });
+
+  it('should handle unknown groupBy value', () => {
+    const result = groupIssues(mockIssues, 'nonexistent');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].label).toBe('Unknown');
+  });
 });
