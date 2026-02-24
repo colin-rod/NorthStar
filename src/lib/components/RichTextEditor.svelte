@@ -25,14 +25,19 @@
   let editorElement = $state<HTMLDivElement | null>(null);
   let editor = $state<Editor | null>(null);
   let isUpdatingFromProp = false;
+  let isInitializing = $state(false);
 
   $effect(() => {
     if (!editorElement) return;
 
+    isInitializing = true; // Mark as initializing
+
     const instance = new Editor({
       element: editorElement,
       extensions: [
-        StarterKit,
+        StarterKit.configure({
+          link: false, // Exclude link from StarterKit to avoid duplicate
+        }),
         Link.configure({ openOnClick: false }),
         Image,
         Placeholder.configure({ placeholder }),
@@ -40,13 +45,19 @@
       content: content ?? '',
       editable: !disabled,
       onUpdate: ({ editor: e }) => {
-        if (!isUpdatingFromProp) {
+        // Don't trigger onchange during initialization or prop updates
+        if (!isUpdatingFromProp && !isInitializing) {
           onchange(e.getHTML());
         }
       },
     });
 
     editor = instance;
+
+    // Allow Tiptap to finish initialization before accepting user changes
+    setTimeout(() => {
+      isInitializing = false;
+    }, 0);
 
     return () => {
       instance.destroy();

@@ -113,7 +113,6 @@
   // Only re-initialize when the issue ID actually changes (not just object reference)
   $effect(() => {
     if (issue && issue.id !== currentIssueId) {
-      console.log('[IssueSheet] INITIALIZING new issue:', issue.id);
       currentIssueId = issue.id;
 
       localTitle = issue.title;
@@ -128,17 +127,6 @@
       prevPriority = issue.priority;
       prevStoryPoints = issue.story_points;
       prevEpicId = issue.epic_id;
-
-      console.log('[IssueSheet] After init:', {
-        localStatus,
-        prevStatus,
-        localPriority,
-        prevPriority,
-        localStoryPoints,
-        prevStoryPoints,
-        localEpicId,
-        prevEpicId,
-      });
 
       if (!descriptionDebounceTimer) {
         localDescription = issue.description ?? null;
@@ -250,8 +238,6 @@
   async function autoSave(field: string, value: any) {
     if (!issue) return;
 
-    console.log('[IssueSheet] 🔄 autoSave called:', { field, value, issueId: issue.id });
-
     loading = true;
     saveError = null;
     saveSuccess = false;
@@ -261,19 +247,16 @@
       formData.append('id', issue.id);
       formData.append(field, value?.toString() ?? '');
 
-      console.log('[IssueSheet] 📤 Sending update request...');
       const response = await fetch('?/updateIssue', {
         method: 'POST',
         body: formData,
       });
 
       const result = await response.json();
-      console.log('[IssueSheet] 📥 Response received:', result);
 
       if (response.ok && result.type === 'success') {
         // No need to reload all data for single field update
         // The UI already shows the updated value via local state
-        console.log('[IssueSheet] ✅ Save successful');
         saveSuccess = true;
         setTimeout(() => {
           saveSuccess = false;
@@ -298,14 +281,9 @@
 
   // Description auto-save (1000ms debounce)
   function handleDescriptionChange(html: string) {
-    console.log('[IssueSheet] 📝 Description changed:', {
-      html,
-      wasDebouncing: !!descriptionDebounceTimer,
-    });
     localDescription = html;
     if (descriptionDebounceTimer) clearTimeout(descriptionDebounceTimer);
     descriptionDebounceTimer = setTimeout(() => {
-      console.log('[IssueSheet] ⏱️ Description debounce complete, triggering autosave');
       autoSave('description', localDescription ?? '');
     }, 1000);
   }
@@ -446,61 +424,28 @@
 
   // Watch for changes and auto-save
   $effect(() => {
-    const willSave = localStatus !== prevStatus && localStatus !== issue?.status;
-    console.log('[IssueSheet] Status effect:', {
-      localStatus,
-      prevStatus,
-      issueStatus: issue?.status,
-      willSave,
-    });
-    if (willSave) {
-      console.log('[IssueSheet] ⚠️ TRIGGERING AUTOSAVE for status');
+    if (localStatus !== prevStatus && localStatus !== issue?.status) {
       autoSave('status', localStatus);
       prevStatus = localStatus;
     }
   });
 
   $effect(() => {
-    const willSave = localPriority !== prevPriority && localPriority !== issue?.priority;
-    console.log('[IssueSheet] Priority effect:', {
-      localPriority,
-      prevPriority,
-      issuePriority: issue?.priority,
-      willSave,
-    });
-    if (willSave) {
-      console.log('[IssueSheet] ⚠️ TRIGGERING AUTOSAVE for priority');
+    if (localPriority !== prevPriority && localPriority !== issue?.priority) {
       autoSave('priority', localPriority);
       prevPriority = localPriority;
     }
   });
 
   $effect(() => {
-    const willSave =
-      localStoryPoints !== prevStoryPoints && localStoryPoints !== issue?.story_points;
-    console.log('[IssueSheet] Story points effect:', {
-      localStoryPoints,
-      prevStoryPoints,
-      issueStoryPoints: issue?.story_points,
-      willSave,
-    });
-    if (willSave) {
-      console.log('[IssueSheet] ⚠️ TRIGGERING AUTOSAVE for story_points');
+    if (localStoryPoints !== prevStoryPoints && localStoryPoints !== issue?.story_points) {
       autoSave('story_points', localStoryPoints);
       prevStoryPoints = localStoryPoints;
     }
   });
 
   $effect(() => {
-    const willSave = localEpicId !== prevEpicId && localEpicId !== issue?.epic_id;
-    console.log('[IssueSheet] Epic effect:', {
-      localEpicId,
-      prevEpicId,
-      issueEpicId: issue?.epic_id,
-      willSave,
-    });
-    if (willSave) {
-      console.log('[IssueSheet] ⚠️ TRIGGERING AUTOSAVE for epic_id');
+    if (localEpicId !== prevEpicId && localEpicId !== issue?.epic_id) {
       autoSave('epic_id', localEpicId);
       prevEpicId = localEpicId;
     }
