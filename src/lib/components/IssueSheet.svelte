@@ -82,12 +82,29 @@
   // Description state
   let localDescription = $state<string | null>(null);
   let descriptionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastPersistedDescriptionNormalized = $state('');
+  let descriptionSaveInFlight = $state(false);
+  let descriptionInFlightNormalized = $state<string | null>(null);
 
   // Attachments state
   let attachments = $state<Attachment[]>([]);
 
   // Debounce timer for title field
   let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function normalizeDescription(value: string | null | undefined): string {
+    const trimmed = (value ?? '').replace(/\u200B/g, '').trim();
+    if (!trimmed) return '';
+
+    const withoutNbsp = trimmed.replace(/&nbsp;/gi, ' ').trim();
+    const textOnly = withoutNbsp
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!textOnly) return '';
+    return withoutNbsp;
+  }
 
   // Ref for sheet content (keyboard-aware height)
   let sheetContentRef = $state<HTMLElement | null>(null);
@@ -113,6 +130,15 @@
   // Only re-initialize when the issue ID actually changes (not just object reference)
   $effect(() => {
     if (issue && issue.id !== currentIssueId) {
+      if (descriptionDebounceTimer) {
+        clearTimeout(descriptionDebounceTimer);
+        descriptionDebounceTimer = null;
+      }
+      if (titleDebounceTimer) {
+        clearTimeout(titleDebounceTimer);
+        titleDebounceTimer = null;
+      }
+
       currentIssueId = issue.id;
 
       localTitle = issue.title;
@@ -127,10 +153,11 @@
       prevPriority = issue.priority;
       prevStoryPoints = issue.story_points;
       prevEpicId = issue.epic_id;
+      localDescription = issue.description ?? null;
+      lastPersistedDescriptionNormalized = normalizeDescription(issue.description);
+      descriptionSaveInFlight = false;
+      descriptionInFlightNormalized = null;
 
-      if (!descriptionDebounceTimer) {
-        localDescription = issue.description ?? null;
-      }
       saveError = null;
       saveSuccess = false;
 
@@ -145,6 +172,20 @@
           .then(({ data }) => {
             attachments = data ?? [];
           });
+      }
+    }
+  });
+
+  // Clear pending autosave timers when drawer closes to avoid stale writes
+  $effect(() => {
+    if (!open) {
+      if (descriptionDebounceTimer) {
+        clearTimeout(descriptionDebounceTimer);
+        descriptionDebounceTimer = null;
+      }
+      if (titleDebounceTimer) {
+        clearTimeout(titleDebounceTimer);
+        titleDebounceTimer = null;
       }
     }
   });
@@ -235,8 +276,12 @@
   }
 
   // Auto-save function
-  async function autoSave(field: string, value: any) {
-    if (!issue) return;
+  async function autoSave(
+    field: string,
+    value: any,
+    options: { onSuccess?: () => void; onFinally?: () => void } = {},
+  ) {
+    if (!issue || mode !== 'edit' || !open) return;
 
     loading = true;
     saveError = null;
@@ -257,6 +302,7 @@
       if (response.ok && result.type === 'success') {
         // No need to reload all data for single field update
         // The UI already shows the updated value via local state
+        options.onSuccess?.();
         saveSuccess = true;
         setTimeout(() => {
           saveSuccess = false;
@@ -276,15 +322,59 @@
       }, 5000);
     } finally {
       loading = false;
+      options.onFinally?.();
     }
   }
 
   // Description auto-save (1000ms debounce)
   function handleDescriptionChange(html: string) {
     localDescription = html;
-    if (descriptionDebounceTimer) clearTimeout(descriptionDebounceTimer);
+    if (!issue || mode !== 'edit' || !open) return;
+
+    if (descriptionDebounceTimer) {
+      clearTimeout(descriptionDebounceTimer);
+      descriptionDebounceTimer = null;
+    }
+
+    const normalizedNext = normalizeDescription(html);
+
+    if (normalizedNext === lastPersistedDescriptionNormalized) {
+      return;
+    }
+    if (descriptionSaveInFlight && descriptionInFlightNormalized === normalizedNext) {
+      return;
+    }
+
+    const issueIdAtSchedule = issue.id;
     descriptionDebounceTimer = setTimeout(() => {
-      autoSave('description', localDescription ?? '');
+      descriptionDebounceTimer = null;
+
+      if (!issue || issue.id !== issueIdAtSchedule || mode !== 'edit' || !open) {
+        return;
+      }
+
+      const normalizedCurrent = normalizeDescription(localDescription);
+      if (normalizedCurrent === lastPersistedDescriptionNormalized) {
+        return;
+      }
+      if (descriptionSaveInFlight && descriptionInFlightNormalized === normalizedCurrent) {
+        return;
+      }
+
+      descriptionSaveInFlight = true;
+      descriptionInFlightNormalized = normalizedCurrent;
+
+      autoSave('description', localDescription ?? '', {
+        onSuccess: () => {
+          lastPersistedDescriptionNormalized = normalizedCurrent;
+        },
+        onFinally: () => {
+          if (descriptionInFlightNormalized === normalizedCurrent) {
+            descriptionSaveInFlight = false;
+            descriptionInFlightNormalized = null;
+          }
+        },
+      });
     }, 1000);
   }
 
@@ -386,13 +476,19 @@
   function handleTitleChange(event: Event) {
     const input = event.target as HTMLInputElement;
     localTitle = input.value;
+    if (!issue || mode !== 'edit' || !open) return;
 
     // Debounce title updates (wait 500ms after user stops typing)
     if (titleDebounceTimer) {
       clearTimeout(titleDebounceTimer);
+      titleDebounceTimer = null;
     }
     titleDebounceTimer = setTimeout(() => {
-      if (localTitle !== issue?.title) {
+      titleDebounceTimer = null;
+      if (mode !== 'edit' || !open || !issue) {
+        return;
+      }
+      if (localTitle !== issue.title) {
         autoSave('title', localTitle);
       }
     }, 500);
@@ -424,28 +520,52 @@
 
   // Watch for changes and auto-save
   $effect(() => {
-    if (localStatus !== prevStatus && localStatus !== issue?.status) {
+    if (
+      mode === 'edit' &&
+      open &&
+      issue &&
+      localStatus !== prevStatus &&
+      localStatus !== issue.status
+    ) {
       autoSave('status', localStatus);
       prevStatus = localStatus;
     }
   });
 
   $effect(() => {
-    if (localPriority !== prevPriority && localPriority !== issue?.priority) {
+    if (
+      mode === 'edit' &&
+      open &&
+      issue &&
+      localPriority !== prevPriority &&
+      localPriority !== issue.priority
+    ) {
       autoSave('priority', localPriority);
       prevPriority = localPriority;
     }
   });
 
   $effect(() => {
-    if (localStoryPoints !== prevStoryPoints && localStoryPoints !== issue?.story_points) {
+    if (
+      mode === 'edit' &&
+      open &&
+      issue &&
+      localStoryPoints !== prevStoryPoints &&
+      localStoryPoints !== issue.story_points
+    ) {
       autoSave('story_points', localStoryPoints);
       prevStoryPoints = localStoryPoints;
     }
   });
 
   $effect(() => {
-    if (localEpicId !== prevEpicId && localEpicId !== issue?.epic_id) {
+    if (
+      mode === 'edit' &&
+      open &&
+      issue &&
+      localEpicId !== prevEpicId &&
+      localEpicId !== issue.epic_id
+    ) {
       autoSave('epic_id', localEpicId);
       prevEpicId = localEpicId;
     }
