@@ -127,12 +127,16 @@
           {@const blocked = isBlocked(issue)}
           <tr
             onclick={() => onRowClick(issue)}
-            class="hover:bg-surface-subtle transition-colors cursor-pointer"
+            class="hover:bg-surface-subtle transition-colors cursor-pointer {blocked
+              ? 'bg-bg-blocked/20'
+              : ''}"
           >
             <!-- Status Cell -->
             <td class="px-3 py-4">
               <div class="flex items-center gap-2">
-                <div class={`w-1.5 h-1.5 rounded-full ${getStatusColor(issue.status)}`}></div>
+                <div
+                  class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}
+                ></div>
                 <span class="text-metadata">{formatStatus(issue.status)}</span>
               </div>
             </td>
@@ -158,7 +162,9 @@
 
             <!-- Priority Cell -->
             <td class="px-3 py-4">
-              <Badge variant={getPriorityVariant(issue.priority)} class="text-xs">P{issue.priority}</Badge>
+              <Badge variant={getPriorityVariant(issue.priority)} class="text-xs"
+                >P{issue.priority}</Badge
+              >
             </td>
 
             <!-- Milestone Cell -->

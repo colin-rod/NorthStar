@@ -28,6 +28,7 @@
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
+  import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
 
   interface Props {
     issue: Issue;
@@ -91,7 +92,9 @@
 <!-- North Design: No heavy cards, light divider, minimal hover -->
 <div
   data-testid="issue-row"
-  class="relative w-full flex items-center px-4 py-4 border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group"
+  class="relative w-full flex items-center px-4 py-4 border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group {blocked
+    ? 'bg-bg-blocked/30'
+    : ''}"
 >
   <!-- Drag Handle (left side, hover-visible) -->
   <div
@@ -147,15 +150,19 @@
 
     <!-- Status indicator: small colored dot per North spec -->
     <div class="flex items-center pt-1 shrink-0">
-      <div class={`w-1.5 h-1.5 rounded-full ${getStatusColor(issue.status)}`}></div>
+      <div class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}></div>
     </div>
 
     <div class="flex-1 min-w-0">
       <!-- Title: 16px, weight 500 (medium bold-ish) -->
-      <h3 class="text-issue-title truncate">
+      <h3 class="text-issue-title truncate flex items-center gap-2">
         <span class="text-muted-foreground font-mono text-sm">I-{issue.number}</span>
         <span class="mx-1 text-muted-foreground">·</span>
-        {issue.title}
+        <span class="flex-1 truncate">{issue.title}</span>
+        <!-- Ready indicator: green checkmark for todo status when not blocked -->
+        {#if issue.status === 'todo' && !blocked}
+          <CheckCircle2 class="h-4 w-4 text-status-done shrink-0" />
+        {/if}
       </h3>
 
       <!-- Metadata: 13px, secondary color -->

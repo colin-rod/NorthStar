@@ -66,7 +66,7 @@
 
     <!-- Status Dot -->
     <div class="flex items-center pt-1.5 shrink-0">
-      <div class="w-1.5 h-1.5 rounded-full {getStatusColor(epic.status)}"></div>
+      <div class="w-2 h-2 md:w-3 md:h-3 rounded-full {getStatusColor(epic.status)}"></div>
     </div>
 
     <!-- Clickable Content Area -->
