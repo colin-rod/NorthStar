@@ -109,12 +109,25 @@
   // Initialize local state when issue changes (edit mode)
   $effect(() => {
     if (issue) {
+      console.log('[IssueSheet] Initializing from issue:', issue.id, {
+        status: issue.status,
+        priority: issue.priority,
+        storyPoints: issue.story_points,
+        epicId: issue.epic_id,
+      });
       localTitle = issue.title;
       localStatus = issue.status;
       localPriority = issue.priority;
       localStoryPoints = issue.story_points;
       localEpicId = issue.epic_id;
       localMilestoneId = issue.milestone_id;
+
+      // CRITICAL: Update prev values to match loaded issue to prevent false change detection
+      prevStatus = issue.status;
+      prevPriority = issue.priority;
+      prevStoryPoints = issue.story_points;
+      prevEpicId = issue.epic_id;
+
       if (!descriptionDebounceTimer) {
         localDescription = issue.description ?? null;
       }
@@ -411,28 +424,56 @@
 
   // Watch for changes and auto-save
   $effect(() => {
+    console.log('[IssueSheet] Status effect:', {
+      localStatus,
+      prevStatus,
+      issueStatus: issue?.status,
+      willSave: localStatus !== prevStatus && localStatus !== issue?.status,
+    });
     if (localStatus !== prevStatus && localStatus !== issue?.status) {
+      console.log('[IssueSheet] AUTOSAVING status:', localStatus);
       autoSave('status', localStatus);
       prevStatus = localStatus;
     }
   });
 
   $effect(() => {
+    console.log('[IssueSheet] Priority effect:', {
+      localPriority,
+      prevPriority,
+      issuePriority: issue?.priority,
+      willSave: localPriority !== prevPriority && localPriority !== issue?.priority,
+    });
     if (localPriority !== prevPriority && localPriority !== issue?.priority) {
+      console.log('[IssueSheet] AUTOSAVING priority:', localPriority);
       autoSave('priority', localPriority);
       prevPriority = localPriority;
     }
   });
 
   $effect(() => {
+    console.log('[IssueSheet] Story points effect:', {
+      localStoryPoints,
+      prevStoryPoints,
+      issueStoryPoints: issue?.story_points,
+      willSave: localStoryPoints !== prevStoryPoints && localStoryPoints !== issue?.story_points,
+    });
     if (localStoryPoints !== prevStoryPoints && localStoryPoints !== issue?.story_points) {
+      console.log('[IssueSheet] AUTOSAVING story_points:', localStoryPoints);
       autoSave('story_points', localStoryPoints);
       prevStoryPoints = localStoryPoints;
     }
   });
 
   $effect(() => {
+    console.log('[IssueSheet] Epic effect:', {
+      localEpicId,
+      prevEpicId,
+      issueEpicId: issue?.epic_id,
+      willSave: localEpicId !== prevEpicId && localEpicId !== issue?.epic_id,
+    });
     if (localEpicId !== prevEpicId && localEpicId !== issue?.epic_id) {
+      console.log('[IssueSheet] AUTOSAVING epic_id:', localEpicId);
       autoSave('epic_id', localEpicId);
       prevEpicId = localEpicId;
     }
