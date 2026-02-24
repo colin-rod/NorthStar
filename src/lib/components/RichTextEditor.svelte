@@ -44,6 +44,10 @@
       ],
       content: content ?? '',
       editable: !disabled,
+      onCreate: () => {
+        // Editor is fully initialized, safe to accept user changes now
+        isInitializing = false;
+      },
       onUpdate: ({ editor: e }) => {
         // Don't trigger onchange during initialization or prop updates
         if (!isUpdatingFromProp && !isInitializing) {
@@ -53,11 +57,6 @@
     });
 
     editor = instance;
-
-    // Allow Tiptap to finish initialization before accepting user changes
-    setTimeout(() => {
-      isInitializing = false;
-    }, 0);
 
     return () => {
       instance.destroy();
