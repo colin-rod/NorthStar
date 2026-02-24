@@ -9,6 +9,7 @@
   interface Props {
     content: string | null;
     onchange: (html: string) => void;
+    onblur?: () => void;
     disabled?: boolean;
     placeholder?: string;
     uploadImage?: (file: File) => Promise<string>;
@@ -17,6 +18,7 @@
   let {
     content,
     onchange,
+    onblur,
     disabled = false,
     placeholder = 'Add a description...',
     uploadImage,
@@ -53,6 +55,10 @@
         if (!isUpdatingFromProp && !isInitializing) {
           onchange(e.getHTML());
         }
+      },
+      onBlur: () => {
+        // Call parent's blur handler when editor loses focus
+        onblur?.();
       },
     });
 

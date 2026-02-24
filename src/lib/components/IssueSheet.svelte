@@ -35,6 +35,7 @@
   import AttachmentList from '$lib/components/AttachmentList.svelte';
   import { supabase } from '$lib/supabase';
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
+  import { normalizeDescription } from '$lib/utils/text-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
 
@@ -81,30 +82,12 @@
 
   // Description state
   let localDescription = $state<string | null>(null);
-  let descriptionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   let lastPersistedDescriptionNormalized = $state('');
   let descriptionSaveInFlight = $state(false);
   let descriptionInFlightNormalized = $state<string | null>(null);
 
   // Attachments state
   let attachments = $state<Attachment[]>([]);
-
-  // Debounce timer for title field
-  let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function normalizeDescription(value: string | null | undefined): string {
-    const trimmed = (value ?? '').replace(/\u200B/g, '').trim();
-    if (!trimmed) return '';
-
-    const withoutNbsp = trimmed.replace(/&nbsp;/gi, ' ').trim();
-    const textOnly = withoutNbsp
-      .replace(/<[^>]*>/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (!textOnly) return '';
-    return withoutNbsp;
-  }
 
   // Ref for sheet content (keyboard-aware height)
   let sheetContentRef = $state<HTMLElement | null>(null);
@@ -130,15 +113,6 @@
   // Only re-initialize when the issue ID actually changes (not just object reference)
   $effect(() => {
     if (issue && issue.id !== currentIssueId) {
-      if (descriptionDebounceTimer) {
-        clearTimeout(descriptionDebounceTimer);
-        descriptionDebounceTimer = null;
-      }
-      if (titleDebounceTimer) {
-        clearTimeout(titleDebounceTimer);
-        titleDebounceTimer = null;
-      }
-
       currentIssueId = issue.id;
 
       localTitle = issue.title;
@@ -172,20 +146,6 @@
           .then(({ data }) => {
             attachments = data ?? [];
           });
-      }
-    }
-  });
-
-  // Clear pending autosave timers when drawer closes to avoid stale writes
-  $effect(() => {
-    if (!open) {
-      if (descriptionDebounceTimer) {
-        clearTimeout(descriptionDebounceTimer);
-        descriptionDebounceTimer = null;
-      }
-      if (titleDebounceTimer) {
-        clearTimeout(titleDebounceTimer);
-        titleDebounceTimer = null;
       }
     }
   });
@@ -326,56 +286,41 @@
     }
   }
 
-  // Description auto-save (1000ms debounce)
+  // Description change handler (just updates local state)
   function handleDescriptionChange(html: string) {
     localDescription = html;
+  }
+
+  // Description blur handler (autosave on blur)
+  function handleDescriptionBlur() {
     if (!issue || mode !== 'edit' || !open) return;
 
-    if (descriptionDebounceTimer) {
-      clearTimeout(descriptionDebounceTimer);
-      descriptionDebounceTimer = null;
-    }
+    const normalizedCurrent = normalizeDescription(localDescription);
 
-    const normalizedNext = normalizeDescription(html);
-
-    if (normalizedNext === lastPersistedDescriptionNormalized) {
-      return;
-    }
-    if (descriptionSaveInFlight && descriptionInFlightNormalized === normalizedNext) {
+    // Don't save if content hasn't changed
+    if (normalizedCurrent === lastPersistedDescriptionNormalized) {
       return;
     }
 
-    const issueIdAtSchedule = issue.id;
-    descriptionDebounceTimer = setTimeout(() => {
-      descriptionDebounceTimer = null;
+    // Don't save if there's already a save in flight with the same content
+    if (descriptionSaveInFlight && descriptionInFlightNormalized === normalizedCurrent) {
+      return;
+    }
 
-      if (!issue || issue.id !== issueIdAtSchedule || mode !== 'edit' || !open) {
-        return;
-      }
+    descriptionSaveInFlight = true;
+    descriptionInFlightNormalized = normalizedCurrent;
 
-      const normalizedCurrent = normalizeDescription(localDescription);
-      if (normalizedCurrent === lastPersistedDescriptionNormalized) {
-        return;
-      }
-      if (descriptionSaveInFlight && descriptionInFlightNormalized === normalizedCurrent) {
-        return;
-      }
-
-      descriptionSaveInFlight = true;
-      descriptionInFlightNormalized = normalizedCurrent;
-
-      autoSave('description', localDescription ?? '', {
-        onSuccess: () => {
-          lastPersistedDescriptionNormalized = normalizedCurrent;
-        },
-        onFinally: () => {
-          if (descriptionInFlightNormalized === normalizedCurrent) {
-            descriptionSaveInFlight = false;
-            descriptionInFlightNormalized = null;
-          }
-        },
-      });
-    }, 1000);
+    autoSave('description', localDescription ?? '', {
+      onSuccess: () => {
+        lastPersistedDescriptionNormalized = normalizedCurrent;
+      },
+      onFinally: () => {
+        if (descriptionInFlightNormalized === normalizedCurrent) {
+          descriptionSaveInFlight = false;
+          descriptionInFlightNormalized = null;
+        }
+      },
+    });
   }
 
   // Inline image upload (goes to public inline-images subfolder)
@@ -476,22 +421,13 @@
   function handleTitleChange(event: Event) {
     const input = event.target as HTMLInputElement;
     localTitle = input.value;
-    if (!issue || mode !== 'edit' || !open) return;
+  }
 
-    // Debounce title updates (wait 500ms after user stops typing)
-    if (titleDebounceTimer) {
-      clearTimeout(titleDebounceTimer);
-      titleDebounceTimer = null;
+  function handleTitleBlur() {
+    if (!issue || mode !== 'edit' || !open) return;
+    if (localTitle !== issue.title) {
+      autoSave('title', localTitle);
     }
-    titleDebounceTimer = setTimeout(() => {
-      titleDebounceTimer = null;
-      if (mode !== 'edit' || !open || !issue) {
-        return;
-      }
-      if (localTitle !== issue.title) {
-        autoSave('title', localTitle);
-      }
-    }, 500);
   }
 
   function handleStatusChange(event: Event) {
@@ -717,6 +653,7 @@
                   name="title"
                   value={localTitle}
                   oninput={handleTitleChange}
+                  onblur={handleTitleBlur}
                   required
                   disabled={loading}
                   class="text-body"
@@ -771,6 +708,7 @@
             <RichTextEditor
               content={localDescription}
               onchange={handleDescriptionChange}
+              onblur={handleDescriptionBlur}
               {uploadImage}
               disabled={loading}
             />

@@ -12,6 +12,7 @@
   import AttachmentList from '$lib/components/AttachmentList.svelte';
   import { supabase } from '$lib/supabase';
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
+  import { normalizeDescription } from '$lib/utils/text-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
 
@@ -42,9 +43,7 @@
   let saveSuccess = $state(false);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
-
-  let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  let descriptionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastPersistedDescriptionNormalized = $state('');
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
@@ -62,9 +61,8 @@
   $effect(() => {
     if (mode === 'edit' && project) {
       localName = project.name;
-      if (!descriptionDebounceTimer) {
-        localDescription = project.description ?? null;
-      }
+      localDescription = project.description ?? null;
+      lastPersistedDescriptionNormalized = normalizeDescription(project.description);
       saveError = null;
       saveSuccess = false;
 
@@ -140,19 +138,29 @@
   function handleNameInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     localName = value;
+  }
 
-    if (titleDebounceTimer) clearTimeout(titleDebounceTimer);
-    titleDebounceTimer = setTimeout(() => {
-      autoSave('name', value.trim());
-    }, 500);
+  function handleNameBlur() {
+    if (!project || mode !== 'edit' || !open) return;
+    if (localName.trim() !== project.name) {
+      autoSave('name', localName.trim());
+    }
   }
 
   function handleDescriptionChange(html: string) {
     localDescription = html;
-    if (descriptionDebounceTimer) clearTimeout(descriptionDebounceTimer);
-    descriptionDebounceTimer = setTimeout(() => {
-      autoSave('description', localDescription ?? '');
-    }, 1000);
+  }
+
+  function handleDescriptionBlur() {
+    if (!project || mode !== 'edit' || !open) return;
+
+    const normalizedCurrent = normalizeDescription(localDescription);
+    if (normalizedCurrent === lastPersistedDescriptionNormalized) {
+      return;
+    }
+
+    autoSave('description', localDescription ?? '');
+    lastPersistedDescriptionNormalized = normalizedCurrent;
   }
 
   async function uploadImage(file: File): Promise<string> {
@@ -328,6 +336,7 @@
             <Input
               value={localName}
               oninput={handleNameInput}
+              onblur={handleNameBlur}
               placeholder="Project name"
               class="text-body"
             />
@@ -341,6 +350,7 @@
             <RichTextEditor
               content={localDescription}
               onchange={handleDescriptionChange}
+              onblur={handleDescriptionBlur}
               {uploadImage}
             />
           </section>

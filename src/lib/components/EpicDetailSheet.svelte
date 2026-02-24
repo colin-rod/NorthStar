@@ -11,6 +11,7 @@
   import AttachmentList from '$lib/components/AttachmentList.svelte';
   import { supabase } from '$lib/supabase';
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
+  import { normalizeDescription } from '$lib/utils/text-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
@@ -45,9 +46,7 @@
   let saveSuccess = $state(false);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
-
-  let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  let descriptionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastPersistedDescriptionNormalized = $state('');
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
@@ -68,9 +67,8 @@
       localStatus = epic.status;
       localPriority = epic.priority ?? null;
       localMilestoneId = epic.milestone_id ?? null;
-      if (!descriptionDebounceTimer) {
-        localDescription = epic.description ?? null;
-      }
+      localDescription = epic.description ?? null;
+      lastPersistedDescriptionNormalized = normalizeDescription(epic.description);
       saveError = null;
       saveSuccess = false;
 
@@ -149,11 +147,13 @@
   function handleNameInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     localName = value;
+  }
 
-    if (titleDebounceTimer) clearTimeout(titleDebounceTimer);
-    titleDebounceTimer = setTimeout(() => {
-      autoSave('name', value.trim());
-    }, 500);
+  function handleNameBlur() {
+    if (!epic || mode !== 'edit' || !open) return;
+    if (localName.trim() !== epic.name) {
+      autoSave('name', localName.trim());
+    }
   }
 
   function handleStatusChange(event: Event) {
@@ -170,10 +170,18 @@
 
   function handleDescriptionChange(html: string) {
     localDescription = html;
-    if (descriptionDebounceTimer) clearTimeout(descriptionDebounceTimer);
-    descriptionDebounceTimer = setTimeout(() => {
-      autoSave('description', localDescription ?? '');
-    }, 1000);
+  }
+
+  function handleDescriptionBlur() {
+    if (!epic || mode !== 'edit' || !open) return;
+
+    const normalizedCurrent = normalizeDescription(localDescription);
+    if (normalizedCurrent === lastPersistedDescriptionNormalized) {
+      return;
+    }
+
+    autoSave('description', localDescription ?? '');
+    lastPersistedDescriptionNormalized = normalizedCurrent;
   }
 
   function handleMilestoneChange(milestoneId: string | null) {
@@ -413,6 +421,7 @@
             <Input
               value={localName}
               oninput={handleNameInput}
+              onblur={handleNameBlur}
               placeholder="Epic name"
               class="text-body"
             />
@@ -472,6 +481,7 @@
             <RichTextEditor
               content={localDescription}
               onchange={handleDescriptionChange}
+              onblur={handleDescriptionBlur}
               {uploadImage}
             />
           </section>
