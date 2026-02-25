@@ -76,7 +76,7 @@
         <h3 class="text-section-header font-ui">{project.name}</h3>
 
         <!-- Action buttons - visible on hover, above overlay -->
-        <div class="relative z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div class="relative z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
           {#if onEdit}
             <Button
               variant="ghost"
