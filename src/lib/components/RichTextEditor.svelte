@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import { Editor } from '@tiptap/core';
   import StarterKit from '@tiptap/starter-kit';
   import Link from '@tiptap/extension-link';
@@ -34,6 +34,10 @@
 
     isInitializing = true; // Mark as initializing
 
+    const initialContent = untrack(() => content ?? '');
+    const initialPlaceholder = untrack(() => placeholder);
+    const initialEditable = !untrack(() => disabled);
+
     const instance = new Editor({
       element: editorElement,
       extensions: [
@@ -42,10 +46,10 @@
         }),
         Link.configure({ openOnClick: false }),
         Image,
-        Placeholder.configure({ placeholder }),
+        Placeholder.configure({ placeholder: initialPlaceholder }),
       ],
-      content: content ?? '',
-      editable: !disabled,
+      content: initialContent,
+      editable: initialEditable,
       onCreate: () => {
         // Editor is fully initialized, safe to accept user changes now
         isInitializing = false;
@@ -72,9 +76,11 @@
 
   // Sync content prop changes (e.g., when a different issue is opened)
   $effect(() => {
-    if (editor && content !== null && content !== editor.getHTML()) {
+    const nextContent = content ?? '';
+
+    if (editor && nextContent !== editor.getHTML()) {
       isUpdatingFromProp = true;
-      editor.commands.setContent(content ?? '');
+      editor.commands.setContent(nextContent);
       isUpdatingFromProp = false;
     }
   });
