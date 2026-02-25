@@ -1,9 +1,31 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
+const { toastSuccessMock, toastErrorMock } = vi.hoisted(() => ({
+  toastSuccessMock: vi.fn(),
+  toastErrorMock: vi.fn(),
+}));
+
 import IssueSheet from '$lib/components/IssueSheet.svelte';
 import { supabase } from '$lib/supabase';
 import type { Epic, Issue } from '$lib/types';
+
+vi.mock('$lib/components/ui/sheet', async () => {
+  const mod = await import('./mocks/EmptyComponent.mock.svelte');
+  return {
+    Sheet: mod.default,
+    SheetContent: mod.default,
+    SheetHeader: mod.default,
+    SheetTitle: mod.default,
+  };
+});
+
+vi.mock('svelte-sonner', () => ({
+  toast: {
+    success: toastSuccessMock,
+    error: toastErrorMock,
+  },
+}));
 
 vi.mock('$lib/components/RichTextEditor.svelte', async () => {
   const mod = await import('./mocks/RichTextEditor.mock.svelte');
@@ -57,6 +79,8 @@ describe('IssueSheet description auto-save guards', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
+    toastSuccessMock.mockClear();
+    toastErrorMock.mockClear();
 
     fetchMock.mockResolvedValue({
       ok: true,
@@ -190,6 +214,71 @@ describe('IssueSheet description auto-save guards', () => {
     await vi.advanceTimersByTimeAsync(1500);
 
     expect(screen.queryByText('✓ Saved')).not.toBeInTheDocument();
+  });
+
+
+
+  it('passes polite status semantics to success toasts', async () => {
+    render(IssueSheet, {
+      props: {
+        open: true,
+        mode: 'edit',
+        issue: makeIssue(),
+        epics: mockEpics,
+        milestones: [],
+        projectIssues: [],
+        projects: [{ id: 'project-1', name: 'Project One' }],
+        userId: 'user-1',
+      },
+    });
+
+    const titleInput = screen.getByLabelText('Title');
+    await fireEvent.input(titleInput, { target: { value: 'Issue One Updated Again' } });
+    await fireEvent.blur(titleInput);
+
+    await waitFor(() => {
+      expect(toastSuccessMock).toHaveBeenCalledWith(
+        'Changes saved successfully',
+        expect.objectContaining({
+          role: 'status',
+          'aria-live': 'polite',
+        }),
+      );
+    });
+  });
+
+  it('passes assertive alert semantics to error toasts', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ type: 'error', data: { error: 'Validation failed' } }),
+    });
+
+    render(IssueSheet, {
+      props: {
+        open: true,
+        mode: 'edit',
+        issue: makeIssue(),
+        epics: mockEpics,
+        milestones: [],
+        projectIssues: [],
+        projects: [{ id: 'project-1', name: 'Project One' }],
+        userId: 'user-1',
+      },
+    });
+
+    const titleInput = screen.getByLabelText('Title');
+    await fireEvent.input(titleInput, { target: { value: 'Issue One Error Path' } });
+    await fireEvent.blur(titleInput);
+
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith(
+        'Validation failed',
+        expect.objectContaining({
+          role: 'alert',
+          'aria-live': 'assertive',
+        }),
+      );
+    });
   });
 
   it('shows inline error state when save fails', async () => {
