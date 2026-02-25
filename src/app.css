@@ -45,7 +45,8 @@
 
     /* Semantic Background Tints - Very subtle */
     --bg-done: 138 76% 97%; /* #F0FDF4 - Done background */
-    --bg-blocked: 48 100% 97%; /* #FFFBEB - Blocked background */
+    --bg-blocked: 48 100% 94%; /* #FEF3C7 - Blocked background (strengthened) */
+    --status-blocked-strong: 25 95% 47%; /* #EA780C - Darker amber for blocked accents */
     --bg-review: 252 100% 98%; /* #F5F3FF - Review background */
 
     /* shadcn/svelte compatibility mappings */

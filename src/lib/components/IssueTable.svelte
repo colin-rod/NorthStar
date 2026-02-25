@@ -26,6 +26,7 @@
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
+  import Lock from '@lucide/svelte/icons/lock';
 
   interface Props {
     issues: Issue[];
@@ -116,7 +117,7 @@
           <tr
             onclick={() => onRowClick(issue)}
             class="hover:bg-surface-subtle transition-colors cursor-pointer {blocked
-              ? 'bg-bg-blocked/20'
+              ? 'bg-bg-blocked/40 border-l-[3px] border-l-status-blocked'
               : ''}"
           >
             <!-- Priority Cell (first for scanability) -->
@@ -172,7 +173,10 @@
             <!-- Blocked Cell -->
             <td class="px-3 py-4">
               {#if blocked}
-                <Badge variant="status-blocked" class="text-xs">Blocked</Badge>
+                <Badge variant="status-blocked-strong" class="text-xs">
+                  <Lock class="h-3 w-3" />
+                  Blocked
+                </Badge>
               {/if}
             </td>
           </tr>

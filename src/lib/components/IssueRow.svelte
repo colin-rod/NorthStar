@@ -30,6 +30,7 @@
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
+  import Lock from '@lucide/svelte/icons/lock';
 
   interface Props {
     issue: Issue;
@@ -61,7 +62,9 @@
 
   // Compute blocked status
   let blocked = $derived(isBlocked(issue));
-  let blockingCount = $derived(getBlockingDependencies(issue).length);
+  let blockingDeps = $derived(getBlockingDependencies(issue));
+  let blockingCount = $derived(blockingDeps.length);
+  let firstBlockingDep = $derived(blockingDeps[0]);
 
   // Status color dot mapping (4px diameter)
   const getStatusColor = (status: string) => {
@@ -81,7 +84,7 @@
 <div
   data-testid="issue-row"
   class="relative w-full flex items-center px-4 py-4 border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group {blocked
-    ? 'bg-bg-blocked/30'
+    ? 'bg-bg-blocked/50 border-l-[3px] border-l-status-blocked'
     : ''}"
 >
   <!-- Drag Handle (left side, hover-visible) -->
@@ -137,8 +140,11 @@
     {/if}
 
     <!-- Status indicator: small colored dot per North spec -->
-    <div class="flex items-center pt-1 shrink-0">
+    <div class="flex items-center gap-1 pt-1 shrink-0">
       <div class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}></div>
+      {#if blocked}
+        <Lock class="h-4 w-4 text-status-blocked-strong" />
+      {/if}
     </div>
 
     <!-- Priority Badge: positioned left for scanability -->
@@ -162,14 +168,24 @@
       <p class="text-metadata mt-1 truncate">
         {issue.project?.name} / {issue.epic?.name}
       </p>
+
+      <!-- Inline blocking dependency (actionable info without opening sheet) -->
+      {#if blocked && firstBlockingDep}
+        <p class="text-xs mt-1 text-status-blocked-strong font-medium truncate">
+          Blocked by: I-{firstBlockingDep.number} ({firstBlockingDep.title})
+        </p>
+      {/if}
     </div>
   </button>
 
   <!-- Right side: Priority & Blocked indicators + Move buttons -->
   <div class="flex items-center gap-2 shrink-0">
-    <!-- Blocked Indicator: amber dot with count -->
+    <!-- Blocked Indicator: prominent badge with lock icon -->
     {#if blocked}
-      <Badge variant="status-blocked" class="text-xs">Blocked ({blockingCount})</Badge>
+      <Badge variant="status-blocked-strong" class="text-xs">
+        <Lock class="h-3 w-3" />
+        Blocked ({blockingCount})
+      </Badge>
     {/if}
 
     <!-- Move Up/Down Buttons (hover-visible) -->

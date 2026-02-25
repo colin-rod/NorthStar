@@ -113,6 +113,7 @@ export default {
           'in-review': 'hsl(var(--status-in-review))',
           done: 'hsl(var(--status-done))',
           blocked: 'hsl(var(--status-blocked))',
+          'blocked-strong': 'hsl(var(--status-blocked-strong))',
           canceled: 'hsl(var(--status-canceled))',
         },
         /* Semantic background tints */

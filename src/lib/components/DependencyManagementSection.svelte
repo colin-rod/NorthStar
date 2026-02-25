@@ -4,6 +4,7 @@
   import { Button } from '$lib/components/ui/button';
   import AddDependencyDialog from '$lib/components/AddDependencyDialog.svelte';
   import X from '@lucide/svelte/icons/x';
+  import Lock from '@lucide/svelte/icons/lock';
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
   import { getBlockingDependencies, getSatisfiedDependencies } from '$lib/utils/issue-helpers';
@@ -92,8 +93,9 @@
   <div class="space-y-4">
     <!-- Blocking Summary -->
     {#if blockingDeps.length > 0}
-      <div class="text-sm text-destructive font-medium mb-2">
-        🔒 Blocked by {blockingDeps.length}
+      <div class="flex items-center gap-1 text-sm text-destructive font-medium mb-2">
+        <Lock class="h-4 w-4" />
+        Blocked by {blockingDeps.length}
         {blockingDeps.length === 1 ? 'dependency' : 'dependencies'}
       </div>
     {/if}
