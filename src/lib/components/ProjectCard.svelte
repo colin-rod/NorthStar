@@ -67,157 +67,92 @@
 
 <!-- North Design: Card with 10px radius, subtle border, minimal hover -->
 <div class="relative group">
-  {#if onToggle}
-    <!-- Drill-down mode: clickable button to expand inline -->
-    <button type="button" onclick={onToggle} class="block w-full text-left">
-      <Card
-        class="hover:shadow-level-1 transition-shadow duration-150 cursor-pointer border rounded-md"
-      >
-        <CardHeader class="pb-4">
-          <div class="flex items-center justify-between">
-            <!-- Project name: section header weight -->
-            <h3 class="text-section-header font-ui">{project.name}</h3>
+  <Card
+    class="hover:shadow-level-1 transition-shadow duration-150 cursor-pointer border rounded-md"
+  >
+    <CardHeader class="pb-4">
+      <div class="flex items-center justify-between">
+        <!-- Project name: section header weight -->
+        <h3 class="text-section-header font-ui">{project.name}</h3>
 
-            <!-- Action buttons - visible on hover -->
-            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {#if onEdit}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8"
-                  onclick={handleEdit}
-                  aria-label="Edit project"
-                >
-                  <Pencil class="h-4 w-4" />
-                </Button>
-              {/if}
-              {#if onArchive}
-                <form method="POST" action="?/archiveProject" use:enhance class="inline">
-                  <input type="hidden" name="id" value={project.id} />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    class="h-8 w-8 text-foreground-muted hover:text-destructive"
-                    onclick={handleArchiveClick}
-                    aria-label="Archive project"
-                  >
-                    <Archive class="h-4 w-4" />
-                  </Button>
-                </form>
-              {/if}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <!-- Counts with subtle badges -->
-          <div class="flex gap-4 text-metadata">
-            <div class="flex items-center gap-2">
-              <Badge variant="default" class="text-xs">{effectiveCounts.ready}</Badge>
-              <span class="text-foreground-secondary">Ready</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge variant="status-doing" class="text-xs">{effectiveCounts.doing}</Badge>
-              <span class="text-foreground-secondary">Doing</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge variant="status-blocked" class="text-xs">{effectiveCounts.blocked}</Badge>
-              <span class="text-foreground-secondary">Blocked</span>
-            </div>
-          </div>
-          <!-- Progress bar -->
-          {@const progress = computeProgress(effectiveCounts)}
-          {#if progress.total > 0}
-            <div class="mt-3 flex items-center gap-2">
-              <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                  style="width: {progress.percentage}%"
-                ></div>
-              </div>
-              <span class="text-metadata text-foreground-secondary shrink-0">
-                {progress.percentage}%
-              </span>
-            </div>
+        <!-- Action buttons - visible on hover, above overlay -->
+        <div class="relative z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {#if onEdit}
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8"
+              onclick={handleEdit}
+              aria-label="Edit project"
+            >
+              <Pencil class="h-4 w-4" />
+            </Button>
           {/if}
-        </CardContent>
-      </Card>
+          {#if onArchive}
+            <form method="POST" action="?/archiveProject" use:enhance class="inline">
+              <input type="hidden" name="id" value={project.id} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                class="h-8 w-8 text-foreground-muted hover:text-destructive"
+                onclick={handleArchiveClick}
+                aria-label="Archive project"
+              >
+                <Archive class="h-4 w-4" />
+              </Button>
+            </form>
+          {/if}
+        </div>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <!-- Counts with subtle badges -->
+      <div class="flex gap-4 text-metadata">
+        <div class="flex items-center gap-2">
+          <Badge variant="default" class="text-xs">{effectiveCounts.ready}</Badge>
+          <span class="text-foreground-secondary">Ready</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <Badge variant="status-doing" class="text-xs">{effectiveCounts.doing}</Badge>
+          <span class="text-foreground-secondary">Doing</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <Badge variant="status-blocked" class="text-xs">{effectiveCounts.blocked}</Badge>
+          <span class="text-foreground-secondary">Blocked</span>
+        </div>
+      </div>
+      <!-- Progress bar -->
+      {@const progress = computeProgress(effectiveCounts)}
+      {#if progress.total > 0}
+        <div class="mt-3 flex items-center gap-2">
+          <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+            <div
+              class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+              style="width: {progress.percentage}%"
+            ></div>
+          </div>
+          <span class="text-metadata text-foreground-secondary shrink-0">
+            {progress.percentage}%
+          </span>
+        </div>
+      {/if}
+    </CardContent>
+  </Card>
+
+  <!-- Primary click overlay: covers entire card area -->
+  {#if onToggle}
+    <button
+      type="button"
+      onclick={onToggle}
+      class="absolute inset-0 z-0"
+      aria-label="Expand {project.name}"
+    >
+      <span class="sr-only">Expand {project.name}</span>
     </button>
   {:else}
-    <!-- Navigation mode: link to project detail page -->
-    <a href="/projects/{project.id}" class="block">
-      <Card
-        class="hover:shadow-level-1 transition-shadow duration-150 cursor-pointer border rounded-md"
-      >
-        <CardHeader class="pb-4">
-          <div class="flex items-center justify-between">
-            <!-- Project name: section header weight -->
-            <h3 class="text-section-header font-ui">{project.name}</h3>
-
-            <!-- Action buttons - visible on hover -->
-            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {#if onEdit}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8"
-                  onclick={handleEdit}
-                  aria-label="Edit project"
-                >
-                  <Pencil class="h-4 w-4" />
-                </Button>
-              {/if}
-              {#if onArchive}
-                <form method="POST" action="?/archiveProject" use:enhance class="inline">
-                  <input type="hidden" name="id" value={project.id} />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    class="h-8 w-8 text-foreground-muted hover:text-destructive"
-                    onclick={handleArchiveClick}
-                    aria-label="Archive project"
-                  >
-                    <Archive class="h-4 w-4" />
-                  </Button>
-                </form>
-              {/if}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <!-- Counts with subtle badges -->
-          <div class="flex gap-4 text-metadata">
-            <div class="flex items-center gap-2">
-              <Badge variant="default" class="text-xs">{effectiveCounts.ready}</Badge>
-              <span class="text-foreground-secondary">Ready</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge variant="status-doing" class="text-xs">{effectiveCounts.doing}</Badge>
-              <span class="text-foreground-secondary">Doing</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge variant="status-blocked" class="text-xs">{effectiveCounts.blocked}</Badge>
-              <span class="text-foreground-secondary">Blocked</span>
-            </div>
-          </div>
-          <!-- Progress bar -->
-          {@const progress = computeProgress(effectiveCounts)}
-          {#if progress.total > 0}
-            <div class="mt-3 flex items-center gap-2">
-              <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                  style="width: {progress.percentage}%"
-                ></div>
-              </div>
-              <span class="text-metadata text-foreground-secondary shrink-0">
-                {progress.percentage}%
-              </span>
-            </div>
-          {/if}
-        </CardContent>
-      </Card>
+    <a href="/projects/{project.id}" class="absolute inset-0 z-0" aria-label="View {project.name}">
+      <span class="sr-only">View {project.name}</span>
     </a>
   {/if}
 </div>
