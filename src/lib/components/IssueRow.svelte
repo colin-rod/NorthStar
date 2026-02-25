@@ -31,6 +31,8 @@
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
   import Lock from '@lucide/svelte/icons/lock';
+  import X from '@lucide/svelte/icons/x';
+  import { dismissReorderHint, reorderHintDismissed } from '$lib/stores/ui-hints';
 
   interface Props {
     issue: Issue;
@@ -44,6 +46,7 @@
     onToggleExpand?: (() => void) | null;
     onMoveUp?: (() => void) | null;
     onMoveDown?: (() => void) | null;
+    showReorderHint?: boolean;
   }
 
   let {
@@ -58,6 +61,7 @@
     onToggleExpand = null,
     onMoveUp = null,
     onMoveDown = null,
+    showReorderHint = false,
   }: Props = $props();
 
   // Compute blocked status
@@ -93,14 +97,41 @@
     role="button"
     tabindex="-1"
     aria-label="Drag to reorder"
-    onmousedown={() => (dragDisabled = false)}
+    onmousedown={() => {
+      dragDisabled = false;
+      dismissReorderHint();
+    }}
     onmouseup={() => (dragDisabled = true)}
     onmouseleave={() => (dragDisabled = true)}
-    ontouchstart={() => (dragDisabled = false)}
+    ontouchstart={() => {
+      dragDisabled = false;
+      dismissReorderHint();
+    }}
     ontouchend={() => (dragDisabled = true)}
   >
     <GripVertical class="h-4 w-4 text-muted-foreground" />
   </div>
+
+  {#if showReorderHint && !$reorderHintDismissed}
+    <div
+      class="absolute left-8 top-1/2 -translate-y-1/2 z-10 flex items-center gap-2 rounded-md border border-border-divider bg-surface px-2 py-1 text-xs text-muted-foreground shadow-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <span>Tip: Hover and drag to reorder</span>
+      <button
+        type="button"
+        class="rounded p-0.5 hover:bg-surface-subtle"
+        aria-label="Dismiss reorder tip"
+        onclick={(e) => {
+          e.stopPropagation();
+          dismissReorderHint();
+        }}
+      >
+        <X class="h-3 w-3" />
+      </button>
+    </div>
+  {/if}
 
   <!-- Main Content (clickable) -->
   <button

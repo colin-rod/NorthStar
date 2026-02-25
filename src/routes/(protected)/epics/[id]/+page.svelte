@@ -32,6 +32,7 @@
   import { calculateNewSortOrders, moveIssueUp, moveIssueDown } from '$lib/utils/reorder';
   import { dndzone } from 'svelte-dnd-action';
   import type { Issue } from '$lib/types';
+  import { dismissReorderHint } from '$lib/stores/ui-hints';
 
   let { data }: { data: PageData } = $props();
 
@@ -123,6 +124,7 @@
   let isReordering = $state(false);
 
   async function handleDndConsider(e: CustomEvent) {
+    dismissReorderHint();
     visibleIssues = e.detail.items;
   }
 
@@ -326,6 +328,7 @@
                 onMoveDown={index < visibleIssues.length - 1
                   ? () => handleMoveDown(issue.id)
                   : null}
+                showReorderHint={index === 0}
               />
             {/each}
           </div>

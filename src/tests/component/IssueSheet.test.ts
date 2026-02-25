@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 import IssueSheet from '$lib/components/IssueSheet.svelte';
@@ -148,5 +148,73 @@ describe('IssueSheet description auto-save guards', () => {
     await vi.advanceTimersByTimeAsync(700);
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('shows inline save-state text while saving and after successful completion', async () => {
+    let resolveFetch:
+      | ((value: { ok: boolean; json: () => Promise<{ type: string }> }) => void)
+      | null = null;
+
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    render(IssueSheet, {
+      props: {
+        open: true,
+        mode: 'edit',
+        issue: makeIssue(),
+        epics: mockEpics,
+        milestones: [],
+        projectIssues: [],
+        projects: [{ id: 'project-1', name: 'Project One' }],
+        userId: 'user-1',
+      },
+    });
+
+    const titleInput = screen.getByLabelText('Title');
+    await fireEvent.input(titleInput, { target: { value: 'Issue One Updated' } });
+    await fireEvent.blur(titleInput);
+
+    expect(await screen.findByText('Saving...')).toBeInTheDocument();
+
+    resolveFetch?.({ ok: true, json: async () => ({ type: 'success' }) });
+
+    await waitFor(() => {
+      expect(screen.getByText('✓ Saved')).toBeInTheDocument();
+    });
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    expect(screen.queryByText('✓ Saved')).not.toBeInTheDocument();
+  });
+
+  it('shows inline error state when save fails', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ type: 'error', data: { error: 'Failed to save' } }),
+    });
+
+    render(IssueSheet, {
+      props: {
+        open: true,
+        mode: 'edit',
+        issue: makeIssue(),
+        epics: mockEpics,
+        milestones: [],
+        projectIssues: [],
+        projects: [{ id: 'project-1', name: 'Project One' }],
+        userId: 'user-1',
+      },
+    });
+
+    const titleInput = screen.getByLabelText('Title');
+    await fireEvent.input(titleInput, { target: { value: 'Issue One Failed Save' } });
+    await fireEvent.blur(titleInput);
+
+    expect(await screen.findByText('Save failed. Please retry.')).toBeInTheDocument();
   });
 });
