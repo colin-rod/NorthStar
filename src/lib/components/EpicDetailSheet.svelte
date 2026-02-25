@@ -576,7 +576,14 @@
               </div>
               {#if computeProgress(counts).total > 0}
                 <div class="mt-3 flex items-center gap-2">
-                  <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+                  <div
+                    class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow={Math.max(0, Math.min(100, Number(computeProgress(counts).percentage) || 0))}
+                    aria-label="Epic completion progress"
+                  >
                     <div
                       class="h-full bg-foreground/40 rounded-full transition-all duration-300"
                       style="width: {computeProgress(counts).percentage}%"
