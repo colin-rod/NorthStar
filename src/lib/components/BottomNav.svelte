@@ -21,7 +21,7 @@
 </script>
 
 <!-- North Design: Minimal mobile nav with burnt orange active state -->
-<nav class="fixed bottom-0 inset-x-0 z-40 border-t border-border-divider bg-surface md:hidden">
+<nav aria-label="Mobile navigation" class="fixed bottom-0 inset-x-0 z-40 border-t border-border-divider bg-surface md:hidden">
   <div class="flex justify-around items-center h-16">
     <a
       href="/"
