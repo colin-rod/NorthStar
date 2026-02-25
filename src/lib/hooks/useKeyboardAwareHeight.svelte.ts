@@ -29,7 +29,7 @@ export function useKeyboardAwareHeight(
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
       const maxHeight = Math.floor(viewportHeight * heightPercentage);
 
-      element!.style.maxHeight = `${maxHeight}px`;
+      element.style.maxHeight = `${maxHeight}px`;
 
       // Scroll focused input into view if keyboard is open
       const focusedElement = document.activeElement;

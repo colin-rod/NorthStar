@@ -62,7 +62,7 @@ export function useSwipeToDismiss(
       state.isDragging = true;
 
       // Disable transition during drag
-      element!.style.transition = 'none';
+      element.style.transition = 'none';
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -83,7 +83,7 @@ export function useSwipeToDismiss(
         }
 
         animationFrameId = requestAnimationFrame(() => {
-          element!.style.transform = `translateY(${deltaY}px)`;
+          element.style.transform = `translateY(${deltaY}px)`;
         });
 
         // Prevent scrolling when swiping
@@ -113,11 +113,11 @@ export function useSwipeToDismiss(
         isVerticalSwipe && isDownwardSwipe && (meetsDistanceThreshold || meetsVelocityThreshold);
 
       // Re-enable transition
-      element!.style.transition = prefersReducedMotion ? 'none' : 'transform 200ms ease-out';
+      element.style.transition = prefersReducedMotion ? 'none' : 'transform 200ms ease-out';
 
       if (shouldDismiss) {
         // Animate out and dismiss
-        element!.style.transform = 'translateY(100%)';
+        element.style.transform = 'translateY(100%)';
         setTimeout(
           () => {
             onDismiss();
@@ -126,7 +126,7 @@ export function useSwipeToDismiss(
         );
       } else {
         // Snap back
-        element!.style.transform = 'translateY(0px)';
+        element.style.transform = 'translateY(0px)';
       }
 
       state.isDragging = false;
