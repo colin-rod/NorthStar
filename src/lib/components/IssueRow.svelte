@@ -82,6 +82,13 @@
     };
     return colors[status] || 'bg-status-todo';
   };
+
+  const formatStatusLabel = (status: string) =>
+    status
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  let statusLabel = $derived(formatStatusLabel(issue.status));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -165,7 +172,11 @@
     <button onclick={onClick} class="flex-1 text-left flex items-start gap-3 min-w-0">
       <!-- Status indicator: small colored dot per North spec -->
       <div class="flex items-center gap-1 pt-1 shrink-0">
-        <div class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}></div>
+        <div
+          class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}
+          aria-hidden="true"
+        ></div>
+        <span class="sr-only">{statusLabel}</span>
         {#if blocked}
           <Lock class="h-4 w-4 text-status-blocked-strong" />
         {/if}
