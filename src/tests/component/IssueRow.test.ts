@@ -535,7 +535,7 @@ describe('IssueRow - Additional Scenarios', () => {
     expect(onClick).toHaveBeenCalled();
   });
 
-  it('should handle keyboard events on chevron', async () => {
+  it('should handle click on chevron button', async () => {
     const onToggleExpand = vi.fn();
     render(IssueRow, {
       props: {
@@ -550,32 +550,13 @@ describe('IssueRow - Additional Scenarios', () => {
 
     const chevron = screen.getByLabelText('Expand sub-issues');
 
-    // Test Enter key
-    await fireEvent.keyDown(chevron, { key: 'Enter' });
+    // Chevron is a native <button>, so Enter/Space are handled by the browser.
+    // Verify click works correctly.
+    await fireEvent.click(chevron);
     expect(onToggleExpand).toHaveBeenCalledTimes(1);
 
-    // Test Space key
-    await fireEvent.keyDown(chevron, { key: ' ' });
+    await fireEvent.click(chevron);
     expect(onToggleExpand).toHaveBeenCalledTimes(2);
-  });
-
-  it('should not toggle when other keys are pressed on chevron', async () => {
-    const onToggleExpand = vi.fn();
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 2,
-        doneSubIssueCount: 0,
-        isExpanded: false,
-        onToggleExpand,
-      },
-    });
-
-    const chevron = screen.getByLabelText('Expand sub-issues');
-
-    await fireEvent.keyDown(chevron, { key: 'Escape' });
-    expect(onToggleExpand).not.toHaveBeenCalled();
   });
 
   it('should handle drag events on drag handle', async () => {
@@ -640,5 +621,102 @@ describe('IssueRow - Additional Scenarios', () => {
     await fireEvent.touchEnd(dragHandle);
 
     expect(dragHandle).toBeInTheDocument();
+  });
+});
+
+describe('IssueRow - Accessibility: No Nested Interactive Elements', () => {
+  const baseIssue: Issue = {
+    id: '1',
+    number: 1,
+    title: 'Test Issue',
+    status: 'todo',
+    priority: 0,
+    project_id: 'proj-1',
+    epic_id: 'epic-1',
+    parent_issue_id: null,
+    milestone_id: null,
+    story_points: null,
+    sort_order: 1,
+    created_at: new Date().toISOString(),
+    description: null,
+    project: {
+      id: 'proj-1',
+      number: 1,
+      name: 'Test Project',
+      user_id: 'user-1',
+      created_at: new Date().toISOString(),
+      archived_at: null,
+      status: 'active',
+      description: null,
+    },
+    epic: {
+      id: 'epic-1',
+      number: 1,
+      name: 'Test Epic',
+      project_id: 'proj-1',
+      status: 'active',
+      is_default: false,
+      sort_order: null,
+      description: null,
+      priority: null,
+    },
+    dependencies: [],
+  };
+
+  it('should not have nested interactive elements inside buttons', () => {
+    const { container } = render(IssueRow, {
+      props: {
+        issue: baseIssue,
+        hasSubIssues: true,
+        subIssueCount: 3,
+        doneSubIssueCount: 1,
+        isExpanded: false,
+        onToggleExpand: vi.fn(),
+      },
+    });
+
+    const buttons = container.querySelectorAll('button');
+    buttons.forEach((button) => {
+      const nestedInteractive = button.querySelectorAll('button, [role="button"]');
+      expect(nestedInteractive.length).toBe(0);
+    });
+  });
+
+  it('should render chevron as a button element, not a div with role="button"', () => {
+    render(IssueRow, {
+      props: {
+        issue: baseIssue,
+        hasSubIssues: true,
+        subIssueCount: 2,
+        doneSubIssueCount: 0,
+        isExpanded: false,
+        onToggleExpand: vi.fn(),
+      },
+    });
+
+    const chevron = screen.getByLabelText('Expand sub-issues');
+    expect(chevron.tagName).toBe('BUTTON');
+  });
+
+  it('should not call onClick when chevron is clicked', async () => {
+    const onClick = vi.fn();
+    const onToggleExpand = vi.fn();
+    render(IssueRow, {
+      props: {
+        issue: baseIssue,
+        hasSubIssues: true,
+        subIssueCount: 2,
+        doneSubIssueCount: 0,
+        isExpanded: false,
+        onClick,
+        onToggleExpand,
+      },
+    });
+
+    const chevron = screen.getByLabelText('Expand sub-issues');
+    await fireEvent.click(chevron);
+
+    expect(onToggleExpand).toHaveBeenCalledTimes(1);
+    expect(onClick).not.toHaveBeenCalled();
   });
 });

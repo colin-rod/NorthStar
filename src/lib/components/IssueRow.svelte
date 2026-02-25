@@ -133,28 +133,19 @@
     </div>
   {/if}
 
-  <!-- Main Content (clickable) -->
-  <button
-    onclick={onClick}
-    class="flex-1 text-left flex items-start gap-3 min-w-0"
+  <!-- Main Content Area (non-interactive container) -->
+  <div
+    class="flex-1 flex items-start gap-3 min-w-0"
     style={isSubIssue ? 'margin-left: 2rem;' : 'margin-left: 2rem;'}
   >
-    <!-- Expand/Collapse Chevron (for parents with sub-issues) -->
+    <!-- Expand/Collapse Chevron (sibling button for parents with sub-issues) -->
     {#if hasSubIssues}
-      <div
+      <button
+        type="button"
         onclick={(e) => {
           e.stopPropagation();
           onToggleExpand?.();
         }}
-        onkeydown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.stopPropagation();
-            e.preventDefault();
-            onToggleExpand?.();
-          }
-        }}
-        role="button"
-        tabindex="0"
         class="flex items-center gap-1 shrink-0 pt-1 cursor-pointer"
         aria-label={isExpanded ? 'Collapse sub-issues' : 'Expand sub-issues'}
       >
@@ -164,50 +155,53 @@
           <ChevronRight class="h-4 w-4 text-muted-foreground" />
         {/if}
         <Badge variant="outline" class="text-xs">{doneSubIssueCount}/{subIssueCount}</Badge>
-      </div>
+      </button>
     {:else}
       <!-- Spacer for alignment when no chevron -->
       <div class="w-4 shrink-0"></div>
     {/if}
 
-    <!-- Status indicator: small colored dot per North spec -->
-    <div class="flex items-center gap-1 pt-1 shrink-0">
-      <div class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}></div>
-      {#if blocked}
-        <Lock class="h-4 w-4 text-status-blocked-strong" />
-      {/if}
-    </div>
-
-    <!-- Priority Badge: positioned left for scanability -->
-    <div class="flex items-center pt-0.5 shrink-0">
-      <PriorityBadge priority={issue.priority} />
-    </div>
-
-    <div class="flex-1 min-w-0">
-      <!-- Title: 16px, weight 500 (medium bold-ish) -->
-      <h3 class="text-issue-title truncate flex items-center gap-2">
-        <span class="text-muted-foreground font-mono text-sm">I-{issue.number}</span>
-        <span class="mx-1 text-muted-foreground">·</span>
-        <span class="flex-1 truncate">{issue.title}</span>
-        <!-- Ready indicator: green checkmark for todo status when not blocked -->
-        {#if issue.status === 'todo' && !blocked}
-          <CheckCircle2 class="h-4 w-4 text-status-done shrink-0" />
+    <!-- Clickable Content Area (sibling button) -->
+    <button onclick={onClick} class="flex-1 text-left flex items-start gap-3 min-w-0">
+      <!-- Status indicator: small colored dot per North spec -->
+      <div class="flex items-center gap-1 pt-1 shrink-0">
+        <div class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}></div>
+        {#if blocked}
+          <Lock class="h-4 w-4 text-status-blocked-strong" />
         {/if}
-      </h3>
+      </div>
 
-      <!-- Metadata: 13px, secondary color -->
-      <p class="text-metadata mt-1 truncate">
-        {issue.project?.name} / {issue.epic?.name}
-      </p>
+      <!-- Priority Badge: positioned left for scanability -->
+      <div class="flex items-center pt-0.5 shrink-0">
+        <PriorityBadge priority={issue.priority} />
+      </div>
 
-      <!-- Inline blocking dependency (actionable info without opening sheet) -->
-      {#if blocked && firstBlockingDep}
-        <p class="text-xs mt-1 text-status-blocked-strong font-medium truncate">
-          Blocked by: I-{firstBlockingDep.number} ({firstBlockingDep.title})
+      <div class="flex-1 min-w-0">
+        <!-- Title: 16px, weight 500 (medium bold-ish) -->
+        <h3 class="text-issue-title truncate flex items-center gap-2">
+          <span class="text-muted-foreground font-mono text-sm">I-{issue.number}</span>
+          <span class="mx-1 text-muted-foreground">·</span>
+          <span class="flex-1 truncate">{issue.title}</span>
+          <!-- Ready indicator: green checkmark for todo status when not blocked -->
+          {#if issue.status === 'todo' && !blocked}
+            <CheckCircle2 class="h-4 w-4 text-status-done shrink-0" />
+          {/if}
+        </h3>
+
+        <!-- Metadata: 13px, secondary color -->
+        <p class="text-metadata mt-1 truncate">
+          {issue.project?.name} / {issue.epic?.name}
         </p>
-      {/if}
-    </div>
-  </button>
+
+        <!-- Inline blocking dependency (actionable info without opening sheet) -->
+        {#if blocked && firstBlockingDep}
+          <p class="text-xs mt-1 text-status-blocked-strong font-medium truncate">
+            Blocked by: I-{firstBlockingDep.number} ({firstBlockingDep.title})
+          </p>
+        {/if}
+      </div>
+    </button>
+  </div>
 
   <!-- Right side: Priority & Blocked indicators + Move buttons -->
   <div class="flex items-center gap-2 shrink-0">
