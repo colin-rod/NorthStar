@@ -28,6 +28,9 @@
     projectSheetOpen,
   } from '$lib/stores/issues';
   import ContextMenu from '$lib/components/ContextMenu.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import FolderOpen from '@lucide/svelte/icons/folder-open';
+  import SearchX from '@lucide/svelte/icons/search-x';
   import type { TreeNode } from '$lib/types/tree-grid';
 
   let { data }: { data: PageData } = $props();
@@ -514,9 +517,34 @@
   <FilterPanel filterParams={data.filterParams} open={filterPanelOpen} />
 
   {#if data.projects.length === 0}
-    <div class="text-center py-12">
-      <p class="text-muted-foreground text-lg">No projects match the current filters.</p>
-    </div>
+    {#if activeFilterCount > 0}
+      <EmptyState
+        icon={SearchX}
+        title="No projects match"
+        description="Try adjusting your filters to see more results"
+        ctaLabel="Clear filters"
+        onCtaClick={() => {
+          const params = new URLSearchParams($page.url.searchParams);
+          params.delete('project_status');
+          params.delete('epic_status');
+          params.delete('priority');
+          params.delete('status');
+          params.delete('story_points');
+          goto(`${$page.url.pathname}?${params.toString()}`, {
+            replaceState: false,
+            noScroll: true,
+          });
+        }}
+      />
+    {:else}
+      <EmptyState
+        icon={FolderOpen}
+        title="No projects yet"
+        description="Projects organize your work into epics and issues"
+        ctaLabel="New Project"
+        onCtaClick={() => projectSheetOpen.set(true)}
+      />
+    {/if}
   {:else}
     <!-- Tree Grid View -->
     <TreeGrid

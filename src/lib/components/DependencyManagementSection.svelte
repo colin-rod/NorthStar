@@ -5,6 +5,8 @@
   import AddDependencyDialog from '$lib/components/AddDependencyDialog.svelte';
   import X from '@lucide/svelte/icons/x';
   import Lock from '@lucide/svelte/icons/lock';
+  import CircleCheckBig from '@lucide/svelte/icons/circle-check-big';
+  import EmptyState from '$lib/components/EmptyState.svelte';
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
   import { getBlockingDependencies, getSatisfiedDependencies } from '$lib/utils/issue-helpers';
@@ -158,7 +160,12 @@
 
     <!-- No dependencies message -->
     {#if blockedByIssues.length === 0}
-      <p class="text-metadata text-foreground-muted">No blocking dependencies</p>
+      <EmptyState
+        icon={CircleCheckBig}
+        title="No blocking dependencies"
+        description="This issue is free to work on"
+        variant="positive"
+      />
     {/if}
 
     <!-- Blocking -->

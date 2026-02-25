@@ -5,6 +5,7 @@
   import { Command, CommandInput, CommandList, CommandItem } from '$lib/components/ui/command';
   import { Checkbox } from '$lib/components/ui/checkbox';
   import type { Issue, StoryPoints } from '$lib/types';
+  import SearchX from '@lucide/svelte/icons/search-x';
 
   interface Props {
     selectedStoryPoints: string[];
@@ -115,7 +116,12 @@
           </CommandItem>
         {/each}
         {#if filteredOptions.length === 0}
-          <div class="py-6 text-center text-sm text-muted-foreground">No options found</div>
+          <div
+            class="py-6 text-center text-sm text-muted-foreground flex flex-col items-center gap-1.5"
+          >
+            <SearchX class="h-4 w-4" />
+            <span>No matches found</span>
+          </div>
         {/if}
       </CommandList>
     </Command>

@@ -4,6 +4,7 @@
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
   import { Command, CommandInput, CommandList, CommandItem } from '$lib/components/ui/command';
   import { Checkbox } from '$lib/components/ui/checkbox';
+  import SearchX from '@lucide/svelte/icons/search-x';
 
   export let projects: Array<{ id: string; name: string }>;
   export let selectedProjectIds: string[];
@@ -68,7 +69,12 @@
           </CommandItem>
         {/each}
         {#if filteredProjects.length === 0}
-          <div class="py-6 text-center text-sm text-muted-foreground">No projects found</div>
+          <div
+            class="py-6 text-center text-sm text-muted-foreground flex flex-col items-center gap-1.5"
+          >
+            <SearchX class="h-4 w-4" />
+            <span>No matches found</span>
+          </div>
         {/if}
       </CommandList>
     </Command>

@@ -5,6 +5,9 @@
   import { Badge } from '$lib/components/ui/badge';
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import SearchX from '@lucide/svelte/icons/search-x';
+  import Link from '@lucide/svelte/icons/link';
 
   // Props
   let {
@@ -153,9 +156,21 @@
     <!-- Results List -->
     <div class="flex-1 overflow-y-auto space-y-2">
       {#if filteredIssues.length === 0}
-        <p class="text-metadata text-foreground-muted text-center py-8">
-          {searchTerm ? 'No matching issues found' : 'No available issues'}
-        </p>
+        {#if searchTerm}
+          <EmptyState
+            icon={SearchX}
+            title="No matching issues"
+            description="Try a different search term"
+            variant="subtle"
+          />
+        {:else}
+          <EmptyState
+            icon={Link}
+            title="No available issues"
+            description="All other issues are already dependencies or there are none to add"
+            variant="subtle"
+          />
+        {/if}
       {:else}
         {#each filteredIssues as availableIssue (availableIssue.id)}
           <button

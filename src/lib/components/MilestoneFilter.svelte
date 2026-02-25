@@ -6,6 +6,7 @@
   import { Checkbox } from '$lib/components/ui/checkbox';
   import { Separator } from '$lib/components/ui/separator';
   import type { Issue, Milestone } from '$lib/types';
+  import SearchX from '@lucide/svelte/icons/search-x';
 
   interface Props {
     milestones: Milestone[];
@@ -180,7 +181,12 @@
         {/each}
 
         {#if filteredMilestones.length === 0 && searchQuery}
-          <div class="py-6 text-center text-sm text-muted-foreground">No milestones found</div>
+          <div
+            class="py-6 text-center text-sm text-muted-foreground flex flex-col items-center gap-1.5"
+          >
+            <SearchX class="h-4 w-4" />
+            <span>No matches found</span>
+          </div>
         {/if}
       </CommandList>
     </Command>

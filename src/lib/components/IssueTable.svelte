@@ -27,6 +27,8 @@
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
   import Lock from '@lucide/svelte/icons/lock';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Inbox from '@lucide/svelte/icons/inbox';
 
   interface Props {
     issues: Issue[];
@@ -59,9 +61,12 @@
 
 <!-- North Design: Clean table with subtle borders -->
 {#if issues.length === 0}
-  <div class="text-center py-12">
-    <p class="text-metadata text-foreground-muted">No issues found</p>
-  </div>
+  <EmptyState
+    icon={Inbox}
+    title="No issues found"
+    description="Try adjusting your filters"
+    variant="subtle"
+  />
 {:else}
   <div class="border border-border-divider rounded-lg overflow-hidden">
     <table class="w-full" aria-label="Issues list">

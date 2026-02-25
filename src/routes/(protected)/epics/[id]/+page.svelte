@@ -33,6 +33,11 @@
   import { dndzone } from 'svelte-dnd-action';
   import type { Issue } from '$lib/types';
   import { dismissReorderHint } from '$lib/stores/ui-hints';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Inbox from '@lucide/svelte/icons/inbox';
+  import ListTodo from '@lucide/svelte/icons/list-todo';
+  import PartyPopper from '@lucide/svelte/icons/party-popper';
+  import CircleCheckBig from '@lucide/svelte/icons/circle-check-big';
 
   let { data }: { data: PageData } = $props();
 
@@ -299,7 +304,40 @@
       <!-- Issue List -->
       <TabsContent value={filter} class="mt-4">
         {#if visibleIssues.length === 0}
-          <p class="text-center text-muted-foreground py-8">No issues in this filter</p>
+          {#if filter === 'all' && allIssues.length === 0}
+            <EmptyState
+              icon={ListTodo}
+              title="No issues in this epic"
+              description="Add an issue to start tracking work"
+              ctaLabel="New Issue"
+              onCtaClick={() => (showInlineForm = true)}
+            />
+          {:else if filter === 'blocked'}
+            <EmptyState
+              icon={PartyPopper}
+              title="Nothing blocked!"
+              description="All issues in this epic are flowing smoothly"
+              variant="positive"
+            />
+          {:else if filter === 'done'}
+            <EmptyState
+              icon={CircleCheckBig}
+              title="No completed issues"
+              description="Completed issues will appear here"
+              variant="subtle"
+            />
+          {:else}
+            <EmptyState
+              icon={Inbox}
+              title="No {filter === 'doing'
+                ? 'in progress'
+                : filter === 'in_review'
+                  ? 'in review'
+                  : filter} issues"
+              description="Issues will appear here when their status changes"
+              variant="subtle"
+            />
+          {/if}
         {:else}
           <div
             class="border rounded-lg divide-y"

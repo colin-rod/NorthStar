@@ -20,6 +20,10 @@
   import GroupBySelector from '$lib/components/GroupBySelector.svelte';
   import SortBySelector from '$lib/components/SortBySelector.svelte';
   import ProgressSummary from '$lib/components/ProgressSummary.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Inbox from '@lucide/svelte/icons/inbox';
+  import SearchX from '@lucide/svelte/icons/search-x';
+  import { goto } from '$app/navigation';
   import {
     issues,
     selectedIssue,
@@ -125,6 +129,19 @@
       projectSheetOpen.set(false);
     }
   });
+
+  // Detect whether filters are active (for empty state messaging)
+  let hasActiveFilters = $derived(
+    (data.selectedProjectIds || []).length > 0 ||
+      (data.selectedPriorities || []).length > 0 ||
+      (data.selectedMilestoneIds || []).length > 0 ||
+      data.includeNoMilestone ||
+      false ||
+      selectedStatuses.length > 0 ||
+      selectedStoryPoints.length > 0,
+  );
+
+  let hasProjects = $derived((data.projects || []).length > 0);
 </script>
 
 <div class="space-y-6">
@@ -166,7 +183,31 @@
   <!-- Issue List or Grouped List -->
   {#if groupBy === 'none'}
     {#if sortedIssues.length === 0}
-      <p class="text-center text-muted-foreground py-8">No issues found</p>
+      {#if hasActiveFilters}
+        <EmptyState
+          icon={SearchX}
+          title="No issues match"
+          description="Try adjusting your filters to see more results"
+          ctaLabel="Clear filters"
+          onCtaClick={() => goto('/', { replaceState: false, noScroll: true })}
+        />
+      {:else if hasProjects}
+        <EmptyState
+          icon={Inbox}
+          title="No issues yet"
+          description="Add your first issue to start tracking work"
+          ctaLabel="New Issue"
+          onCtaClick={openCreateIssueSheet}
+        />
+      {:else}
+        <EmptyState
+          icon={Inbox}
+          title="No issues yet"
+          description="Create a project to start tracking your work"
+          ctaLabel="New Project"
+          onCtaClick={() => projectSheetOpen.set(true)}
+        />
+      {/if}
     {:else}
       <IssueList issues={sortedIssues} onIssueClick={openIssueSheet} />
     {/if}

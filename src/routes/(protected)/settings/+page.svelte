@@ -9,6 +9,8 @@
   import { Button } from '$lib/components/ui/button';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import type { PageData } from './$types';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Archive from '@lucide/svelte/icons/archive';
 
   let { data }: { data: PageData } = $props();
 
@@ -95,7 +97,12 @@
     </CardHeader>
     <CardContent>
       {#if data.archivedProjects && data.archivedProjects.length === 0}
-        <p class="text-foreground-muted">No archived projects.</p>
+        <EmptyState
+          icon={Archive}
+          title="No archived projects"
+          description="Projects you archive will appear here for restoration"
+          variant="subtle"
+        />
       {:else if data.archivedProjects}
         <div class="space-y-2">
           {#each data.archivedProjects as project}
