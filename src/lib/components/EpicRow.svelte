@@ -39,6 +39,13 @@
     if (status === 'done') return 'bg-green-500';
     return 'bg-muted-foreground'; // canceled
   };
+
+  const formatStatusLabel = (status: string) =>
+    status
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  let statusLabel = $derived(formatStatusLabel(epic.status));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -64,13 +71,15 @@
       {/if}
     </button>
 
-    <!-- Status Dot -->
-    <div class="flex items-center pt-1.5 shrink-0">
-      <div class="w-2 h-2 md:w-3 md:h-3 rounded-full {getStatusColor(epic.status)}"></div>
-    </div>
-
     <!-- Clickable Content Area -->
-    <button onclick={onOpenSheet} class="flex-1 text-left min-w-0">
+    <button onclick={onOpenSheet} class="flex-1 text-left min-w-0 flex items-start gap-3">
+      <!-- Status Dot -->
+      <div class="flex items-center pt-1.5 shrink-0">
+        <div class="w-2 h-2 md:w-3 md:h-3 rounded-full {getStatusColor(epic.status)}" aria-hidden="true"></div>
+        <span class="sr-only">{statusLabel}</span>
+      </div>
+
+      <div class="flex-1 min-w-0">
       <!-- Epic Name: 16px, weight 500 (medium bold-ish) -->
       <h3 class="text-section-header truncate">{epic.name}</h3>
 
@@ -108,6 +117,7 @@
           </span>
         </div>
       {/if}
+      </div>
     </button>
   </div>
 </div>
