@@ -13,6 +13,7 @@
   $: doneCount = nonCanceled.filter((i) => i.status === 'done').length;
   $: totalCount = nonCanceled.length;
   $: completionPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  $: clampedCompletionPercent = Math.max(0, Math.min(100, Number(completionPercent) || 0));
 
   $: totalPoints = nonCanceled.reduce((sum, i) => sum + (i.story_points || 0), 0);
   $: donePoints = nonCanceled
@@ -42,7 +43,14 @@
     </div>
   </div>
 
-  <div class="h-2 w-full rounded-full bg-muted">
+  <div
+    class="h-2 w-full rounded-full bg-muted"
+    role="progressbar"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow={clampedCompletionPercent}
+    aria-label="Completion progress"
+  >
     <div
       class="h-2 rounded-full bg-primary transition-all duration-300"
       style="width: {completionPercent}%"
