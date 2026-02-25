@@ -623,6 +623,8 @@
 <!-- Simple toast-style feedback -->
 {#if showFeedback}
   <div
+    role={feedbackType === 'success' ? 'status' : 'alert'}
+    aria-live={feedbackType === 'success' ? 'polite' : 'assertive'}
     class="fixed bottom-4 right-4 px-4 py-3 rounded-md shadow-lg transition-opacity z-50 {feedbackType ===
     'success'
       ? 'bg-primary text-white'
