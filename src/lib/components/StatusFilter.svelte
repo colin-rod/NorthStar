@@ -4,7 +4,9 @@
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
   import { Command, CommandInput, CommandList, CommandItem } from '$lib/components/ui/command';
   import { Checkbox } from '$lib/components/ui/checkbox';
+  import { Separator } from '$lib/components/ui/separator';
   import type { Issue, IssueStatus } from '$lib/types';
+  import { isReady, isBlocked } from '$lib/utils/issue-helpers';
   import SearchX from '@lucide/svelte/icons/search-x';
 
   interface Props {
@@ -17,28 +19,44 @@
   let open = $state(false);
   let searchQuery = $state('');
 
-  // Status options with labels
-  const statuses: { value: IssueStatus; label: string }[] = [
-    { value: 'todo', label: 'Todo' },
-    { value: 'doing', label: 'In Progress' },
-    { value: 'in_review', label: 'In Review' },
-    { value: 'done', label: 'Done' },
-    { value: 'canceled', label: 'Canceled' },
+  type StatusOption = {
+    value: string;
+    label: string;
+    description?: string;
+    section: 'computed' | 'raw';
+  };
+
+  // Computed statuses (virtual) + raw database statuses
+  const allOptions: StatusOption[] = [
+    { value: 'ready', label: 'Ready', description: 'Todo + no blockers', section: 'computed' },
+    { value: 'blocked', label: 'Blocked', description: 'Has unresolved deps', section: 'computed' },
+    { value: 'todo', label: 'Todo (all)', description: 'Includes blocked', section: 'raw' },
+    { value: 'doing', label: 'In Progress', section: 'raw' },
+    { value: 'in_review', label: 'In Review', section: 'raw' },
+    { value: 'done', label: 'Done', section: 'raw' },
+    { value: 'canceled', label: 'Canceled', section: 'raw' },
   ];
 
-  // Calculate counts for each status
-  let statusCounts = $derived.by(() => {
-    const counts = new Map<IssueStatus, number>();
-    for (const status of statuses) {
-      counts.set(status.value, issues.filter((i) => i.status === status.value).length);
-    }
+  // Calculate counts for each option
+  let optionCounts = $derived.by(() => {
+    const counts = new Map<string, number>();
+    counts.set('ready', issues.filter((i) => isReady(i)).length);
+    counts.set('blocked', issues.filter((i) => isBlocked(i)).length);
+    counts.set('todo', issues.filter((i) => i.status === 'todo').length);
+    counts.set('doing', issues.filter((i) => i.status === 'doing').length);
+    counts.set('in_review', issues.filter((i) => i.status === 'in_review').length);
+    counts.set('done', issues.filter((i) => i.status === 'done').length);
+    counts.set('canceled', issues.filter((i) => i.status === 'canceled').length);
     return counts;
   });
 
-  // Filtered statuses based on search
-  let filteredStatuses = $derived(
-    statuses.filter((s) => s.label.toLowerCase().includes(searchQuery.toLowerCase())),
+  // Filtered options based on search
+  let filteredOptions = $derived(
+    allOptions.filter((s) => s.label.toLowerCase().includes(searchQuery.toLowerCase())),
   );
+
+  let filteredComputed = $derived(filteredOptions.filter((s) => s.section === 'computed'));
+  let filteredRaw = $derived(filteredOptions.filter((s) => s.section === 'raw'));
 
   // Display text for trigger button
   let buttonText = $derived.by(() => {
@@ -46,13 +64,13 @@
       return 'Status';
     }
     if (selectedStatuses.length === 1) {
-      const statusObj = statuses.find((s) => s.value === selectedStatuses[0]);
-      return `Status: ${statusObj?.label}`;
+      const opt = allOptions.find((s) => s.value === selectedStatuses[0]);
+      return `Status: ${opt?.label}`;
     }
     return `Status (${selectedStatuses.length})`;
   });
 
-  function toggleStatus(status: IssueStatus) {
+  function toggleStatus(status: string) {
     const newSelection = selectedStatuses.includes(status)
       ? selectedStatuses.filter((s) => s !== status)
       : [...selectedStatuses, status];
@@ -85,24 +103,50 @@
   >
     {buttonText}
   </PopoverTrigger>
-  <PopoverContent class="w-[250px] p-0" align="start">
+  <PopoverContent class="w-[280px] p-0" align="start">
     <Command>
       <CommandInput placeholder="Search status..." bind:value={searchQuery} />
       <CommandList>
-        {#each filteredStatuses as status (status.value)}
+        {#each filteredComputed as option (option.value)}
           <CommandItem
-            onSelect={() => toggleStatus(status.value)}
+            onSelect={() => toggleStatus(option.value)}
             class="flex items-center gap-2 cursor-pointer"
             data-testid="status-checkbox"
           >
-            <Checkbox checked={selectedStatuses.includes(status.value)} aria-label={status.label} />
-            <span class="flex-1">{status.label}</span>
+            <Checkbox checked={selectedStatuses.includes(option.value)} aria-label={option.label} />
+            <div class="flex-1 flex flex-col">
+              <span>{option.label}</span>
+              {#if option.description}
+                <span class="text-xs text-muted-foreground">{option.description}</span>
+              {/if}
+            </div>
             <span class="text-muted-foreground text-sm">
-              ({statusCounts.get(status.value) || 0})
+              ({optionCounts.get(option.value) || 0})
             </span>
           </CommandItem>
         {/each}
-        {#if filteredStatuses.length === 0}
+        {#if filteredComputed.length > 0 && filteredRaw.length > 0}
+          <Separator />
+        {/if}
+        {#each filteredRaw as option (option.value)}
+          <CommandItem
+            onSelect={() => toggleStatus(option.value)}
+            class="flex items-center gap-2 cursor-pointer"
+            data-testid="status-checkbox"
+          >
+            <Checkbox checked={selectedStatuses.includes(option.value)} aria-label={option.label} />
+            <div class="flex-1 flex flex-col">
+              <span>{option.label}</span>
+              {#if option.description}
+                <span class="text-xs text-muted-foreground">{option.description}</span>
+              {/if}
+            </div>
+            <span class="text-muted-foreground text-sm">
+              ({optionCounts.get(option.value) || 0})
+            </span>
+          </CommandItem>
+        {/each}
+        {#if filteredOptions.length === 0}
           <div
             class="py-6 text-center text-sm text-muted-foreground flex flex-col items-center gap-1.5"
           >

@@ -52,7 +52,8 @@
 
   // Issue filtering
   let allIssues = $derived(data.issues || []);
-  let todoIssues = $derived(allIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
+  let readyIssues = $derived(allIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
+  let totalTodoCount = $derived(allIssues.filter((i) => i.status === 'todo').length);
   let doingIssues = $derived(allIssues.filter((i) => i.status === 'doing'));
   let inReviewIssues = $derived(allIssues.filter((i) => i.status === 'in_review'));
   let blockedIssues = $derived(allIssues.filter((i) => isBlocked(i)));
@@ -63,7 +64,7 @@
   let filteredIssues = $derived.by(() => {
     switch (filter) {
       case 'todo':
-        return todoIssues;
+        return readyIssues;
       case 'doing':
         return doingIssues;
       case 'in_review':
@@ -281,8 +282,13 @@
         <TabsTrigger value="all" onclick={() => setFilter('all')}
           >All ({allIssues.length})</TabsTrigger
         >
-        <TabsTrigger value="todo" onclick={() => setFilter('todo')}
-          >Todo ({todoIssues.length})</TabsTrigger
+        <TabsTrigger
+          value="todo"
+          onclick={() => setFilter('todo')}
+          title="Todo status with no blockers"
+          >Ready ({readyIssues.length}{blockedIssues.length > 0
+            ? ` of ${totalTodoCount}`
+            : ''})</TabsTrigger
         >
         <TabsTrigger value="doing" onclick={() => setFilter('doing')}
           >In Progress ({doingIssues.length})</TabsTrigger

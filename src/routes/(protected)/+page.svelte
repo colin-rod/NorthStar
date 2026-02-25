@@ -32,6 +32,7 @@
     openCreateIssueSheet,
     projectSheetOpen,
   } from '$lib/stores/issues';
+  import { isReady, isBlocked } from '$lib/utils/issue-helpers';
 
   let { data }: { data: PageData } = $props();
 
@@ -50,9 +51,14 @@
   // Client-side filtering (all issues loaded, filter in browser)
   let filteredIssues = $derived.by((): Issue[] => {
     return $issues.filter((issue) => {
-      // Status filter
-      if (selectedStatuses.length > 0 && !selectedStatuses.includes(issue.status)) {
-        return false;
+      // Status filter (supports virtual statuses "ready" and "blocked")
+      if (selectedStatuses.length > 0) {
+        const matchesStatus = selectedStatuses.some((s) => {
+          if (s === 'ready') return isReady(issue);
+          if (s === 'blocked') return isBlocked(issue);
+          return issue.status === s;
+        });
+        if (!matchesStatus) return false;
       }
 
       // Story points filter

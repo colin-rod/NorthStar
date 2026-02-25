@@ -74,7 +74,7 @@ describe('StatusFilter', () => {
       props: { selectedStatuses: ['todo'], issues: mockIssues },
     });
 
-    expect(screen.getByText('Status: Todo')).toBeInTheDocument();
+    expect(screen.getByText('Status: Todo (all)')).toBeInTheDocument();
   });
 
   it('should show count when multiple statuses selected', () => {
@@ -93,7 +93,11 @@ describe('StatusFilter', () => {
     const trigger = screen.getByText('Status');
     await fireEvent.click(trigger);
 
-    expect(screen.getByText('Todo')).toBeInTheDocument();
+    // Computed options
+    expect(screen.getByText('Ready')).toBeInTheDocument();
+    expect(screen.getByText('Blocked')).toBeInTheDocument();
+    // Raw status options
+    expect(screen.getByText('Todo (all)')).toBeInTheDocument();
     expect(screen.getByText('In Progress')).toBeInTheDocument();
     expect(screen.getByText('In Review')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
@@ -108,7 +112,7 @@ describe('StatusFilter', () => {
     const trigger = screen.getByText('Status');
     await fireEvent.click(trigger);
 
-    const todoOption = screen.getByText('Todo');
+    const todoOption = screen.getByText('Todo (all)');
     await fireEvent.click(todoOption);
 
     expect(mockGoto).toHaveBeenCalledWith(
@@ -122,14 +126,48 @@ describe('StatusFilter', () => {
       props: { selectedStatuses: ['todo'], issues: mockIssues },
     });
 
-    const trigger = screen.getByText('Status: Todo');
+    const trigger = screen.getByText('Status: Todo (all)');
     await fireEvent.click(trigger);
 
-    const todoOption = screen.getByText('Todo');
+    const todoOption = screen.getByText('Todo (all)');
     await fireEvent.click(todoOption);
 
     expect(mockGoto).toHaveBeenCalled();
     const calledUrl = mockGoto.mock.calls[0][0] as string;
     expect(calledUrl).not.toContain('status=');
+  });
+
+  it('should call goto with ready when Ready is selected', async () => {
+    render(StatusFilter, {
+      props: { selectedStatuses: [], issues: mockIssues },
+    });
+
+    const trigger = screen.getByText('Status');
+    await fireEvent.click(trigger);
+
+    const readyOption = screen.getByText('Ready');
+    await fireEvent.click(readyOption);
+
+    expect(mockGoto).toHaveBeenCalledWith(
+      expect.stringContaining('status=ready'),
+      expect.objectContaining({ replaceState: false, noScroll: true }),
+    );
+  });
+
+  it('should call goto with blocked when Blocked is selected', async () => {
+    render(StatusFilter, {
+      props: { selectedStatuses: [], issues: mockIssues },
+    });
+
+    const trigger = screen.getByText('Status');
+    await fireEvent.click(trigger);
+
+    const blockedOption = screen.getByText('Blocked');
+    await fireEvent.click(blockedOption);
+
+    expect(mockGoto).toHaveBeenCalledWith(
+      expect.stringContaining('status=blocked'),
+      expect.objectContaining({ replaceState: false, noScroll: true }),
+    );
   });
 });

@@ -55,4 +55,10 @@
       <span>{donePoints} / {totalPoints} story points done</span>
     {/if}
   </div>
+  {#if blockedCount > 0}
+    <p class="text-xs text-muted-foreground">
+      {blockedCount}
+      {blockedCount === 1 ? 'todo is' : 'todos are'} blocked — resolve dependencies to unblock
+    </p>
+  {/if}
 </div>
