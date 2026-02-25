@@ -181,7 +181,7 @@ describe('IssueSheet description auto-save guards', () => {
 
     expect(await screen.findByText('Saving...')).toBeInTheDocument();
 
-    resolveFetch?.({ ok: true, json: async () => ({ type: 'success' }) });
+    resolveFetch!({ ok: true, json: async () => ({ type: 'success' }) });
 
     await waitFor(() => {
       expect(screen.getByText('✓ Saved')).toBeInTheDocument();
