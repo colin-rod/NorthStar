@@ -28,6 +28,7 @@
   import { invalidateAll } from '$app/navigation';
   import { buildBreadcrumb } from '$lib/utils/breadcrumb';
   import { groupIssues } from '$lib/utils/group-issues';
+  import { dismissReorderHint } from '$lib/stores/ui-hints';
 
   interface Props {
     projects: (Project & {
@@ -287,6 +288,7 @@
 
   // Drag-drop handlers
   function handleDragStart(e: any) {
+    dismissReorderHint();
     const draggingNode = nodesWithDragState.find((n) => n.id === e.detail.info.id);
 
     if (!draggingNode || draggingNode.type === 'group-header') return;
@@ -477,6 +479,8 @@
               {onProjectClick}
               {onEpicClick}
               {onContextMenu}
+              showReorderHint={nodesWithDragState.filter((n) => n.type !== 'group-header')[0]
+                ?.id === node.id}
             />
 
             <!-- Check if we should show AddRow after this node -->

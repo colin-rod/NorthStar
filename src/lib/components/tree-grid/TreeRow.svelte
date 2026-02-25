@@ -40,6 +40,7 @@
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
     onContextMenu?: (node: TreeNode, event: MouseEvent) => void;
+    showReorderHint?: boolean;
   }
 
   let {
@@ -57,6 +58,7 @@
     onProjectClick,
     onEpicClick,
     onContextMenu,
+    showReorderHint = false,
   }: Props = $props();
 
   // Level-based background shading (per spec)
@@ -148,7 +150,7 @@
 >
   <!-- Drag Handle -->
   <td class="py-4 px-4">
-    <DragHandleCell {editMode} />
+    <DragHandleCell {editMode} {showReorderHint} />
   </td>
 
   <!-- Selection Checkbox -->
