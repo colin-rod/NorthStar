@@ -38,6 +38,7 @@
   import { normalizeDescription } from '$lib/utils/text-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
+  import { toast } from 'svelte-sonner';
 
   // Props
   let {
@@ -68,10 +69,8 @@
   let localEpicId = $state('');
   let localMilestoneId = $state<string | null>(null);
 
-  // Loading and error state
+  // Loading state
   let loading = $state(false);
-  let saveError = $state<string | null>(null);
-  let saveSuccess = $state(false);
 
   // Sub-issues state
   let showSubIssueForm = $state(false);
@@ -132,9 +131,6 @@
       descriptionSaveInFlight = false;
       descriptionInFlightNormalized = null;
 
-      saveError = null;
-      saveSuccess = false;
-
       // Load attachments for this issue
       if (mode === 'edit') {
         supabase
@@ -158,7 +154,6 @@
       localPriority = 2;
       localStoryPoints = null;
       localMilestoneId = null;
-      saveError = null;
       if (projects.length > 0 && !selectedProjectId) {
         selectedProjectId = projects[0].id;
       }
@@ -244,8 +239,6 @@
     if (!issue || mode !== 'edit' || !open) return;
 
     loading = true;
-    saveError = null;
-    saveSuccess = false;
 
     try {
       const formData = new FormData();
@@ -263,23 +256,20 @@
         // No need to reload all data for single field update
         // The UI already shows the updated value via local state
         options.onSuccess?.();
-        saveSuccess = true;
-        setTimeout(() => {
-          saveSuccess = false;
-        }, 2000);
+        toast.success('Changes saved successfully', {
+          duration: 2000,
+        });
       } else {
         const error = result.data?.error || 'Failed to save';
-        saveError = error;
-        setTimeout(() => {
-          saveError = null;
-        }, 5000);
+        toast.error(error, {
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error('Auto-save error:', error);
-      saveError = 'Network error - please try again';
-      setTimeout(() => {
-        saveError = null;
-      }, 5000);
+      toast.error('Network error - please try again', {
+        duration: 5000,
+      });
     } finally {
       loading = false;
       options.onFinally?.();
@@ -339,10 +329,9 @@
     const path = buildStoragePath(userId, 'issue', issue.id, file.name);
     const { error: uploadError } = await supabase.storage.from('attachments').upload(path, file);
     if (uploadError) {
-      saveError = 'Failed to upload file';
-      setTimeout(() => {
-        saveError = null;
-      }, 5000);
+      toast.error('Failed to upload file', {
+        duration: 5000,
+      });
       return;
     }
     const formData = new FormData();
@@ -373,16 +362,19 @@
     event.preventDefault();
 
     if (!localTitle.trim()) {
-      saveError = 'Issue title is required';
+      toast.error('Issue title is required', {
+        duration: 5000,
+      });
       return;
     }
     if (!selectedProjectId || !localEpicId) {
-      saveError = 'Project and epic are required';
+      toast.error('Project and epic are required', {
+        duration: 5000,
+      });
       return;
     }
 
     createLoading = true;
-    saveError = null;
 
     try {
       const formData = new FormData();
@@ -401,11 +393,15 @@
         await invalidateAll();
         open = false;
       } else {
-        saveError = result.data?.error || 'Failed to create issue';
+        toast.error(result.data?.error || 'Failed to create issue', {
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error('Create issue error:', error);
-      saveError = 'Network error - please try again';
+      toast.error('Network error - please try again', {
+        duration: 5000,
+      });
     } finally {
       createLoading = false;
     }
@@ -549,22 +545,6 @@
           {/if}
         </SheetTitle>
       </SheetHeader>
-
-      <!-- Success/Error Toast -->
-      {#if saveSuccess}
-        <div
-          class="mb-4 p-3 rounded-md bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-sm"
-        >
-          Changes saved successfully
-        </div>
-      {/if}
-      {#if saveError}
-        <div
-          class="mb-4 p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 text-sm"
-        >
-          {saveError}
-        </div>
-      {/if}
 
       {#if mode === 'create'}
         <!-- Create mode: form with submit button -->
@@ -809,7 +789,6 @@
               {projectIssues}
               {blockedByIssues}
               {blockingIssues}
-              bind:saveError
             />
 
             <!-- Sub-issues Section -->

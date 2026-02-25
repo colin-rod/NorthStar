@@ -7,6 +7,7 @@
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
   import { getBlockingDependencies, getSatisfiedDependencies } from '$lib/utils/issue-helpers';
+  import { toast } from 'svelte-sonner';
 
   // Props
   let {
@@ -14,13 +15,11 @@
     projectIssues = [],
     blockedByIssues = [],
     blockingIssues = [],
-    saveError = $bindable<string | null>(null),
   }: {
     issue: Issue;
     projectIssues: Issue[];
     blockedByIssues: Issue[];
     blockingIssues: Issue[];
-    saveError?: string | null;
   } = $props();
 
   // Compute blocking vs satisfied dependencies
@@ -78,8 +77,9 @@
 
       await invalidateAll();
     } catch (err) {
-      saveError = 'Failed to remove dependency';
-      setTimeout(() => (saveError = null), 5000);
+      toast.error('Failed to remove dependency', {
+        duration: 5000,
+      });
       console.error('Remove dependency error:', err);
     }
   }

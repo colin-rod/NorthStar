@@ -15,6 +15,7 @@
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
+  import { toast } from 'svelte-sonner';
 
   interface Props {
     open: boolean;
@@ -42,8 +43,6 @@
   let localDescription = $state<string | null>(null);
   let localMilestoneId = $state<string | null>(null);
   let attachments = $state<Attachment[]>([]);
-  let saveError = $state<string | null>(null);
-  let saveSuccess = $state(false);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
   let lastPersistedDescriptionNormalized = $state('');
@@ -69,8 +68,6 @@
       localMilestoneId = epic.milestone_id ?? null;
       localDescription = epic.description ?? null;
       lastPersistedDescriptionNormalized = normalizeDescription(epic.description);
-      saveError = null;
-      saveSuccess = false;
 
       // Load attachments for this epic
       supabase
@@ -94,7 +91,6 @@
       localDescription = null;
       localMilestoneId = null;
       attachments = [];
-      saveError = null;
       createLoading = false;
     }
   });
@@ -108,9 +104,6 @@
 
   async function autoSave(field: string, value: string) {
     if (!epic) return;
-
-    saveError = null;
-    saveSuccess = false;
 
     try {
       const formData = new FormData();
@@ -126,21 +119,18 @@
 
       if (response.ok && result.type === 'success') {
         await invalidateAll();
-        saveSuccess = true;
-        setTimeout(() => {
-          saveSuccess = false;
-        }, 2000);
+        toast.success('Changes saved successfully', {
+          duration: 2000,
+        });
       } else {
-        saveError = result.data?.error || 'Failed to save';
-        setTimeout(() => {
-          saveError = null;
-        }, 5000);
+        toast.error(result.data?.error || 'Failed to save', {
+          duration: 5000,
+        });
       }
     } catch {
-      saveError = 'Network error - please try again';
-      setTimeout(() => {
-        saveError = null;
-      }, 5000);
+      toast.error('Network error - please try again', {
+        duration: 5000,
+      });
     }
   }
 
@@ -203,10 +193,9 @@
     const path = buildStoragePath(userId, 'epic', epic.id, file.name);
     const { error: uploadError } = await supabase.storage.from('attachments').upload(path, file);
     if (uploadError) {
-      saveError = 'Failed to upload file';
-      setTimeout(() => {
-        saveError = null;
-      }, 5000);
+      toast.error('Failed to upload file', {
+        duration: 5000,
+      });
       return;
     }
     const formData = new FormData();
@@ -236,16 +225,19 @@
     event.preventDefault();
 
     if (!localName.trim()) {
-      saveError = 'Epic name is required';
+      toast.error('Epic name is required', {
+        duration: 5000,
+      });
       return;
     }
     if (!projectId) {
-      saveError = 'Project is required';
+      toast.error('Project is required', {
+        duration: 5000,
+      });
       return;
     }
 
     createLoading = true;
-    saveError = null;
 
     try {
       const formData = new FormData();
@@ -273,11 +265,15 @@
         await invalidateAll();
         open = false;
       } else {
-        saveError = result.data?.error || 'Failed to create epic';
+        toast.error(result.data?.error || 'Failed to create epic', {
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error('Create epic error:', error);
-      saveError = 'Network error - please try again';
+      toast.error('Network error - please try again', {
+        duration: 5000,
+      });
     } finally {
       createLoading = false;
     }
@@ -311,15 +307,6 @@
       {#if mode === 'create'}
         <!-- Create mode: form with submit button -->
         <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
-          <!-- Error message -->
-          {#if saveError}
-            <div
-              class="p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 text-sm"
-            >
-              {saveError}
-            </div>
-          {/if}
-
           <!-- Name -->
           <section>
             <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
@@ -544,14 +531,6 @@
                 </div>
               {/if}
             </section>
-          {/if}
-
-          <!-- Save feedback -->
-          {#if saveError}
-            <p class="text-sm text-destructive">{saveError}</p>
-          {/if}
-          {#if saveSuccess}
-            <p class="text-sm text-foreground-secondary">Saved</p>
           {/if}
         </div>
       {/if}
