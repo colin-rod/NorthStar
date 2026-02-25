@@ -22,8 +22,9 @@
         'status-blocked': 'bg-bg-blocked text-status-blocked border-transparent',
         'status-canceled': 'bg-surface-subtle text-foreground-muted border-transparent',
         /* Priority variants */
-        'priority-p0': 'bg-destructive/10 text-destructive border-transparent',
-        'priority-p1': 'bg-primary-tint text-primary border-transparent',
+        'priority-p0':
+          'bg-destructive text-destructive-foreground border-transparent font-semibold',
+        'priority-p1': 'bg-primary text-primary-foreground border-transparent font-semibold',
         'priority-p2': 'bg-bg-blocked text-status-blocked border-transparent',
         'priority-p3': 'bg-surface-subtle text-foreground-muted border-transparent',
       },

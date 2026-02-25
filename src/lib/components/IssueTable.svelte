@@ -24,6 +24,7 @@
 
   import type { Issue, IssueStatus } from '$lib/types';
   import Badge from '$lib/components/ui/badge/badge.svelte';
+  import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
 
   interface Props {
@@ -53,19 +54,6 @@
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
-
-  type PriorityVariant = 'priority-p0' | 'priority-p1' | 'priority-p2' | 'priority-p3';
-
-  function getPriorityVariant(priority: number): PriorityVariant {
-    const priorityMap: Record<number, PriorityVariant> = {
-      0: 'priority-p0',
-      1: 'priority-p1',
-      2: 'priority-p2',
-      3: 'priority-p3',
-    };
-
-    return priorityMap[priority] ?? 'priority-p3';
-  }
 </script>
 
 <!-- North Design: Clean table with subtle borders -->
@@ -79,6 +67,11 @@
       <!-- Table Header -->
       <thead class="bg-surface-subtle border-b border-border-divider">
         <tr>
+          <!-- Priority Column (first for scanability) -->
+          <th class="text-left px-3 py-3">
+            <span class="text-metadata uppercase text-foreground-muted">Priority</span>
+          </th>
+
           <!-- Status Column -->
           <th class="text-left px-3 py-3">
             <span class="text-metadata uppercase text-foreground-muted">Status</span>
@@ -89,7 +82,7 @@
             <span class="text-metadata uppercase text-foreground-muted">Title</span>
           </th>
 
-          <!-- Project Column (NEW) -->
+          <!-- Project Column -->
           <th class="text-left px-3 py-3">
             <span class="text-metadata uppercase text-foreground-muted">Project</span>
           </th>
@@ -97,11 +90,6 @@
           <!-- Epic Column -->
           <th class="text-left px-3 py-3">
             <span class="text-metadata uppercase text-foreground-muted">Epic</span>
-          </th>
-
-          <!-- Priority Column -->
-          <th class="text-left px-3 py-3">
-            <span class="text-metadata uppercase text-foreground-muted">Priority</span>
           </th>
 
           <!-- Milestone Column -->
@@ -131,6 +119,11 @@
               ? 'bg-bg-blocked/20'
               : ''}"
           >
+            <!-- Priority Cell (first for scanability) -->
+            <td class="px-3 py-4">
+              <PriorityBadge priority={issue.priority} />
+            </td>
+
             <!-- Status Cell -->
             <td class="px-3 py-4">
               <div class="flex items-center gap-2">
@@ -146,7 +139,7 @@
               <span class="text-body truncate block max-w-md">{issue.title}</span>
             </td>
 
-            <!-- Project Cell (NEW) -->
+            <!-- Project Cell -->
             <td class="px-3 py-4">
               <span class="text-metadata text-foreground-muted">
                 {issue.project?.name || '—'}
@@ -158,13 +151,6 @@
               <span class="text-metadata text-foreground-muted truncate block max-w-xs">
                 {issue.epic?.name || '—'}
               </span>
-            </td>
-
-            <!-- Priority Cell -->
-            <td class="px-3 py-4">
-              <Badge variant={getPriorityVariant(issue.priority)} class="text-xs"
-                >P{issue.priority}</Badge
-              >
             </td>
 
             <!-- Milestone Cell -->

@@ -23,6 +23,7 @@
 
   import type { Issue } from '$lib/types';
   import Badge from '$lib/components/ui/badge/badge.svelte';
+  import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import { isBlocked, getBlockingDependencies } from '$lib/utils/issue-helpers';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -74,19 +75,6 @@
     };
     return colors[status] || 'bg-status-todo';
   };
-
-  type PriorityVariant = 'priority-p0' | 'priority-p1' | 'priority-p2' | 'priority-p3';
-
-  function getPriorityVariant(priority: number): PriorityVariant {
-    const priorityMap: Record<number, PriorityVariant> = {
-      0: 'priority-p0',
-      1: 'priority-p1',
-      2: 'priority-p2',
-      3: 'priority-p3',
-    };
-
-    return priorityMap[priority] ?? 'priority-p3';
-  }
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -153,6 +141,11 @@
       <div class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}></div>
     </div>
 
+    <!-- Priority Badge: positioned left for scanability -->
+    <div class="flex items-center pt-0.5 shrink-0">
+      <PriorityBadge priority={issue.priority} />
+    </div>
+
     <div class="flex-1 min-w-0">
       <!-- Title: 16px, weight 500 (medium bold-ish) -->
       <h3 class="text-issue-title truncate flex items-center gap-2">
@@ -174,9 +167,6 @@
 
   <!-- Right side: Priority & Blocked indicators + Move buttons -->
   <div class="flex items-center gap-2 shrink-0">
-    <!-- Priority Badge: light burnt orange tint per North spec -->
-    <Badge variant={getPriorityVariant(issue.priority)} class="text-xs">P{issue.priority}</Badge>
-
     <!-- Blocked Indicator: amber dot with count -->
     {#if blocked}
       <Badge variant="status-blocked" class="text-xs">Blocked ({blockingCount})</Badge>
