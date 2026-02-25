@@ -71,6 +71,11 @@
 
   // Loading state
   let loading = $state(false);
+  type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+  let saveState = $state<SaveState>('idle');
+  let activeSaveCount = $state(0);
+  let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
+  let latestSaveRequestId = $state(0);
 
   // Sub-issues state
   let showSubIssueForm = $state(false);
@@ -154,6 +159,11 @@
       localPriority = 2;
       localStoryPoints = null;
       localMilestoneId = null;
+      saveState = 'idle';
+      if (saveStateResetTimeout) {
+        clearTimeout(saveStateResetTimeout);
+        saveStateResetTimeout = null;
+      }
       if (projects.length > 0 && !selectedProjectId) {
         selectedProjectId = projects[0].id;
       }
@@ -174,8 +184,30 @@
       selectedProjectId = '';
       localEpicId = '';
       createLoading = false;
+      saveState = 'idle';
+      if (saveStateResetTimeout) {
+        clearTimeout(saveStateResetTimeout);
+        saveStateResetTimeout = null;
+      }
     }
   });
+
+  function clearSaveStateResetTimeout() {
+    if (saveStateResetTimeout) {
+      clearTimeout(saveStateResetTimeout);
+      saveStateResetTimeout = null;
+    }
+  }
+
+  function queueSaveStateIdleReset() {
+    clearSaveStateResetTimeout();
+    saveStateResetTimeout = setTimeout(() => {
+      if (saveState === 'saved') {
+        saveState = 'idle';
+      }
+      saveStateResetTimeout = null;
+    }, 1500);
+  }
 
   // Filter epics to only show those from the relevant project
   let projectEpics = $derived(
@@ -238,7 +270,12 @@
   ) {
     if (!issue || mode !== 'edit' || !open) return;
 
-    loading = true;
+    const requestId = latestSaveRequestId + 1;
+    latestSaveRequestId = requestId;
+    activeSaveCount += 1;
+    loading = activeSaveCount > 0;
+    clearSaveStateResetTimeout();
+    saveState = 'saving';
 
     try {
       const formData = new FormData();
@@ -253,6 +290,10 @@
       const result = await response.json();
 
       if (response.ok && result.type === 'success') {
+        if (requestId === latestSaveRequestId) {
+          saveState = 'saved';
+          queueSaveStateIdleReset();
+        }
         // No need to reload all data for single field update
         // The UI already shows the updated value via local state
         options.onSuccess?.();
@@ -260,18 +301,25 @@
           duration: 2000,
         });
       } else {
+        if (requestId === latestSaveRequestId) {
+          saveState = 'error';
+        }
         const error = result.data?.error || 'Failed to save';
         toast.error(error, {
           duration: 5000,
         });
       }
     } catch (error) {
+      if (requestId === latestSaveRequestId) {
+        saveState = 'error';
+      }
       console.error('Auto-save error:', error);
       toast.error('Network error - please try again', {
         duration: 5000,
       });
     } finally {
-      loading = false;
+      activeSaveCount = Math.max(0, activeSaveCount - 1);
+      loading = activeSaveCount > 0;
       options.onFinally?.();
     }
   }
@@ -619,6 +667,16 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-6 pb-6">
+          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
+            {#if saveState === 'saving'}
+              Saving...
+            {:else if saveState === 'saved'}
+              ✓ Saved
+            {:else if saveState === 'error'}
+              Save failed. Please retry.
+            {/if}
+          </div>
+
           <!-- Basic Info Section -->
           <section>
             <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">

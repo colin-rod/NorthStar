@@ -46,6 +46,10 @@
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
   let lastPersistedDescriptionNormalized = $state('');
+  type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+  let saveState = $state<SaveState>('idle');
+  let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
+  let latestSaveRequestId = $state(0);
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
@@ -68,6 +72,7 @@
       localMilestoneId = epic.milestone_id ?? null;
       localDescription = epic.description ?? null;
       lastPersistedDescriptionNormalized = normalizeDescription(epic.description);
+      saveState = 'idle';
 
       // Load attachments for this epic
       supabase
@@ -92,6 +97,11 @@
       localMilestoneId = null;
       attachments = [];
       createLoading = false;
+      saveState = 'idle';
+      if (saveStateResetTimeout) {
+        clearTimeout(saveStateResetTimeout);
+        saveStateResetTimeout = null;
+      }
     }
   });
 
@@ -99,11 +109,38 @@
   $effect(() => {
     if (!open && mode === 'create') {
       createLoading = false;
+      saveState = 'idle';
+      if (saveStateResetTimeout) {
+        clearTimeout(saveStateResetTimeout);
+        saveStateResetTimeout = null;
+      }
     }
   });
 
+  function clearSaveStateResetTimeout() {
+    if (saveStateResetTimeout) {
+      clearTimeout(saveStateResetTimeout);
+      saveStateResetTimeout = null;
+    }
+  }
+
+  function queueSaveStateIdleReset() {
+    clearSaveStateResetTimeout();
+    saveStateResetTimeout = setTimeout(() => {
+      if (saveState === 'saved') {
+        saveState = 'idle';
+      }
+      saveStateResetTimeout = null;
+    }, 1500);
+  }
+
   async function autoSave(field: string, value: string) {
-    if (!epic) return;
+    if (!epic || mode !== 'edit' || !open) return;
+
+    const requestId = latestSaveRequestId + 1;
+    latestSaveRequestId = requestId;
+    clearSaveStateResetTimeout();
+    saveState = 'saving';
 
     try {
       const formData = new FormData();
@@ -118,16 +155,26 @@
       const result = await response.json();
 
       if (response.ok && result.type === 'success') {
+        if (requestId === latestSaveRequestId) {
+          saveState = 'saved';
+          queueSaveStateIdleReset();
+        }
         await invalidateAll();
         toast.success('Changes saved successfully', {
           duration: 2000,
         });
       } else {
+        if (requestId === latestSaveRequestId) {
+          saveState = 'error';
+        }
         toast.error(result.data?.error || 'Failed to save', {
           duration: 5000,
         });
       }
     } catch {
+      if (requestId === latestSaveRequestId) {
+        saveState = 'error';
+      }
       toast.error('Network error - please try again', {
         duration: 5000,
       });
@@ -400,6 +447,16 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-6 pb-6">
+          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
+            {#if saveState === 'saving'}
+              Saving...
+            {:else if saveState === 'saved'}
+              ✓ Saved
+            {:else if saveState === 'error'}
+              Save failed. Please retry.
+            {/if}
+          </div>
+
           <!-- Name -->
           <section>
             <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
