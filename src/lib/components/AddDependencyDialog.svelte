@@ -135,9 +135,7 @@
 
     <!-- Error Banner -->
     {#if error}
-      <div
-        class="mb-4 p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 text-sm"
-      >
+      <div class="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
         {error}
       </div>
     {/if}
