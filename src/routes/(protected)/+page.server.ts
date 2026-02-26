@@ -493,8 +493,8 @@ export const actions: Actions = {
 
     const formData = await request.formData();
     const titleRaw = formData.get('title')?.toString().trim();
-    const epicId = formData.get('epic_id')?.toString();
-    const projectId = formData.get('project_id')?.toString();
+    const epicId = formData.get('epicId')?.toString();
+    const projectId = formData.get('projectId')?.toString();
 
     if (!titleRaw || titleRaw.length === 0) {
       return fail(400, { error: 'Issue title is required' });
