@@ -119,7 +119,7 @@
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
-                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                 aria-label="Remove dependency"
               >
                 <X class="h-4 w-4" />
@@ -147,7 +147,7 @@
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
-                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                 aria-label="Remove dependency"
               >
                 <X class="h-4 w-4" />

@@ -76,7 +76,7 @@
         <h3 class="text-section-header font-ui">{project.name}</h3>
 
         <!-- Action buttons - visible on hover, above overlay -->
-        <div class="relative z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div class="relative z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
           {#if onEdit}
             <Button
               variant="ghost"
@@ -125,8 +125,16 @@
       <!-- Progress bar -->
       {@const progress = computeProgress(effectiveCounts)}
       {#if progress.total > 0}
+        {@const clampedProgressPercentage = Math.max(0, Math.min(100, Number(progress.percentage) || 0))}
         <div class="mt-3 flex items-center gap-2">
-          <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+          <div
+            class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={clampedProgressPercentage}
+            aria-label="Project completion progress"
+          >
             <div
               class="h-full bg-foreground/40 rounded-full transition-all duration-300"
               style="width: {progress.percentage}%"

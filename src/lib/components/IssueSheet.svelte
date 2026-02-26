@@ -99,6 +99,16 @@
   // Track current issue ID to prevent re-initialization on same issue
   let currentIssueId = $state<string | null>(null);
 
+  const successToastA11y = {
+    role: 'status',
+    'aria-live': 'polite',
+  } as const;
+
+  const errorToastA11y = {
+    role: 'alert',
+    'aria-live': 'assertive',
+  } as const;
+
   // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
@@ -299,6 +309,7 @@
         options.onSuccess?.();
         toast.success('Changes saved successfully', {
           duration: 2000,
+          ...successToastA11y,
         });
       } else {
         if (requestId === latestSaveRequestId) {
@@ -307,6 +318,7 @@
         const error = result.data?.error || 'Failed to save';
         toast.error(error, {
           duration: 5000,
+          ...errorToastA11y,
         });
       }
     } catch (error) {
@@ -316,6 +328,7 @@
       console.error('Auto-save error:', error);
       toast.error('Network error - please try again', {
         duration: 5000,
+        ...errorToastA11y,
       });
     } finally {
       activeSaveCount = Math.max(0, activeSaveCount - 1);
@@ -379,6 +392,7 @@
     if (uploadError) {
       toast.error('Failed to upload file', {
         duration: 5000,
+        ...errorToastA11y,
       });
       return;
     }
@@ -412,12 +426,14 @@
     if (!localTitle.trim()) {
       toast.error('Issue title is required', {
         duration: 5000,
+        ...errorToastA11y,
       });
       return;
     }
     if (!selectedProjectId || !localEpicId) {
       toast.error('Project and epic are required', {
         duration: 5000,
+        ...errorToastA11y,
       });
       return;
     }
@@ -443,12 +459,14 @@
       } else {
         toast.error(result.data?.error || 'Failed to create issue', {
           duration: 5000,
+          ...errorToastA11y,
         });
       }
     } catch (error) {
       console.error('Create issue error:', error);
       toast.error('Network error - please try again', {
         duration: 5000,
+        ...errorToastA11y,
       });
     } finally {
       createLoading = false;
@@ -573,9 +591,15 @@
       <!-- Loading overlay -->
       {#if loading || createLoading}
         <div
+          role="status"
+          aria-live="polite"
+          aria-label="Loading"
           class="absolute inset-0 bg-background/50 flex items-center justify-center z-50 rounded-t-lg"
         >
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div
+            aria-hidden="true"
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
+          ></div>
         </div>
       {/if}
 

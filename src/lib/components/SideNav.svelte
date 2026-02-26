@@ -22,6 +22,7 @@
 
 <!-- North Design: Clean sidebar with subtle styling -->
 <nav
+  aria-label="Main navigation"
   class="fixed left-0 top-0 h-screen w-64 border-r border-border-divider bg-surface hidden md:block"
 >
   <div class="flex flex-col h-full">
