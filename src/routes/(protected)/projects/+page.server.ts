@@ -152,24 +152,43 @@ export const actions: Actions = {
 
     const formData = await request.formData();
     const id = formData.get('id')?.toString();
-    const name = formData.get('name')?.toString().trim();
 
     if (!id) {
       return fail(400, { error: 'Project ID is required' });
     }
-    if (!name || name.length === 0) {
-      return fail(400, { error: 'Project name is required' });
-    }
-    if (name.length > 100) {
-      return fail(400, { error: 'Project name must be 100 characters or less' });
-    }
 
-    const updates: Record<string, unknown> = { name };
+    const updates: Record<string, unknown> = {};
+
+    const name = formData.get('name');
+    if (name !== null) {
+      const trimmedName = name.toString().trim();
+      if (trimmedName.length === 0) {
+        return fail(400, { error: 'Project name is required' });
+      }
+      if (trimmedName.length > 100) {
+        return fail(400, { error: 'Project name must be 100 characters or less' });
+      }
+      updates.name = trimmedName;
+    }
 
     // Description (rich text HTML, optional field)
     const description = formData.get('description');
     if (description !== null) {
       updates.description = description.toString() === '' ? null : description.toString();
+    }
+
+    // Status
+    const status = formData.get('status');
+    if (status !== null) {
+      const s = status.toString();
+      if (!['active', 'done', 'canceled'].includes(s)) {
+        return fail(400, { error: 'Invalid status value' });
+      }
+      updates.status = s;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return { success: true, action: 'update' };
     }
 
     const { error } = await supabase

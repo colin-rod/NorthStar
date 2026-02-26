@@ -44,6 +44,7 @@
 
   let localName = $state('');
   let localDescription = $state<string | null>(null);
+  let localStatus = $state<'active' | 'done' | 'canceled'>('active');
   let attachments = $state<Attachment[]>([]);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
@@ -70,6 +71,7 @@
     if (internalMode === 'edit' && effectiveProject) {
       localName = effectiveProject.name;
       localDescription = effectiveProject.description ?? null;
+      localStatus = effectiveProject.status ?? 'active';
       lastPersistedDescriptionNormalized = normalizeDescription(effectiveProject.description);
       saveState = 'idle';
 
@@ -192,6 +194,12 @@
     if (localName.trim() !== effectiveProject.name) {
       autoSave('name', localName.trim());
     }
+  }
+
+  function handleStatusChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value as 'active' | 'done' | 'canceled';
+    localStatus = value;
+    autoSave('status', value);
   }
 
   function handleDescriptionChange(html: string) {
@@ -382,6 +390,22 @@
               placeholder="Project name"
               class="text-body"
             />
+          </section>
+
+          <!-- Status -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Status
+            </h3>
+            <select
+              value={localStatus}
+              onchange={handleStatusChange}
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="active">Active</option>
+              <option value="done">Done</option>
+              <option value="canceled">Canceled</option>
+            </select>
           </section>
 
           <!-- Description -->

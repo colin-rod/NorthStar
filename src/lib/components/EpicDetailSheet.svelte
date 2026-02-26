@@ -22,6 +22,7 @@
     mode?: 'create' | 'edit';
     epic: Epic | null;
     projectId?: string;
+    projectName?: string;
     counts: IssueCounts | null;
     userId?: string;
     milestones?: Milestone[];
@@ -33,6 +34,7 @@
     mode = 'edit',
     epic,
     projectId,
+    projectName,
     counts,
     userId = '',
     milestones = [],
@@ -389,6 +391,9 @@
             Epic
           {/if}
         </SheetTitle>
+        {#if internalMode === 'create' && projectName}
+          <p class="text-sm text-foreground-muted">{projectName}</p>
+        {/if}
       </SheetHeader>
 
       {#if internalMode === 'create'}

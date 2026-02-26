@@ -591,6 +591,7 @@
   mode={epicDetailSheetMode}
   epic={selectedEpicForDetail}
   projectId={epicCreateProjectId ?? undefined}
+  projectName={data.projects.find((p) => p.id === epicCreateProjectId)?.name}
   counts={selectedEpicCounts}
   issues={selectedEpicIssues}
   userId={data.session?.user?.id ?? ''}
