@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { writable } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { PageData } from '../../routes/(protected)/projects/$types';
 import ProjectsPage from '../../routes/(protected)/projects/+page.svelte';
 
 vi.mock('$app/navigation', () => ({
@@ -75,7 +76,7 @@ const pageData = {
   },
   milestones: [],
   session: { user: { id: 'user-1' } },
-};
+} as unknown as PageData;
 
 describe('Projects page inline feedback toast accessibility', () => {
   it('renders success feedback as polite status region', async () => {
