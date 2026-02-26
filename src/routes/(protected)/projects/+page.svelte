@@ -66,6 +66,7 @@
   let epicCreateProjectId: string | null = $state(null);
   let selectedEpicForDetail: Epic | null = $state(null);
   let selectedEpicCounts: IssueCounts | null = $state(null);
+  let selectedEpicIssues: Issue[] = $state([]);
 
   // Context menu state
   let contextMenuOpen = $state(false);
@@ -331,6 +332,7 @@
     epicDetailSheetMode = 'edit';
     selectedEpicForDetail = epic;
     selectedEpicCounts = counts;
+    selectedEpicIssues = epic.issues ?? [];
     epicDetailSheetOpen = true;
   }
 
@@ -390,6 +392,7 @@
       epicDetailSheetMode = 'edit';
       selectedEpicForDetail = node.data as Epic;
       selectedEpicCounts = null;
+      selectedEpicIssues = (node.data as Epic).issues ?? [];
       epicDetailSheetOpen = true;
     }
   }
@@ -589,6 +592,7 @@
   epic={selectedEpicForDetail}
   projectId={epicCreateProjectId ?? undefined}
   counts={selectedEpicCounts}
+  issues={selectedEpicIssues}
   userId={data.session?.user?.id ?? ''}
   milestones={data.milestones ?? []}
 />

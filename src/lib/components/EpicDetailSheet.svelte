@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Epic, Attachment, Milestone } from '$lib/types';
+  import type { Epic, Attachment, Milestone, Issue, IssueStatus } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import { computeProgress } from '$lib/utils/issue-counts';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
@@ -25,6 +25,7 @@
     counts: IssueCounts | null;
     userId?: string;
     milestones?: Milestone[];
+    issues?: Issue[];
   }
 
   let {
@@ -35,6 +36,7 @@
     counts,
     userId = '',
     milestones = [],
+    issues = [],
   }: Props = $props();
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
@@ -189,6 +191,22 @@
         duration: 5000,
       });
     }
+  }
+
+  function getIssueStatusVariant(status: IssueStatus) {
+    if (status === 'done') return 'status-done';
+    if (status === 'canceled') return 'status-canceled';
+    if (status === 'doing') return 'status-doing';
+    if (status === 'in_review') return 'status-in-review';
+    return 'default';
+  }
+
+  function issueStatusLabel(status: IssueStatus) {
+    if (status === 'doing') return 'In Progress';
+    if (status === 'in_review') return 'In Review';
+    if (status === 'todo') return 'Todo';
+    if (status === 'done') return 'Done';
+    return 'Canceled';
   }
 
   function handleNameInput(event: Event) {
@@ -619,6 +637,25 @@
                   </span>
                 </div>
               {/if}
+            </section>
+          {/if}
+
+          <!-- Issues -->
+          {#if issues.length > 0}
+            <section>
+              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+                Issues
+              </h3>
+              <div class="space-y-2">
+                {#each issues as issue (issue.id)}
+                  <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                    <Badge variant={getIssueStatusVariant(issue.status)} class="text-xs shrink-0">
+                      {issueStatusLabel(issue.status)}
+                    </Badge>
+                    <span class="text-body flex-1 truncate">{issue.title}</span>
+                  </div>
+                {/each}
+              </div>
             </section>
           {/if}
         </div>
