@@ -26,7 +26,6 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import { invalidateAll } from '$app/navigation';
-  import { deserializeActionResult } from '@sveltejs/kit';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
@@ -469,7 +468,7 @@
       });
 
       const text = await response.text();
-      const result = deserializeActionResult(text);
+      const result = JSON.parse(text);
 
       if (response.ok && result.type === 'success') {
         const newIssue = result.data.issue;
