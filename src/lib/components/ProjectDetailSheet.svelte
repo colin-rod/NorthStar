@@ -7,7 +7,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
-  import { goto, invalidateAll } from '$app/navigation';
+  import { invalidateAll } from '$app/navigation';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
   import { supabase } from '$lib/supabase';
@@ -278,13 +278,14 @@
       if (response.ok && result.type === 'success') {
         const newProject = result.data.project;
 
-        // Close sheet and navigate to project detail page
-        open = false;
+        // Transition to edit mode (keep sheet open)
+        internalProject = newProject;
+        internalMode = 'edit';
+
         await invalidateAll();
         toast.success('Project created', {
           duration: 2000,
         });
-        goto(`/projects/${newProject.id}`);
       } else {
         toast.error(result.data?.error || 'Failed to create project', {
           duration: 5000,

@@ -139,6 +139,9 @@ describe('IssueSheet create-to-edit transition', () => {
     const submitButton = screen.getByText('Create Issue');
     await fireEvent.click(submitButton);
 
+    // Flush pending promises/timers so async handlers complete
+    await vi.runAllTimersAsync();
+
     // Wait for transition
     await waitFor(() => {
       // Should show edit mode indicators
@@ -179,6 +182,9 @@ describe('IssueSheet create-to-edit transition', () => {
 
     const submitButton = screen.getByText('Create Issue');
     await fireEvent.click(submitButton);
+
+    // Flush pending promises/timers so async handlers complete
+    await vi.runAllTimersAsync();
 
     await waitFor(() => {
       expect(toastErrorMock).toHaveBeenCalledWith('Title too long', expect.any(Object));

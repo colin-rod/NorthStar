@@ -41,6 +41,7 @@ vi.mock('$lib/hooks/useKeyboardAwareHeight.svelte', () => ({
 
 vi.mock('$app/navigation', () => ({
   invalidateAll: vi.fn().mockResolvedValue(undefined),
+  goto: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('ProjectDetailSheet create-to-edit transition', () => {
@@ -114,6 +115,9 @@ describe('ProjectDetailSheet create-to-edit transition', () => {
     const submitButton = screen.getByText('Create Project');
     await fireEvent.click(submitButton);
 
+    // Flush pending promises/timers so async handlers complete
+    await vi.runAllTimersAsync();
+
     // Wait for transition
     await waitFor(() => {
       expect(screen.queryByText('Create Project')).not.toBeInTheDocument();
@@ -150,6 +154,9 @@ describe('ProjectDetailSheet create-to-edit transition', () => {
 
     const submitButton = screen.getByText('Create Project');
     await fireEvent.click(submitButton);
+
+    // Flush pending promises/timers so async handlers complete
+    await vi.runAllTimersAsync();
 
     await waitFor(() => {
       expect(toastErrorMock).toHaveBeenCalledWith('Name already exists', expect.any(Object));
