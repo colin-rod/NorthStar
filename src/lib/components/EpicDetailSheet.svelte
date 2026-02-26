@@ -37,6 +37,11 @@
     milestones = [],
   }: Props = $props();
 
+  // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
+  let internalMode = $state<'create' | 'edit'>(mode);
+  let internalEpic = $state<Epic | null>(null);
+  let effectiveEpic = $derived(internalEpic ?? epic);
+
   let localName = $state('');
   let localStatus = $state<'active' | 'done' | 'canceled'>('active');
   let localPriority = $state<number | null>(null);
@@ -65,13 +70,13 @@
 
   // Initialize local state when epic changes (edit mode)
   $effect(() => {
-    if (mode === 'edit' && epic) {
-      localName = epic.name;
-      localStatus = epic.status;
-      localPriority = epic.priority ?? null;
-      localMilestoneId = epic.milestone_id ?? null;
-      localDescription = epic.description ?? null;
-      lastPersistedDescriptionNormalized = normalizeDescription(epic.description);
+    if (internalMode === 'edit' && effectiveEpic) {
+      localName = effectiveEpic.name;
+      localStatus = effectiveEpic.status;
+      localPriority = effectiveEpic.priority ?? null;
+      localMilestoneId = effectiveEpic.milestone_id ?? null;
+      localDescription = effectiveEpic.description ?? null;
+      lastPersistedDescriptionNormalized = normalizeDescription(effectiveEpic.description);
       saveState = 'idle';
 
       // Load attachments for this epic
@@ -79,7 +84,7 @@
         .from('attachments')
         .select('*')
         .eq('entity_type', 'epic')
-        .eq('entity_id', epic.id)
+        .eq('entity_id', effectiveEpic.id)
         .order('created_at', { ascending: true })
         .then(({ data }) => {
           attachments = data ?? [];
@@ -89,7 +94,7 @@
 
   // Initialize create mode defaults when sheet opens
   $effect(() => {
-    if (mode === 'create' && open) {
+    if (internalMode === 'create' && open) {
       localName = '';
       localStatus = 'active';
       localPriority = null;
@@ -105,15 +110,20 @@
     }
   });
 
-  // Reset create mode state when sheet closes
+  // Reset state when sheet closes
   $effect(() => {
-    if (!open && mode === 'create') {
+    if (!open) {
       createLoading = false;
       saveState = 'idle';
       if (saveStateResetTimeout) {
         clearTimeout(saveStateResetTimeout);
         saveStateResetTimeout = null;
       }
+      // Reset internal mode and created epic after close animation
+      setTimeout(() => {
+        internalMode = mode;
+        internalEpic = null;
+      }, 300);
     }
   });
 
@@ -135,7 +145,7 @@
   }
 
   async function autoSave(field: string, value: string) {
-    if (!epic || mode !== 'edit' || !open) return;
+    if (!effectiveEpic || internalMode !== 'edit' || !open) return;
 
     const requestId = latestSaveRequestId + 1;
     latestSaveRequestId = requestId;
@@ -144,7 +154,7 @@
 
     try {
       const formData = new FormData();
-      formData.append('id', epic.id);
+      formData.append('id', effectiveEpic!.id);
       formData.append(field, value);
 
       const response = await fetch('?/updateEpic', {
@@ -187,8 +197,8 @@
   }
 
   function handleNameBlur() {
-    if (!epic || mode !== 'edit' || !open) return;
-    if (localName.trim() !== epic.name) {
+    if (!effectiveEpic || internalMode !== 'edit' || !open) return;
+    if (localName.trim() !== effectiveEpic.name) {
       autoSave('name', localName.trim());
     }
   }
@@ -210,7 +220,7 @@
   }
 
   function handleDescriptionBlur() {
-    if (!epic || mode !== 'edit' || !open) return;
+    if (!effectiveEpic || internalMode !== 'edit' || !open) return;
 
     const normalizedCurrent = normalizeDescription(localDescription);
     if (normalizedCurrent === lastPersistedDescriptionNormalized) {
@@ -236,8 +246,8 @@
   }
 
   async function handleAttachmentUpload(file: File) {
-    if (!epic || !userId) return;
-    const path = buildStoragePath(userId, 'epic', epic.id, file.name);
+    if (!effectiveEpic || !userId) return;
+    const path = buildStoragePath(userId, 'epic', effectiveEpic.id, file.name);
     const { error: uploadError } = await supabase.storage.from('attachments').upload(path, file);
     if (uploadError) {
       toast.error('Failed to upload file', {
@@ -247,7 +257,7 @@
     }
     const formData = new FormData();
     formData.append('entity_type', 'epic');
-    formData.append('entity_id', epic.id);
+    formData.append('entity_id', effectiveEpic!.id);
     formData.append('file_name', file.name);
     formData.append('file_size', String(file.size));
     formData.append('mime_type', file.type);
@@ -309,8 +319,20 @@
       const result = await response.json();
 
       if (response.ok && result.type === 'success') {
+        const newEpic = result.data.epic;
+
+        // Set internal epic for edit mode
+        internalEpic = newEpic;
+        attachments = [];
+
+        // Transition to edit mode
+        internalMode = 'edit';
+
         await invalidateAll();
-        open = false;
+
+        toast.success('Epic created', {
+          duration: 2000,
+        });
       } else {
         toast.error(result.data?.error || 'Failed to create epic', {
           duration: 5000,
@@ -329,7 +351,7 @@
 
 <Sheet bind:open>
   <SheetContent side={sheetSide} class={sheetClass} bind:ref={sheetContentRef}>
-    {#if mode === 'create' || epic}
+    {#if internalMode === 'create' || effectiveEpic}
       <!-- Loading overlay -->
       {#if createLoading}
         <div
@@ -341,17 +363,17 @@
 
       <SheetHeader class="mb-6">
         <SheetTitle class="text-xs uppercase font-medium text-foreground-muted tracking-wide">
-          {#if mode === 'create'}
+          {#if internalMode === 'create'}
             New Epic
-          {:else if epic}
-            E-{epic.number} · Epic
+          {:else if effectiveEpic}
+            E-{effectiveEpic.number} · Epic
           {:else}
             Epic
           {/if}
         </SheetTitle>
       </SheetHeader>
 
-      {#if mode === 'create'}
+      {#if internalMode === 'create'}
         <!-- Create mode: form with submit button -->
         <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
           <!-- Name -->
@@ -581,7 +603,10 @@
                     role="progressbar"
                     aria-valuemin="0"
                     aria-valuemax="100"
-                    aria-valuenow={Math.max(0, Math.min(100, Number(computeProgress(counts).percentage) || 0))}
+                    aria-valuenow={Math.max(
+                      0,
+                      Math.min(100, Number(computeProgress(counts).percentage) || 0),
+                    )}
                     aria-label="Epic completion progress"
                   >
                     <div

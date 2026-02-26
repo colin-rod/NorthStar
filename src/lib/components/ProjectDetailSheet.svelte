@@ -37,6 +37,11 @@
     userId = '',
   }: Props = $props();
 
+  // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
+  let internalMode = $state<'create' | 'edit'>(mode);
+  let internalProject = $state<Project | null>(null);
+  let effectiveProject = $derived(internalProject ?? project);
+
   let localName = $state('');
   let localDescription = $state<string | null>(null);
   let attachments = $state<Attachment[]>([]);
@@ -62,10 +67,10 @@
 
   // Initialize local state when project changes (edit mode)
   $effect(() => {
-    if (mode === 'edit' && project) {
-      localName = project.name;
-      localDescription = project.description ?? null;
-      lastPersistedDescriptionNormalized = normalizeDescription(project.description);
+    if (internalMode === 'edit' && effectiveProject) {
+      localName = effectiveProject.name;
+      localDescription = effectiveProject.description ?? null;
+      lastPersistedDescriptionNormalized = normalizeDescription(effectiveProject.description);
       saveState = 'idle';
 
       // Load attachments for this project
@@ -73,7 +78,7 @@
         .from('attachments')
         .select('*')
         .eq('entity_type', 'project')
-        .eq('entity_id', project.id)
+        .eq('entity_id', effectiveProject.id)
         .order('created_at', { ascending: true })
         .then(({ data }) => {
           attachments = data ?? [];
@@ -83,7 +88,7 @@
 
   // Initialize create mode defaults when sheet opens
   $effect(() => {
-    if (mode === 'create' && open) {
+    if (internalMode === 'create' && open) {
       localName = '';
       localDescription = null;
       attachments = [];
@@ -96,15 +101,20 @@
     }
   });
 
-  // Reset create mode state when sheet closes
+  // Reset state when sheet closes
   $effect(() => {
-    if (!open && mode === 'create') {
+    if (!open) {
       createLoading = false;
       saveState = 'idle';
       if (saveStateResetTimeout) {
         clearTimeout(saveStateResetTimeout);
         saveStateResetTimeout = null;
       }
+      // Reset internal mode and created project after close animation
+      setTimeout(() => {
+        internalMode = mode;
+        internalProject = null;
+      }, 300);
     }
   });
 
@@ -126,7 +136,7 @@
   }
 
   async function autoSave(field: string, value: string) {
-    if (!project || mode !== 'edit' || !open) return;
+    if (!effectiveProject || internalMode !== 'edit' || !open) return;
 
     const requestId = latestSaveRequestId + 1;
     latestSaveRequestId = requestId;
@@ -135,7 +145,7 @@
 
     try {
       const formData = new FormData();
-      formData.append('id', project.id);
+      formData.append('id', effectiveProject!.id);
       formData.append(field, value);
 
       const response = await fetch('?/updateProject', {
@@ -178,8 +188,8 @@
   }
 
   function handleNameBlur() {
-    if (!project || mode !== 'edit' || !open) return;
-    if (localName.trim() !== project.name) {
+    if (!effectiveProject || internalMode !== 'edit' || !open) return;
+    if (localName.trim() !== effectiveProject.name) {
       autoSave('name', localName.trim());
     }
   }
@@ -189,7 +199,7 @@
   }
 
   function handleDescriptionBlur() {
-    if (!project || mode !== 'edit' || !open) return;
+    if (!effectiveProject || internalMode !== 'edit' || !open) return;
 
     const normalizedCurrent = normalizeDescription(localDescription);
     if (normalizedCurrent === lastPersistedDescriptionNormalized) {
@@ -210,8 +220,8 @@
   }
 
   async function handleAttachmentUpload(file: File) {
-    if (!project || !userId) return;
-    const path = buildStoragePath(userId, 'project', project.id, file.name);
+    if (!effectiveProject || !userId) return;
+    const path = buildStoragePath(userId, 'project', effectiveProject.id, file.name);
     const { error: uploadError } = await supabase.storage.from('attachments').upload(path, file);
     if (uploadError) {
       toast.error('Failed to upload file', {
@@ -221,7 +231,7 @@
     }
     const formData = new FormData();
     formData.append('entity_type', 'project');
-    formData.append('entity_id', project.id);
+    formData.append('entity_id', effectiveProject!.id);
     formData.append('file_name', file.name);
     formData.append('file_size', String(file.size));
     formData.append('mime_type', file.type);
@@ -269,8 +279,20 @@
       const result = await response.json();
 
       if (response.ok && result.type === 'success') {
+        const newProject = result.data.project;
+
+        // Set internal project for edit mode
+        internalProject = newProject;
+        attachments = [];
+
+        // Transition to edit mode
+        internalMode = 'edit';
+
         await invalidateAll();
-        open = false;
+
+        toast.success('Project created', {
+          duration: 2000,
+        });
       } else {
         toast.error(result.data?.error || 'Failed to create project', {
           duration: 5000,
@@ -295,7 +317,7 @@
 
 <Sheet bind:open>
   <SheetContent side={sheetSide} class={sheetClass} bind:ref={sheetContentRef}>
-    {#if mode === 'create' || project}
+    {#if internalMode === 'create' || effectiveProject}
       <!-- Loading overlay -->
       {#if createLoading}
         <div
@@ -307,17 +329,17 @@
 
       <SheetHeader class="mb-6">
         <SheetTitle class="text-xs uppercase font-medium text-foreground-muted tracking-wide">
-          {#if mode === 'create'}
+          {#if internalMode === 'create'}
             New Project
-          {:else if project}
-            P-{project.number} · Project
+          {:else if effectiveProject}
+            P-{effectiveProject.number} · Project
           {:else}
             Project
           {/if}
         </SheetTitle>
       </SheetHeader>
 
-      {#if mode === 'create'}
+      {#if internalMode === 'create'}
         <!-- Create mode: form with submit button -->
         <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
           <!-- Name -->
@@ -471,7 +493,10 @@
                     role="progressbar"
                     aria-valuemin="0"
                     aria-valuemax="100"
-                    aria-valuenow={Math.max(0, Math.min(100, Number(computeProgress(counts).percentage) || 0))}
+                    aria-valuenow={Math.max(
+                      0,
+                      Math.min(100, Number(computeProgress(counts).percentage) || 0),
+                    )}
                     aria-label="Project completion progress"
                   >
                     <div

@@ -80,6 +80,9 @@
   // Sub-issues state
   let showSubIssueForm = $state(false);
 
+  // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
+  let internalMode = $state<'create' | 'edit'>(mode);
+
   // Create mode state
   let selectedProjectId = $state('');
   let createLoading = $state(false);
@@ -126,7 +129,7 @@
   // Initialize local state when issue changes (edit mode)
   // Only re-initialize when the issue ID actually changes (not just object reference)
   $effect(() => {
-    if (issue && issue.id !== currentIssueId) {
+    if (internalMode === 'edit' && issue && issue.id !== currentIssueId) {
       currentIssueId = issue.id;
 
       localTitle = issue.title;
@@ -147,7 +150,7 @@
       descriptionInFlightNormalized = null;
 
       // Load attachments for this issue
-      if (mode === 'edit') {
+      if (internalMode === 'edit') {
         supabase
           .from('attachments')
           .select('*')
@@ -163,7 +166,7 @@
 
   // Initialize create mode defaults when sheet opens
   $effect(() => {
-    if (mode === 'create' && open) {
+    if (internalMode === 'create' && open) {
       localTitle = '';
       localStatus = 'todo';
       localPriority = 2;
@@ -182,15 +185,15 @@
 
   // Auto-select first epic when project changes in create mode
   $effect(() => {
-    if (mode === 'create' && selectedProjectId) {
+    if (internalMode === 'create' && selectedProjectId) {
       const firstEpic = epics.find((e) => e.project_id === selectedProjectId);
       localEpicId = firstEpic?.id ?? '';
     }
   });
 
-  // Reset create mode state when sheet closes
+  // Reset state when sheet closes
   $effect(() => {
-    if (!open && mode === 'create') {
+    if (!open) {
       selectedProjectId = '';
       localEpicId = '';
       createLoading = false;
@@ -199,6 +202,10 @@
         clearTimeout(saveStateResetTimeout);
         saveStateResetTimeout = null;
       }
+      // Reset internal mode back to parent's mode after close animation
+      setTimeout(() => {
+        internalMode = mode;
+      }, 300);
     }
   });
 
@@ -221,7 +228,7 @@
 
   // Filter epics to only show those from the relevant project
   let projectEpics = $derived(
-    mode === 'create'
+    internalMode === 'create'
       ? epics.filter((epic) => epic.project_id === selectedProjectId)
       : issue
         ? epics.filter((epic) => epic.project_id === issue?.project_id)
@@ -278,7 +285,7 @@
     value: any,
     options: { onSuccess?: () => void; onFinally?: () => void } = {},
   ) {
-    if (!issue || mode !== 'edit' || !open) return;
+    if (!issue || internalMode !== 'edit' || !open) return;
 
     const requestId = latestSaveRequestId + 1;
     latestSaveRequestId = requestId;
@@ -344,7 +351,7 @@
 
   // Description blur handler (autosave on blur)
   function handleDescriptionBlur() {
-    if (!issue || mode !== 'edit' || !open) return;
+    if (!issue || internalMode !== 'edit' || !open) return;
 
     const normalizedCurrent = normalizeDescription(localDescription);
 
@@ -454,8 +461,26 @@
       const result = await response.json();
 
       if (response.ok && result.type === 'success') {
+        const newIssue = result.data.issue;
+
+        // Set issue with empty relations for edit mode
+        issue = {
+          ...newIssue,
+          blocked_by: [],
+          blocking: [],
+          sub_issues: [],
+        };
+        currentIssueId = newIssue.id;
+
+        // Transition to edit mode
+        internalMode = 'edit';
+
         await invalidateAll();
-        open = false;
+
+        toast.success('Issue created', {
+          duration: 2000,
+          ...successToastA11y,
+        });
       } else {
         toast.error(result.data?.error || 'Failed to create issue', {
           duration: 5000,
@@ -486,7 +511,7 @@
   }
 
   function handleTitleBlur() {
-    if (!issue || mode !== 'edit' || !open) return;
+    if (!issue || internalMode !== 'edit' || !open) return;
     if (localTitle !== issue.title) {
       autoSave('title', localTitle);
     }
@@ -519,7 +544,7 @@
   // Watch for changes and auto-save
   $effect(() => {
     if (
-      mode === 'edit' &&
+      internalMode === 'edit' &&
       open &&
       issue &&
       localStatus !== prevStatus &&
@@ -532,7 +557,7 @@
 
   $effect(() => {
     if (
-      mode === 'edit' &&
+      internalMode === 'edit' &&
       open &&
       issue &&
       localPriority !== prevPriority &&
@@ -545,7 +570,7 @@
 
   $effect(() => {
     if (
-      mode === 'edit' &&
+      internalMode === 'edit' &&
       open &&
       issue &&
       localStoryPoints !== prevStoryPoints &&
@@ -558,7 +583,7 @@
 
   $effect(() => {
     if (
-      mode === 'edit' &&
+      internalMode === 'edit' &&
       open &&
       issue &&
       localEpicId !== prevEpicId &&
@@ -587,7 +612,7 @@
       open = isOpen;
     }}
   >
-    {#if mode === 'create' || issue}
+    {#if internalMode === 'create' || issue}
       <!-- Loading overlay -->
       {#if loading || createLoading}
         <div
@@ -606,7 +631,7 @@
       <!-- Header -->
       <SheetHeader class="mb-6">
         <SheetTitle class="font-accent text-page-title">
-          {#if mode === 'create'}
+          {#if internalMode === 'create'}
             New Issue
           {:else if issue}
             <span class="text-muted-foreground font-mono text-base">I-{issue.number}</span>
@@ -618,7 +643,7 @@
         </SheetTitle>
       </SheetHeader>
 
-      {#if mode === 'create'}
+      {#if internalMode === 'create'}
         <!-- Create mode: form with submit button -->
         <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
           <!-- Basic Info Section -->
