@@ -452,7 +452,7 @@
         {#each nodesWithDragState as node, index (node.id)}
           {#if node.type === 'group-header'}
             <!-- Render GroupHeader -->
-            <tr onclick={() => toggleGroupExpansion(node.id)}>
+            <tr>
               <td colspan={columns.length} class="p-0">
                 <GroupHeader
                   groupName={node.label}
@@ -460,6 +460,7 @@
                   totalStoryPoints={node.totalStoryPoints}
                   completionPercent={node.completionPercent}
                   isExpanded={node.isExpanded}
+                  onclick={() => toggleGroupExpansion(node.id)}
                 />
               </td>
             </tr>

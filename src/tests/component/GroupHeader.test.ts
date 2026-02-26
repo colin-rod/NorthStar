@@ -1,6 +1,6 @@
 // tests/component/GroupHeader.test.ts
 import { render, screen } from '@testing-library/svelte';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import GroupHeader from '$lib/components/GroupHeader.svelte';
 
@@ -136,5 +136,70 @@ describe('GroupHeader', () => {
 
     const header = container.querySelector('.cursor-pointer');
     expect(header).toBeInTheDocument();
+  });
+
+  describe('Accessibility', () => {
+    it('should render as a button with aria-expanded="true" when onclick is provided and expanded', () => {
+      render(GroupHeader, {
+        props: {
+          groupName: 'P0',
+          issueCount: 5,
+          totalStoryPoints: 13,
+          completionPercent: 60,
+          isExpanded: true,
+          onclick: vi.fn(),
+        },
+      });
+
+      const button = screen.getByRole('button', { name: /P0/ });
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('should render as a button with aria-expanded="false" when onclick is provided and collapsed', () => {
+      render(GroupHeader, {
+        props: {
+          groupName: 'P0',
+          issueCount: 5,
+          totalStoryPoints: 13,
+          completionPercent: 60,
+          isExpanded: false,
+          onclick: vi.fn(),
+        },
+      });
+
+      const button = screen.getByRole('button', { name: /P0/ });
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('should NOT render as a button when onclick is not provided', () => {
+      render(GroupHeader, {
+        props: {
+          groupName: 'P0',
+          issueCount: 5,
+          totalStoryPoints: 13,
+          completionPercent: 60,
+          isExpanded: true,
+        },
+      });
+
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
+
+    it('should render a native button element when onclick is provided', () => {
+      render(GroupHeader, {
+        props: {
+          groupName: 'P0',
+          issueCount: 5,
+          totalStoryPoints: 13,
+          completionPercent: 60,
+          isExpanded: true,
+          onclick: vi.fn(),
+        },
+      });
+
+      const button = screen.getByRole('button', { name: /P0/ });
+      expect(button.tagName).toBe('BUTTON');
+    });
   });
 });

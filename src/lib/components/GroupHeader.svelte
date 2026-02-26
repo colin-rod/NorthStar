@@ -8,17 +8,17 @@
     totalStoryPoints: number;
     completionPercent: number;
     isExpanded: boolean;
+    onclick?: () => void;
   }
 
-  let { groupName, issueCount, totalStoryPoints, completionPercent, isExpanded }: Props = $props();
+  let { groupName, issueCount, totalStoryPoints, completionPercent, isExpanded, onclick }: Props =
+    $props();
 
   // Format completion percentage
   let formattedCompletion = $derived(Math.round(completionPercent));
 </script>
 
-<div
-  class="flex items-center gap-2 px-4 py-3 hover:bg-surface-subtle transition-colors cursor-pointer"
->
+{#snippet content()}
   <!-- Chevron -->
   {#if isExpanded}
     <ChevronDown class="h-4 w-4 text-foreground-muted" />
@@ -45,4 +45,21 @@
 
   <!-- Completion % -->
   <span class="text-metadata text-foreground-muted">, {formattedCompletion}% complete</span>
-</div>
+{/snippet}
+
+{#if onclick}
+  <button
+    type="button"
+    {onclick}
+    aria-expanded={isExpanded}
+    class="flex w-full items-center gap-2 px-4 py-3 hover:bg-surface-subtle transition-colors cursor-pointer"
+  >
+    {@render content()}
+  </button>
+{:else}
+  <div
+    class="flex items-center gap-2 px-4 py-3 hover:bg-surface-subtle transition-colors cursor-pointer"
+  >
+    {@render content()}
+  </div>
+{/if}
