@@ -7,7 +7,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
-  import { invalidateAll } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
   import { supabase } from '$lib/supabase';
@@ -267,9 +267,6 @@
     try {
       const formData = new FormData();
       formData.append('name', localName.trim());
-      if (localDescription) {
-        formData.append('description', localDescription);
-      }
 
       const response = await fetch('?/createProject', {
         method: 'POST',
@@ -281,18 +278,13 @@
       if (response.ok && result.type === 'success') {
         const newProject = result.data.project;
 
-        // Set internal project for edit mode
-        internalProject = newProject;
-        attachments = [];
-
-        // Transition to edit mode
-        internalMode = 'edit';
-
+        // Close sheet and navigate to project detail page
+        open = false;
         await invalidateAll();
-
         toast.success('Project created', {
           duration: 2000,
         });
+        goto(`/projects/${newProject.id}`);
       } else {
         toast.error(result.data?.error || 'Failed to create project', {
           duration: 5000,
@@ -356,21 +348,6 @@
               disabled={createLoading}
               placeholder="Project name"
               class="text-body"
-            />
-          </section>
-
-          <!-- Description -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Description
-            </h3>
-            <RichTextEditor
-              content={localDescription}
-              onchange={(html) => {
-                localDescription = html;
-              }}
-              {uploadImage}
-              disabled={createLoading}
             />
           </section>
 
