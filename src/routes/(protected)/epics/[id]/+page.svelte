@@ -256,7 +256,10 @@
       <Button onclick={() => (showAllSubIssues = !showAllSubIssues)} variant="outline">
         {showAllSubIssues ? 'Hide Sub-issues' : 'Show All Sub-issues'}
       </Button>
-      <Button onclick={openCreateIssueSheet} class="bg-primary hover:bg-primary-hover text-white">
+      <Button
+        onclick={() => openCreateIssueSheet()}
+        class="bg-primary hover:bg-primary-hover text-white"
+      >
         New Issue
       </Button>
     </div>

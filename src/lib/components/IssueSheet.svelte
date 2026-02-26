@@ -39,6 +39,8 @@
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
   import { toast } from 'svelte-sonner';
+  import { get } from 'svelte/store';
+  import { createIssueContext } from '$lib/stores/issues';
 
   // Props
   let {
@@ -177,15 +179,22 @@
         clearTimeout(saveStateResetTimeout);
         saveStateResetTimeout = null;
       }
-      if (projects.length > 0 && !selectedProjectId) {
+      const ctx = get(createIssueContext);
+      if (ctx) {
+        selectedProjectId = ctx.projectId;
+        localEpicId = ctx.epicId;
+      } else if (projects.length > 0 && !selectedProjectId) {
         selectedProjectId = projects[0].id;
       }
     }
   });
 
   // Auto-select first epic when project changes in create mode
+  // Skip if a context already set the epic for this project
   $effect(() => {
     if (internalMode === 'create' && selectedProjectId) {
+      const ctx = get(createIssueContext);
+      if (ctx && ctx.projectId === selectedProjectId) return;
       const firstEpic = epics.find((e) => e.project_id === selectedProjectId);
       localEpicId = firstEpic?.id ?? '';
     }

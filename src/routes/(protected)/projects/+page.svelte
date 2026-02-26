@@ -403,8 +403,11 @@
       selectedEpicCounts = null;
       epicDetailSheetOpen = true;
     } else if (node.type === 'epic') {
-      // Add Issue to epic - open create issue sheet
-      openCreateIssueSheet();
+      // Add Issue to epic - open create issue sheet pre-seeded with this epic's project
+      const parentProject = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === node.id));
+      openCreateIssueSheet(
+        parentProject ? { projectId: parentProject.id, epicId: node.id } : undefined,
+      );
     } else if (node.type === 'issue') {
       // Add Sub-issue to issue - use inline form
       handleCreateChild(node.id, 'issue', { title: '' });
