@@ -423,18 +423,21 @@
 
           <!-- Status -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Status
-            </h3>
-            <select
-              value={localStatus}
-              onchange={handleStatusChange}
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="active">Active</option>
-              <option value="done">Done</option>
-              <option value="canceled">Canceled</option>
-            </select>
+            <div class="flex items-center gap-3">
+              <label for="edit-status" class="text-xs text-foreground-muted w-20 shrink-0"
+                >Status</label
+              >
+              <select
+                id="edit-status"
+                value={localStatus}
+                onchange={handleStatusChange}
+                class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="active">Active</option>
+                <option value="done">Done</option>
+                <option value="canceled">Canceled</option>
+              </select>
+            </div>
           </section>
 
           <!-- Description -->
@@ -472,6 +475,10 @@
                 <div class="flex flex-col gap-1">
                   <span class="text-lg font-semibold">{metrics.totalIssues}</span>
                   <span class="text-foreground-secondary">Issues</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span class="text-lg font-semibold">{epics.length}</span>
+                  <span class="text-foreground-secondary">Epics</span>
                 </div>
                 <div class="flex flex-col gap-1">
                   <span class="text-lg font-semibold">{metrics.activeStoryPoints}</span>

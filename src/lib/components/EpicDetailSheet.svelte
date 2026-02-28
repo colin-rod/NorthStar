@@ -445,57 +445,61 @@
             />
           </section>
 
-          <!-- Status -->
+          <!-- Status / Priority / Milestone -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Status
-            </h3>
-            <select
-              bind:value={localStatus}
-              disabled={createLoading}
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="active">Active</option>
-              <option value="done">Done</option>
-              <option value="canceled">Canceled</option>
-            </select>
-          </section>
-
-          <!-- Priority -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Priority
-            </h3>
-            <select
-              value={localPriority !== null ? String(localPriority) : ''}
-              onchange={(e) => {
-                const raw = e.currentTarget.value;
-                localPriority = raw === '' ? null : Number(raw);
-              }}
-              disabled={createLoading}
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="">None</option>
-              <option value="0">P0 — Highest</option>
-              <option value="1">P1 — High</option>
-              <option value="2">P2 — Medium</option>
-              <option value="3">P3 — Low</option>
-            </select>
-          </section>
-
-          <!-- Milestone -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Milestone
-            </h3>
-            <MilestonePicker
-              selectedMilestoneId={localMilestoneId}
-              {milestones}
-              disabled={createLoading}
-              onChange={(id) => {
-                localMilestoneId = id;
-              }}
-            />
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <label for="create-status" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Status</label
+                >
+                <select
+                  id="create-status"
+                  bind:value={localStatus}
+                  disabled={createLoading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="active">Active</option>
+                  <option value="done">Done</option>
+                  <option value="canceled">Canceled</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-3">
+                <label for="create-priority" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Priority</label
+                >
+                <select
+                  id="create-priority"
+                  value={localPriority !== null ? String(localPriority) : ''}
+                  onchange={(e) => {
+                    const raw = e.currentTarget.value;
+                    localPriority = raw === '' ? null : Number(raw);
+                  }}
+                  disabled={createLoading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">None</option>
+                  <option value="0">P0 — Highest</option>
+                  <option value="1">P1 — High</option>
+                  <option value="2">P2 — Medium</option>
+                  <option value="3">P3 — Low</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-3">
+                <label for="create-milestone" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Milestone</label
+                >
+                <div class="flex-1">
+                  <MilestonePicker
+                    selectedMilestoneId={localMilestoneId}
+                    {milestones}
+                    disabled={createLoading}
+                    onChange={(id) => {
+                      localMilestoneId = id;
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </section>
 
           <!-- Description -->
@@ -545,50 +549,54 @@
             />
           </section>
 
-          <!-- Status -->
+          <!-- Status / Priority / Milestone -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Status
-            </h3>
-            <select
-              value={localStatus}
-              onchange={handleStatusChange}
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="active">Active</option>
-              <option value="done">Done</option>
-              <option value="canceled">Canceled</option>
-            </select>
-          </section>
-
-          <!-- Priority -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Priority
-            </h3>
-            <select
-              value={localPriority !== null ? String(localPriority) : ''}
-              onchange={handlePriorityChange}
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <option value="">None</option>
-              <option value="0">P0 — Highest</option>
-              <option value="1">P1 — High</option>
-              <option value="2">P2 — Medium</option>
-              <option value="3">P3 — Low</option>
-            </select>
-          </section>
-
-          <!-- Milestone -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Milestone
-            </h3>
-            <MilestonePicker
-              selectedMilestoneId={localMilestoneId}
-              {milestones}
-              onChange={handleMilestoneChange}
-            />
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <label for="edit-status" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Status</label
+                >
+                <select
+                  id="edit-status"
+                  value={localStatus}
+                  onchange={handleStatusChange}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="active">Active</option>
+                  <option value="done">Done</option>
+                  <option value="canceled">Canceled</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-3">
+                <label for="edit-priority" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Priority</label
+                >
+                <select
+                  id="edit-priority"
+                  value={localPriority !== null ? String(localPriority) : ''}
+                  onchange={handlePriorityChange}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">None</option>
+                  <option value="0">P0 — Highest</option>
+                  <option value="1">P1 — High</option>
+                  <option value="2">P2 — Medium</option>
+                  <option value="3">P3 — Low</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-3">
+                <label for="edit-milestone" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Milestone</label
+                >
+                <div class="flex-1">
+                  <MilestonePicker
+                    selectedMilestoneId={localMilestoneId}
+                    {milestones}
+                    onChange={handleMilestoneChange}
+                  />
+                </div>
+              </div>
+            </div>
           </section>
 
           <!-- Description -->

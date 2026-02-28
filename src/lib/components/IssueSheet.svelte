@@ -778,7 +778,7 @@
                 />
               </div>
 
-              <!-- Status + Priority -->
+              <!-- Status -->
               <div class="flex items-center gap-3">
                 <label for="status" class="text-xs text-foreground-muted w-20 shrink-0"
                   >Status</label
@@ -796,6 +796,13 @@
                   <option value="done">Done</option>
                   <option value="canceled">Canceled</option>
                 </select>
+              </div>
+
+              <!-- Priority -->
+              <div class="flex items-center gap-3">
+                <label for="priority" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Priority</label
+                >
                 <select
                   id="priority"
                   bind:value={localPriority}
@@ -810,7 +817,7 @@
                 </select>
               </div>
 
-              <!-- Milestone + Points -->
+              <!-- Milestone -->
               <div class="flex items-center gap-3">
                 <label for="milestone" class="text-xs text-foreground-muted w-20 shrink-0"
                   >Milestone</label
@@ -827,6 +834,13 @@
                     }}
                   />
                 </div>
+              </div>
+
+              <!-- Story Points -->
+              <div class="flex items-center gap-3">
+                <label for="story_points" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Points</label
+                >
                 <select
                   id="story_points"
                   inputmode="numeric"
