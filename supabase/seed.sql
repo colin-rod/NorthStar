@@ -79,22 +79,22 @@ BEGIN
 
     -- Insert epics and capture IDs
     INSERT INTO epics (project_id, name, status, is_default, sort_order)
-    VALUES (project1_id, 'Backend', 'active', FALSE, 1)
+    VALUES (project1_id, 'Backend', 'active', FALSE, 2)
     RETURNING id INTO epic_backend_id;
 
     INSERT INTO epics (project_id, name, status, is_default, sort_order)
-    VALUES (project1_id, 'Frontend', 'active', FALSE, 2)
+    VALUES (project1_id, 'Frontend', 'active', FALSE, 3)
     RETURNING id INTO epic_frontend_id;
 
     INSERT INTO epics (project_id, name, status, is_default, sort_order)
-    VALUES (project1_id, 'DevOps', 'active', FALSE, 3)
+    VALUES (project1_id, 'DevOps', 'active', FALSE, 4)
     RETURNING id INTO epic_devops_id;
 
     -- Add epics for project2 (we don't need their IDs)
     INSERT INTO epics (project_id, name, status, is_default, sort_order)
     VALUES
-        (project2_id, 'Design', 'active', FALSE, 1),
-        (project2_id, 'Research', 'done', FALSE, 2);
+        (project2_id, 'Design', 'active', FALSE, 2),
+        (project2_id, 'Research', 'done', FALSE, 3);
 
     RAISE NOTICE '✓ Created custom epics';
 
@@ -293,7 +293,7 @@ BEGIN
     RAISE NOTICE 'Seed data created successfully!';
     RAISE NOTICE '========================================';
     RAISE NOTICE 'Projects: 2';
-    RAISE NOTICE 'Epics: 7 (including 2 auto-created Unassigned)';
+    RAISE NOTICE 'Epics: 9 (including 2 auto-created Unassigned + 2 auto-created Future Work)';
     RAISE NOTICE 'Milestones: 3';
     RAISE NOTICE 'Issues: 10 (8 parent + 2 sub-issues)';
     RAISE NOTICE 'Dependencies: 4';
