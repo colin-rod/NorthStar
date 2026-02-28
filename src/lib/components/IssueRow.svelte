@@ -97,7 +97,7 @@
   <!-- Drag Handle (left side, hover-visible) -->
   <div
     class="absolute left-0 flex items-center justify-center w-8 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
-    aria-hidden="true"
+    aria-label="Drag to reorder"
     onmousedown={() => {
       dragDisabled = false;
       dismissReorderHint();

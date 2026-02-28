@@ -18,6 +18,7 @@
   import IssueSortBySelector from '$lib/components/IssueSortBySelector.svelte';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
+  import { computeIssueCounts } from '$lib/utils/issue-counts';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import {
@@ -336,6 +337,24 @@
     epicDetailSheetOpen = true;
   }
 
+  function handleEpicClickFromProjectSheet(epic: Epic) {
+    epicDetailSheetMode = 'edit';
+    selectedEpicForDetail = epic;
+    selectedEpicCounts = computeIssueCounts(epic.issues ?? []);
+    selectedEpicIssues = epic.issues ?? [];
+    epicDetailSheetOpen = true;
+  }
+
+  function handleAddEpicFromProjectSheet() {
+    if (!selectedProjectForDetail) return;
+    epicDetailSheetMode = 'create';
+    epicCreateProjectId = selectedProjectForDetail.id;
+    selectedEpicForDetail = null;
+    selectedEpicCounts = null;
+    selectedEpicIssues = [];
+    epicDetailSheetOpen = true;
+  }
+
   // --- Context menu handlers ---
 
   function handleContextMenu(node: TreeNode, event: MouseEvent) {
@@ -583,6 +602,8 @@
   metrics={selectedProjectMetrics}
   epics={selectedProjectEpics}
   userId={data.session?.user?.id ?? ''}
+  onEpicClick={handleEpicClickFromProjectSheet}
+  onAddEpic={handleAddEpicFromProjectSheet}
 />
 
 <!-- Epic detail sheet (handles both create and edit) -->

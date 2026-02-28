@@ -2,7 +2,7 @@
   import type { Project, Epic, Attachment } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
-  import { computeProgress } from '$lib/utils/issue-counts';
+  import { computeIssueCounts, computeProgress } from '$lib/utils/issue-counts';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
@@ -28,6 +28,8 @@
     metrics: ProjectMetrics | null;
     epics: Epic[];
     userId?: string;
+    onEpicClick?: (epic: Epic) => void;
+    onAddEpic?: () => void;
   }
 
   let {
@@ -38,6 +40,8 @@
     metrics,
     epics,
     userId = '',
+    onEpicClick,
+    onAddEpic,
   }: Props = $props();
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
@@ -551,21 +555,61 @@
           {/if}
 
           <!-- Epics -->
-          {#if epics.length > 0}
+          {#if epics.length > 0 || onAddEpic}
             <section>
               <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
                 Epics
               </h3>
               <div class="space-y-2">
                 {#each epics as epic (epic.id)}
-                  <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                    <Badge variant={getEpicStatusVariant(epic.status)} class="text-xs shrink-0">
-                      {epic.status}
-                    </Badge>
-                    <span class="text-body flex-1 truncate">{epic.name}</span>
-                  </div>
+                  {@const epicCounts = computeIssueCounts(epic.issues ?? [])}
+                  {@const epicProgress = computeProgress(epicCounts)}
+                  <button
+                    type="button"
+                    onclick={() => onEpicClick?.(epic)}
+                    class="w-full flex flex-col gap-1 p-2 rounded-md bg-muted/50 text-left {onEpicClick
+                      ? 'hover:bg-muted cursor-pointer'
+                      : 'cursor-default'}"
+                  >
+                    <div class="flex items-center gap-2">
+                      <Badge variant={getEpicStatusVariant(epic.status)} class="text-xs shrink-0">
+                        {epic.status}
+                      </Badge>
+                      <span class="text-body flex-1 truncate">{epic.name}</span>
+                      {#if epicProgress.total > 0}
+                        <span class="text-metadata text-foreground-secondary shrink-0">
+                          {epicProgress.completed}/{epicProgress.total} done
+                        </span>
+                      {/if}
+                    </div>
+                    {#if epicProgress.total > 0}
+                      <div
+                        class="h-0.75 w-full bg-muted rounded-full overflow-hidden"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow={epicProgress.percentage}
+                        aria-label="{epic.name} completion"
+                      >
+                        <div
+                          class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+                          style="width: {epicProgress.percentage}%"
+                        ></div>
+                      </div>
+                    {/if}
+                  </button>
                 {/each}
               </div>
+              {#if onAddEpic}
+                <button
+                  type="button"
+                  onclick={onAddEpic}
+                  class="mt-2 w-full flex items-center gap-1 px-2 py-1.5 rounded-md text-sm text-foreground-muted hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <span class="text-base leading-none">+</span>
+                  <span>Add epic</span>
+                </button>
+              {/if}
             </section>
           {/if}
         </div>
