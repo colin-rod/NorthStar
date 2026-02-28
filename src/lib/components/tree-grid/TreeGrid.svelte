@@ -276,14 +276,14 @@
 
   // Column definitions (per spec)
   const columns = [
-    { key: 'drag', header: '', width: '40px' },
-    { key: 'select', header: '', width: '40px' },
-    { key: 'title', header: 'Title', width: 'flex min-w-[340px]' },
-    { key: 'status', header: 'Status', width: '140px' },
-    { key: 'milestone', header: 'Milestone', width: '140px' },
-    { key: 'sp', header: 'SP', width: '72px' },
-    { key: 'total_sp', header: 'Total SP', width: '96px' },
-    { key: 'progress', header: 'Progress', width: '140px' },
+    { key: 'drag', header: '', width: '40px', hideOnMobile: true },
+    { key: 'select', header: '', width: '40px', hideOnMobile: true },
+    { key: 'title', header: 'Title', width: 'flex min-w-[340px]', hideOnMobile: false },
+    { key: 'status', header: 'Status', width: '140px', hideOnMobile: false },
+    { key: 'milestone', header: 'Milestone', width: '140px', hideOnMobile: true },
+    { key: 'sp', header: 'SP', width: '72px', hideOnMobile: true },
+    { key: 'total_sp', header: 'Total SP', width: '96px', hideOnMobile: true },
+    { key: 'progress', header: 'Progress', width: '140px', hideOnMobile: true },
   ];
 
   // Drag-drop handlers
@@ -427,7 +427,9 @@
         <tr class="border-b border-border-divider">
           {#each columns as col}
             <th
-              class="text-left py-3 px-4 text-metadata uppercase text-foreground-muted tracking-wide"
+              class="text-left py-3 px-4 text-metadata uppercase text-foreground-muted tracking-wide {col.hideOnMobile
+                ? 'hidden md:table-cell'
+                : ''}"
               style="width: {col.width}"
             >
               {col.header}

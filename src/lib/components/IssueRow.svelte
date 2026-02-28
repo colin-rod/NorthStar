@@ -137,7 +137,7 @@
   <!-- Main Content Area (non-interactive container) -->
   <div
     class="flex-1 flex items-start gap-3 min-w-0"
-    style={isSubIssue ? 'margin-left: 2rem;' : 'margin-left: 2rem;'}
+    style={isSubIssue ? 'margin-left: 3rem;' : 'margin-left: 2rem;'}
   >
     <!-- Expand/Collapse Chevron (sibling button for parents with sub-issues) -->
     {#if hasSubIssues}
@@ -163,7 +163,7 @@
     {/if}
 
     <!-- Clickable Content Area (sibling button) -->
-    <button onclick={onClick} class="flex-1 text-left flex items-start gap-3 min-w-0">
+    <button type="button" onclick={onClick} class="flex-1 text-left flex items-start gap-3 min-w-0">
       <!-- Status indicator: small colored dot per North spec -->
       <div class="flex items-center gap-1 pt-1 shrink-0">
         <div

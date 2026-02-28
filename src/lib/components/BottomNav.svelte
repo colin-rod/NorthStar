@@ -15,13 +15,16 @@
   import { navSearchOpen } from '$lib/stores/issues';
 
   // Derive active states from current pathname
-  $: pathname = $page.url.pathname;
-  $: isHome = pathname === '/';
-  $: isProjects = pathname.startsWith('/projects');
+  const pathname = $derived($page.url.pathname);
+  const isHome = $derived(pathname === '/');
+  const isProjects = $derived(pathname.startsWith('/projects'));
 </script>
 
 <!-- North Design: Minimal mobile nav with burnt orange active state -->
-<nav aria-label="Mobile navigation" class="fixed bottom-0 inset-x-0 z-40 border-t border-border-divider bg-surface md:hidden">
+<nav
+  aria-label="Mobile navigation"
+  class="fixed bottom-0 inset-x-0 z-40 border-t border-border-divider bg-surface md:hidden"
+>
   <div class="flex justify-around items-center h-16">
     <a
       href="/"

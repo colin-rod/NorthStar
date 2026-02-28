@@ -4,21 +4,28 @@
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import Lock from '@lucide/svelte/icons/lock';
 
-  export let issues: Issue[];
-  export let title: string;
-  export let milestoneDueDate: string | null = null;
+  interface Props {
+    issues: Issue[];
+    title: string;
+    milestoneDueDate?: string | null;
+  }
+  let { issues, title, milestoneDueDate = null }: Props = $props();
 
-  $: nonCanceled = issues.filter((i) => i.status !== 'canceled');
-  $: blockedCount = nonCanceled.filter((i) => isBlocked(i)).length;
-  $: doneCount = nonCanceled.filter((i) => i.status === 'done').length;
-  $: totalCount = nonCanceled.length;
-  $: completionPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-  $: clampedCompletionPercent = Math.max(0, Math.min(100, Number(completionPercent) || 0));
+  let nonCanceled = $derived(issues.filter((i) => i.status !== 'canceled'));
+  let blockedCount = $derived(nonCanceled.filter((i) => isBlocked(i)).length);
+  let doneCount = $derived(nonCanceled.filter((i) => i.status === 'done').length);
+  let totalCount = $derived(nonCanceled.length);
+  let completionPercent = $derived(totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0);
+  let clampedCompletionPercent = $derived(
+    Math.max(0, Math.min(100, Number(completionPercent) || 0)),
+  );
 
-  $: totalPoints = nonCanceled.reduce((sum, i) => sum + (i.story_points || 0), 0);
-  $: donePoints = nonCanceled
-    .filter((i) => i.status === 'done')
-    .reduce((sum, i) => sum + (i.story_points || 0), 0);
+  let totalPoints = $derived(nonCanceled.reduce((sum, i) => sum + (i.story_points || 0), 0));
+  let donePoints = $derived(
+    nonCanceled
+      .filter((i) => i.status === 'done')
+      .reduce((sum, i) => sum + (i.story_points || 0), 0),
+  );
 </script>
 
 <div class="space-y-2">

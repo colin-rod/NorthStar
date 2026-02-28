@@ -24,6 +24,7 @@
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import * as Dialog from '$lib/components/ui/dialog';
   import { Pencil, Archive } from '@lucide/svelte';
 
   interface Props {
@@ -35,6 +36,9 @@
   }
 
   let { project, counts, onEdit, onArchive, onToggle }: Props = $props();
+
+  let archiveDialogOpen = $state(false);
+  let archiveForm: HTMLFormElement;
 
   const defaultCounts: IssueCounts = {
     ready: 0,
@@ -55,13 +59,12 @@
   function handleArchiveClick(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm(`Archive "${project.name}"? It will be hidden from this list.`)) {
-      // Submit the form
-      const form = (e.target as HTMLElement).closest('form');
-      if (form) {
-        form.requestSubmit();
-      }
-    }
+    archiveDialogOpen = true;
+  }
+
+  function handleArchiveConfirm() {
+    archiveDialogOpen = false;
+    archiveForm.requestSubmit();
   }
 </script>
 
@@ -76,7 +79,9 @@
         <h3 class="text-section-header font-ui">{project.name}</h3>
 
         <!-- Action buttons - visible on hover, above overlay -->
-        <div class="relative z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
+        <div
+          class="relative z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity"
+        >
           {#if onEdit}
             <Button
               variant="ghost"
@@ -89,7 +94,13 @@
             </Button>
           {/if}
           {#if onArchive}
-            <form method="POST" action="?/archiveProject" use:enhance class="inline">
+            <form
+              method="POST"
+              action="?/archiveProject"
+              use:enhance
+              class="inline"
+              bind:this={archiveForm}
+            >
               <input type="hidden" name="id" value={project.id} />
               <Button
                 type="button"
@@ -125,7 +136,10 @@
       <!-- Progress bar -->
       {@const progress = computeProgress(effectiveCounts)}
       {#if progress.total > 0}
-        {@const clampedProgressPercentage = Math.max(0, Math.min(100, Number(progress.percentage) || 0))}
+        {@const clampedProgressPercentage = Math.max(
+          0,
+          Math.min(100, Number(progress.percentage) || 0),
+        )}
         <div class="mt-3 flex items-center gap-2">
           <div
             class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden"
@@ -164,3 +178,18 @@
     </a>
   {/if}
 </div>
+
+<Dialog.Root bind:open={archiveDialogOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Archive project?</Dialog.Title>
+      <Dialog.Description>
+        "{project.name}" will be hidden from this list.
+      </Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Button variant="outline" onclick={() => (archiveDialogOpen = false)}>Cancel</Button>
+      <Button variant="destructive" onclick={handleArchiveConfirm}>Archive</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
