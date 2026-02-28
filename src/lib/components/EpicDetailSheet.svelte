@@ -7,6 +7,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import { invalidateAll } from '$app/navigation';
+  import { deserialize } from '$app/forms';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
   import { supabase } from '$lib/supabase';
@@ -166,9 +167,9 @@
         body: formData,
       });
 
-      const result = await response.json();
+      const result = deserialize(await response.text());
 
-      if (response.ok && result.type === 'success') {
+      if (result.type === 'success') {
         if (requestId === latestSaveRequestId) {
           saveState = 'saved';
           queueSaveStateIdleReset();
@@ -181,7 +182,7 @@
         if (requestId === latestSaveRequestId) {
           saveState = 'error';
         }
-        toast.error(result.data?.error || 'Failed to save', {
+        toast.error((result as any).data?.error || 'Failed to save', {
           duration: 5000,
         });
       }
@@ -283,9 +284,9 @@
     formData.append('mime_type', file.type);
     formData.append('storage_path', path);
     const res = await fetch('?/createAttachment', { method: 'POST', body: formData });
-    const result = await res.json();
-    if (res.ok && result.type === 'success') {
-      attachments = [...attachments, result.data.attachment];
+    const result = deserialize(await res.text());
+    if (result.type === 'success') {
+      attachments = [...attachments, (result.data as any).attachment];
     }
   }
 
@@ -336,10 +337,10 @@
         body: formData,
       });
 
-      const result = await response.json();
+      const result = deserialize(await response.text());
 
-      if (response.ok && result.type === 'success') {
-        const newEpic = result.data.epic;
+      if (result.type === 'success') {
+        const newEpic = (result.data as any).epic;
 
         // Set internal epic for edit mode
         internalEpic = newEpic;
@@ -354,7 +355,7 @@
           duration: 2000,
         });
       } else {
-        toast.error(result.data?.error || 'Failed to create epic', {
+        toast.error((result as any).data?.error || 'Failed to create epic', {
           duration: 5000,
         });
       }

@@ -44,6 +44,10 @@ vi.mock('$app/navigation', () => ({
   goto: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('$app/forms', () => ({
+  deserialize: (text: string) => JSON.parse(text),
+}));
+
 describe('ProjectDetailSheet create-to-edit transition', () => {
   const fetchMock = vi.fn();
 
@@ -74,20 +78,21 @@ describe('ProjectDetailSheet create-to-edit transition', () => {
   it('transitions to edit mode after successful creation', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        type: 'success',
-        data: {
-          project: {
-            id: 'new-project-1',
-            user_id: 'user-1',
-            number: 7,
-            name: 'New Project',
-            description: null,
-            created_at: new Date().toISOString(),
-            archived_at: null,
+      text: async () =>
+        JSON.stringify({
+          type: 'success',
+          data: {
+            project: {
+              id: 'new-project-1',
+              user_id: 'user-1',
+              number: 7,
+              name: 'New Project',
+              description: null,
+              created_at: new Date().toISOString(),
+              archived_at: null,
+            },
           },
-        },
-      }),
+        }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -130,10 +135,12 @@ describe('ProjectDetailSheet create-to-edit transition', () => {
   it('stays in create mode on failed creation', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({
-        type: 'error',
-        data: { error: 'Name already exists' },
-      }),
+      text: async () =>
+        JSON.stringify({
+          type: 'failure',
+          status: 400,
+          data: { error: 'Name already exists' },
+        }),
     });
     vi.stubGlobal('fetch', fetchMock);
 

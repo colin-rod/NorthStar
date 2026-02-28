@@ -40,6 +40,10 @@ vi.mock('$lib/hooks/useKeyboardAwareHeight.svelte', () => ({
   useKeyboardAwareHeight: vi.fn(),
 }));
 
+vi.mock('$app/forms', () => ({
+  deserialize: (text: string) => JSON.parse(text),
+}));
+
 function makeIssue(overrides: Partial<Issue> = {}): Issue {
   return {
     id: 'issue-1',
@@ -84,7 +88,7 @@ describe('IssueSheet description auto-save guards', () => {
 
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ type: 'success' }),
+      text: async () => JSON.stringify({ type: 'success' }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -175,9 +179,7 @@ describe('IssueSheet description auto-save guards', () => {
   });
 
   it('shows inline save-state text while saving and after successful completion', async () => {
-    let resolveFetch:
-      | ((value: { ok: boolean; json: () => Promise<{ type: string }> }) => void)
-      | null = null;
+    let resolveFetch: ((value: { ok: boolean; text: () => Promise<string> }) => void) | null = null;
 
     fetchMock.mockImplementationOnce(
       () =>
@@ -205,7 +207,7 @@ describe('IssueSheet description auto-save guards', () => {
 
     expect(await screen.findByText('Saving...')).toBeInTheDocument();
 
-    resolveFetch!({ ok: true, json: async () => ({ type: 'success' }) });
+    resolveFetch!({ ok: true, text: async () => JSON.stringify({ type: 'success' }) });
 
     await waitFor(() => {
       expect(screen.getByText('✓ Saved')).toBeInTheDocument();
@@ -215,8 +217,6 @@ describe('IssueSheet description auto-save guards', () => {
 
     expect(screen.queryByText('✓ Saved')).not.toBeInTheDocument();
   });
-
-
 
   it('passes polite status semantics to success toasts', async () => {
     render(IssueSheet, {
@@ -250,7 +250,8 @@ describe('IssueSheet description auto-save guards', () => {
   it('passes assertive alert semantics to error toasts', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ type: 'error', data: { error: 'Validation failed' } }),
+      text: async () =>
+        JSON.stringify({ type: 'failure', status: 400, data: { error: 'Validation failed' } }),
     });
 
     render(IssueSheet, {
@@ -284,7 +285,8 @@ describe('IssueSheet description auto-save guards', () => {
   it('shows inline error state when save fails', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ type: 'error', data: { error: 'Failed to save' } }),
+      text: async () =>
+        JSON.stringify({ type: 'failure', status: 400, data: { error: 'Failed to save' } }),
     });
 
     render(IssueSheet, {

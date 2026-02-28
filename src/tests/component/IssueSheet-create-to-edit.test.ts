@@ -44,6 +44,10 @@ vi.mock('$app/navigation', () => ({
   invalidateAll: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('$app/forms', () => ({
+  deserialize: (text: string) => JSON.parse(text),
+}));
+
 const mockEpics: Epic[] = [
   {
     id: 'epic-1',
@@ -91,26 +95,27 @@ describe('IssueSheet create-to-edit transition', () => {
   it('transitions to edit mode after successful creation', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        type: 'success',
-        data: {
-          issue: {
-            id: 'new-issue-1',
-            project_id: 'project-1',
-            epic_id: 'epic-1',
-            number: 42,
-            parent_issue_id: null,
-            milestone_id: null,
-            title: 'New Issue',
-            description: null,
-            status: 'todo',
-            priority: 2,
-            story_points: null,
-            sort_order: 0,
-            created_at: new Date().toISOString(),
+      text: async () =>
+        JSON.stringify({
+          type: 'success',
+          data: {
+            issue: {
+              id: 'new-issue-1',
+              project_id: 'project-1',
+              epic_id: 'epic-1',
+              number: 42,
+              parent_issue_id: null,
+              milestone_id: null,
+              title: 'New Issue',
+              description: null,
+              status: 'todo',
+              priority: 2,
+              story_points: null,
+              sort_order: 0,
+              created_at: new Date().toISOString(),
+            },
           },
-        },
-      }),
+        }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -157,10 +162,12 @@ describe('IssueSheet create-to-edit transition', () => {
   it('shows error toast on failed creation without transitioning', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({
-        type: 'error',
-        data: { error: 'Title too long' },
-      }),
+      text: async () =>
+        JSON.stringify({
+          type: 'failure',
+          status: 400,
+          data: { error: 'Title too long' },
+        }),
     });
     vi.stubGlobal('fetch', fetchMock);
 

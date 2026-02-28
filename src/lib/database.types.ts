@@ -8,6 +8,42 @@ export type Database = {
   };
   public: {
     Tables: {
+      attachments: {
+        Row: {
+          created_at: string;
+          entity_id: string;
+          entity_type: string;
+          file_name: string;
+          file_size: number;
+          id: string;
+          mime_type: string;
+          storage_path: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          entity_id: string;
+          entity_type: string;
+          file_name: string;
+          file_size: number;
+          id?: string;
+          mime_type: string;
+          storage_path: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          entity_id?: string;
+          entity_type?: string;
+          file_name?: string;
+          file_size?: number;
+          id?: string;
+          mime_type?: string;
+          storage_path?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       dependencies: {
         Row: {
           created_at: string;
@@ -44,10 +80,13 @@ export type Database = {
       epics: {
         Row: {
           created_at: string;
+          description: string | null;
           id: string;
           is_default: boolean;
+          milestone_id: string | null;
           name: string;
           number: number;
+          priority: number | null;
           project_id: string;
           sort_order: number | null;
           status: string;
@@ -55,10 +94,13 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
+          description?: string | null;
           id?: string;
           is_default?: boolean;
+          milestone_id?: string | null;
           name: string;
           number?: number;
+          priority?: number | null;
           project_id: string;
           sort_order?: number | null;
           status: string;
@@ -66,16 +108,26 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          description?: string | null;
           id?: string;
           is_default?: boolean;
+          milestone_id?: string | null;
           name?: string;
           number?: number;
+          priority?: number | null;
           project_id?: string;
           sort_order?: number | null;
           status?: string;
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'epics_milestone_id_fkey';
+            columns: ['milestone_id'];
+            isOneToOne: false;
+            referencedRelation: 'milestones';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'epics_project_id_fkey';
             columns: ['project_id'];
@@ -88,6 +140,7 @@ export type Database = {
       issues: {
         Row: {
           created_at: string;
+          description: string | null;
           epic_id: string;
           id: string;
           milestone_id: string | null;
@@ -104,6 +157,7 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
+          description?: string | null;
           epic_id: string;
           id?: string;
           milestone_id?: string | null;
@@ -120,6 +174,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          description?: string | null;
           epic_id?: string;
           id?: string;
           milestone_id?: string | null;
@@ -193,25 +248,31 @@ export type Database = {
         Row: {
           archived_at: string | null;
           created_at: string;
+          description: string | null;
           id: string;
           name: string;
           number: number;
+          status: string;
           user_id: string;
         };
         Insert: {
           archived_at?: string | null;
           created_at?: string;
+          description?: string | null;
           id?: string;
           name: string;
           number?: number;
+          status?: string;
           user_id: string;
         };
         Update: {
           archived_at?: string | null;
           created_at?: string;
+          description?: string | null;
           id?: string;
           name?: string;
           number?: number;
+          status?: string;
           user_id?: string;
         };
         Relationships: [];

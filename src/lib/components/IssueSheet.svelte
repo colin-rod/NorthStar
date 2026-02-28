@@ -26,6 +26,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import { invalidateAll } from '$app/navigation';
+  import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
@@ -313,9 +314,9 @@
         body: formData,
       });
 
-      const result = await response.json();
+      const result = deserialize(await response.text());
 
-      if (response.ok && result.type === 'success') {
+      if (result.type === 'success') {
         if (requestId === latestSaveRequestId) {
           saveState = 'saved';
           queueSaveStateIdleReset();
@@ -331,7 +332,7 @@
         if (requestId === latestSaveRequestId) {
           saveState = 'error';
         }
-        const error = result.data?.error || 'Failed to save';
+        const error = (result as any).data?.error || 'Failed to save';
         toast.error(error, {
           duration: 5000,
           ...errorToastA11y,
@@ -420,9 +421,9 @@
     formData.append('mime_type', file.type);
     formData.append('storage_path', path);
     const res = await fetch('?/createAttachment', { method: 'POST', body: formData });
-    const result = await res.json();
-    if (res.ok && result.type === 'success') {
-      attachments = [...attachments, result.data.attachment];
+    const result = deserialize(await res.text());
+    if (result.type === 'success') {
+      attachments = [...attachments, (result.data as any).attachment];
     }
   }
 
@@ -467,11 +468,10 @@
         body: formData,
       });
 
-      const text = await response.text();
-      const result = JSON.parse(text);
+      const result = deserialize(await response.text());
 
-      if (response.ok && result.type === 'success') {
-        const newIssue = result.data.issue;
+      if (result.type === 'success') {
+        const newIssue = (result.data as any).issue;
 
         // Set issue with empty relations for edit mode
         issue = {
@@ -492,7 +492,7 @@
           ...successToastA11y,
         });
       } else {
-        toast.error(result.data?.error || 'Failed to create issue', {
+        toast.error((result as any).data?.error || 'Failed to create issue', {
           duration: 5000,
           ...errorToastA11y,
         });

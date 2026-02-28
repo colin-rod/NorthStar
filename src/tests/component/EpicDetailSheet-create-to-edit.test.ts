@@ -43,6 +43,10 @@ vi.mock('$app/navigation', () => ({
   invalidateAll: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('$app/forms', () => ({
+  deserialize: (text: string) => JSON.parse(text),
+}));
+
 describe('EpicDetailSheet create-to-edit transition', () => {
   const fetchMock = vi.fn();
 
@@ -73,23 +77,24 @@ describe('EpicDetailSheet create-to-edit transition', () => {
   it('transitions to edit mode after successful creation', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        type: 'success',
-        data: {
-          epic: {
-            id: 'new-epic-1',
-            project_id: 'project-1',
-            number: 5,
-            name: 'New Epic',
-            description: null,
-            status: 'active',
-            priority: null,
-            is_default: false,
-            sort_order: 0,
-            milestone_id: null,
+      text: async () =>
+        JSON.stringify({
+          type: 'success',
+          data: {
+            epic: {
+              id: 'new-epic-1',
+              project_id: 'project-1',
+              number: 5,
+              name: 'New Epic',
+              description: null,
+              status: 'active',
+              priority: null,
+              is_default: false,
+              sort_order: 0,
+              milestone_id: null,
+            },
           },
-        },
-      }),
+        }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -129,10 +134,12 @@ describe('EpicDetailSheet create-to-edit transition', () => {
   it('stays in create mode on failed creation', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({
-        type: 'error',
-        data: { error: 'Epic name required' },
-      }),
+      text: async () =>
+        JSON.stringify({
+          type: 'failure',
+          status: 400,
+          data: { error: 'Epic name required' },
+        }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
