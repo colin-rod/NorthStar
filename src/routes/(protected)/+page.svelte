@@ -9,6 +9,7 @@
   import type { Issue, GroupByMode, SortByColumn, SortDirection } from '$lib/types';
   import IssueList from '$lib/components/IssueList.svelte';
   import GroupedIssueList from '$lib/components/GroupedIssueList.svelte';
+  import SectionedIssueList from '$lib/components/SectionedIssueList.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
   import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
@@ -23,6 +24,8 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import Inbox from '@lucide/svelte/icons/inbox';
   import SearchX from '@lucide/svelte/icons/search-x';
+  import LayoutList from '@lucide/svelte/icons/layout-list';
+  import Layers from '@lucide/svelte/icons/layers';
   import { goto } from '$app/navigation';
   import {
     issues,
@@ -42,6 +45,7 @@
   });
 
   // Parse URL params from data
+  let viewMode = $derived(data.viewMode || 'sectioned');
   let selectedStatuses = $derived(data.selectedStatuses || []);
   let selectedStoryPoints = $derived(data.selectedStoryPoints || []);
   let groupBy = $derived((data.groupBy || 'none') as GroupByMode);
@@ -153,7 +157,25 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Issues</h1>
-    <NewButtonDropdown />
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        title={viewMode === 'sectioned' ? 'Switch to flat list' : 'Switch to focus view'}
+        onclick={() =>
+          goto(viewMode === 'sectioned' ? '?view=all' : '/', {
+            replaceState: false,
+            noScroll: true,
+          })}
+        class="flex h-8 w-8 items-center justify-center rounded-md text-foreground-muted hover:bg-surface-subtle hover:text-foreground transition-colors"
+      >
+        {#if viewMode === 'sectioned'}
+          <LayoutList class="h-4 w-4" />
+        {:else}
+          <Layers class="h-4 w-4" />
+        {/if}
+      </button>
+      <NewButtonDropdown />
+    </div>
   </div>
 
   <!-- Filter Row -->
@@ -180,14 +202,38 @@
     milestoneDueDate={activeMilestoneDueDate}
   />
 
-  <!-- Group By + Sort Controls -->
-  <div class="flex gap-2 items-center">
-    <GroupBySelector selected={groupBy} />
-    <SortBySelector selected={sortBy} direction={sortDir} />
-  </div>
+  {#if viewMode === 'all'}
+    <!-- Group By + Sort Controls (flat list mode only) -->
+    <div class="flex gap-2 items-center">
+      <GroupBySelector selected={groupBy} />
+      <SortBySelector selected={sortBy} direction={sortDir} />
+    </div>
+  {/if}
 
-  <!-- Issue List or Grouped List -->
-  {#if groupBy === 'none'}
+  <!-- Issue List or Grouped List or Sectioned List -->
+  {#if viewMode === 'sectioned'}
+    {#if $issues.length === 0}
+      {#if hasProjects}
+        <EmptyState
+          icon={Inbox}
+          title="No issues yet"
+          description="Add your first issue to start tracking work"
+          ctaLabel="New Issue"
+          onCtaClick={openCreateIssueSheet}
+        />
+      {:else}
+        <EmptyState
+          icon={Inbox}
+          title="No issues yet"
+          description="Create a project to start tracking your work"
+          ctaLabel="New Project"
+          onCtaClick={() => projectSheetOpen.set(true)}
+        />
+      {/if}
+    {:else}
+      <SectionedIssueList issues={filteredIssues} onIssueClick={openIssueSheet} />
+    {/if}
+  {:else if groupBy === 'none'}
     {#if sortedIssues.length === 0}
       {#if hasActiveFilters}
         <EmptyState

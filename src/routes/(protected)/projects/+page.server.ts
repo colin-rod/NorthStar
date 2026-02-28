@@ -849,6 +849,29 @@ export const actions: Actions = {
 
     if (!id) return fail(400, { error: 'Epic ID is required' });
 
+    // Get the epic's project_id
+    const { data: epic } = await supabase.from('epics').select('project_id').eq('id', id).single();
+    if (!epic) return fail(404, { error: 'Epic not found' });
+
+    // Find the project's default (Unassigned) epic
+    const { data: defaultEpic } = await supabase
+      .from('epics')
+      .select('id')
+      .eq('project_id', epic.project_id)
+      .eq('is_default', true)
+      .single();
+    if (!defaultEpic) return fail(500, { error: 'Default epic not found' });
+
+    // Reassign all issues from deleted epic to Unassigned
+    const { error: reassignError } = await supabase
+      .from('issues')
+      .update({ epic_id: defaultEpic.id })
+      .eq('epic_id', id);
+    if (reassignError) {
+      console.error('Reassign issues error:', reassignError);
+      return fail(500, { error: 'Failed to reassign issues' });
+    }
+
     const { error } = await supabase.from('epics').delete().eq('id', id);
 
     if (error) {

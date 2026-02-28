@@ -38,6 +38,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const groupBy = url.searchParams.get('group_by') || 'none';
   const sortBy = url.searchParams.get('sort_by') || 'priority';
   const sortDir = url.searchParams.get('sort_dir') || 'asc';
+  const viewMode = url.searchParams.get('view') === 'all' ? 'all' : 'sectioned';
 
   // 2. Build issues query
   let issuesQuery = locals.supabase.from('issues').select(
@@ -139,6 +140,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     groupBy,
     sortBy,
     sortDir,
+    viewMode,
   };
 };
 

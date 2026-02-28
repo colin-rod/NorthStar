@@ -648,13 +648,15 @@
       <!-- Header -->
       <SheetHeader class="mb-6">
         <div class="flex items-start justify-between gap-2">
-          <SheetTitle class="font-accent text-page-title flex-1 min-w-0">
+          <SheetTitle class="font-accent text-page-title flex-1 min-w-0 flex items-baseline gap-0">
             {#if internalMode === 'create'}
               New Issue
             {:else if issue}
-              <span class="text-muted-foreground font-mono text-base">I-{issue.number}</span>
-              <span class="mx-2 text-muted-foreground">·</span>
-              {issue.title}
+              <span class="text-muted-foreground font-mono text-base shrink-0"
+                >I-{issue.number}</span
+              >
+              <span class="mx-2 text-muted-foreground shrink-0">·</span>
+              <span>{issue.title}</span>
             {:else}
               Edit Issue
             {/if}
@@ -776,7 +778,7 @@
                 />
               </div>
 
-              <!-- Status -->
+              <!-- Status + Priority -->
               <div class="flex items-center gap-3">
                 <label for="status" class="text-xs text-foreground-muted w-20 shrink-0"
                   >Status</label
@@ -794,13 +796,6 @@
                   <option value="done">Done</option>
                   <option value="canceled">Canceled</option>
                 </select>
-              </div>
-
-              <!-- Priority -->
-              <div class="flex items-center gap-3">
-                <label for="priority" class="text-xs text-foreground-muted w-20 shrink-0"
-                  >Priority</label
-                >
                 <select
                   id="priority"
                   bind:value={localPriority}
@@ -812,6 +807,38 @@
                   <option value={1}>P1 (High)</option>
                   <option value={2}>P2 (Medium)</option>
                   <option value={3}>P3 (Low)</option>
+                </select>
+              </div>
+
+              <!-- Milestone + Points -->
+              <div class="flex items-center gap-3">
+                <label for="milestone" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Milestone</label
+                >
+                <div class="flex-1">
+                  <MilestonePicker
+                    selectedMilestoneId={localMilestoneId}
+                    {milestones}
+                    issues={projectIssues}
+                    disabled={loading}
+                    onChange={(id) => {
+                      localMilestoneId = id;
+                      autoSave('milestone_id', id);
+                    }}
+                  />
+                </div>
+                <select
+                  id="story_points"
+                  inputmode="numeric"
+                  value={localStoryPoints?.toString() ?? 'null'}
+                  onchange={handleStoryPointsChange}
+                  disabled={loading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="null">Not set</option>
+                  {#each ALLOWED_STORY_POINTS as points (points)}
+                    <option value={points.toString()}>{points}</option>
+                  {/each}
                 </select>
               </div>
             </div>
@@ -876,45 +903,6 @@
                   </select>
                 {/if}
               </div>
-
-              <!-- Milestone -->
-              <div class="flex items-center gap-3">
-                <label for="milestone" class="text-xs text-foreground-muted w-20 shrink-0"
-                  >Milestone</label
-                >
-                <div class="flex-1">
-                  <MilestonePicker
-                    selectedMilestoneId={localMilestoneId}
-                    {milestones}
-                    issues={projectIssues}
-                    disabled={loading}
-                    onChange={(id) => {
-                      localMilestoneId = id;
-                      autoSave('milestone_id', id);
-                    }}
-                  />
-                </div>
-              </div>
-
-              <!-- Story Points -->
-              <div class="flex items-center gap-3">
-                <label for="story_points" class="text-xs text-foreground-muted w-20 shrink-0"
-                  >Points</label
-                >
-                <select
-                  id="story_points"
-                  inputmode="numeric"
-                  value={localStoryPoints?.toString() ?? 'null'}
-                  onchange={handleStoryPointsChange}
-                  disabled={loading}
-                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="null">Not set</option>
-                  {#each ALLOWED_STORY_POINTS as points (points)}
-                    <option value={points.toString()}>{points}</option>
-                  {/each}
-                </select>
-              </div>
             </div>
           </section>
 
@@ -939,11 +927,12 @@
                   {#each subIssues as subIssue (subIssue.id)}
                     <button
                       type="button"
-                      ondblclick={() => {
+                      onclick={() => {
                         issue = subIssue;
                         showSubIssueForm = false;
                       }}
                       class="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted w-full text-left transition-colors"
+                      title="Open sub-issue"
                     >
                       <Badge variant={getStatusVariant(subIssue.status)} class="shrink-0">
                         {formatStatus(subIssue.status)}
