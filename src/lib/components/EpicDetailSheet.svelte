@@ -6,6 +6,8 @@
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
+  import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
   import { invalidateAll } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
@@ -60,6 +62,9 @@
   let saveState = $state<SaveState>('idle');
   let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
   let latestSaveRequestId = $state(0);
+
+  // Expand to center peek mode (desktop only)
+  let expanded = $state(false);
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
@@ -118,6 +123,7 @@
   // Reset state when sheet closes
   $effect(() => {
     if (!open) {
+      expanded = false;
       createLoading = false;
       saveState = 'idle';
       if (saveStateResetTimeout) {
@@ -371,7 +377,12 @@
 </script>
 
 <Sheet bind:open>
-  <SheetContent side={sheetSide} class={sheetClass} bind:ref={sheetContentRef}>
+  <SheetContent
+    side={sheetSide}
+    {expanded}
+    class={expanded && isDesktop() ? 'p-6' : sheetClass}
+    bind:ref={sheetContentRef}
+  >
     {#if internalMode === 'create' || effectiveEpic}
       <!-- Loading overlay -->
       {#if createLoading}
@@ -383,18 +394,35 @@
       {/if}
 
       <SheetHeader class="mb-6">
-        <SheetTitle class="text-xs uppercase font-medium text-foreground-muted tracking-wide">
-          {#if internalMode === 'create'}
-            New Epic
-          {:else if effectiveEpic}
-            E-{effectiveEpic.number} · Epic
-          {:else}
-            Epic
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex-1 min-w-0">
+            <SheetTitle class="text-xs uppercase font-medium text-foreground-muted tracking-wide">
+              {#if internalMode === 'create'}
+                New Epic
+              {:else if effectiveEpic}
+                E-{effectiveEpic.number} · Epic
+              {:else}
+                Epic
+              {/if}
+            </SheetTitle>
+            {#if internalMode === 'create' && projectName}
+              <p class="text-sm text-foreground-muted">{projectName}</p>
+            {/if}
+          </div>
+          {#if isDesktop()}
+            <button
+              onclick={() => (expanded = !expanded)}
+              aria-label={expanded ? 'Collapse to sidebar' : 'Expand to full page'}
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mr-8"
+            >
+              {#if expanded}
+                <Minimize2Icon class="size-4" />
+              {:else}
+                <Maximize2Icon class="size-4" />
+              {/if}
+            </button>
           {/if}
-        </SheetTitle>
-        {#if internalMode === 'create' && projectName}
-          <p class="text-sm text-foreground-muted">{projectName}</p>
-        {/if}
+        </div>
       </SheetHeader>
 
       {#if internalMode === 'create'}

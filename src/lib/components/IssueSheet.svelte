@@ -25,6 +25,8 @@
   import { Label } from '$lib/components/ui/label';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
+  import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
   import { invalidateAll } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
@@ -115,6 +117,9 @@
     'aria-live': 'assertive',
   } as const;
 
+  // Expand to center peek mode (desktop only)
+  let expanded = $state(false);
+
   // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
@@ -204,6 +209,7 @@
   // Reset state when sheet closes
   $effect(() => {
     if (!open) {
+      expanded = false;
       selectedProjectId = '';
       localEpicId = '';
       createLoading = false;
@@ -617,7 +623,8 @@
   <SheetContent
     bind:ref={sheetContentRef}
     side={sheetSide}
-    class={sheetClass}
+    {expanded}
+    class={expanded && isDesktop() ? 'p-6' : sheetClass}
     onOpenChange={(isOpen) => {
       open = isOpen;
     }}
@@ -640,17 +647,32 @@
 
       <!-- Header -->
       <SheetHeader class="mb-6">
-        <SheetTitle class="font-accent text-page-title">
-          {#if internalMode === 'create'}
-            New Issue
-          {:else if issue}
-            <span class="text-muted-foreground font-mono text-base">I-{issue.number}</span>
-            <span class="mx-2 text-muted-foreground">·</span>
-            {issue.title}
-          {:else}
-            Edit Issue
+        <div class="flex items-start justify-between gap-2">
+          <SheetTitle class="font-accent text-page-title flex-1 min-w-0">
+            {#if internalMode === 'create'}
+              New Issue
+            {:else if issue}
+              <span class="text-muted-foreground font-mono text-base">I-{issue.number}</span>
+              <span class="mx-2 text-muted-foreground">·</span>
+              {issue.title}
+            {:else}
+              Edit Issue
+            {/if}
+          </SheetTitle>
+          {#if isDesktop()}
+            <button
+              onclick={() => (expanded = !expanded)}
+              aria-label={expanded ? 'Collapse to sidebar' : 'Expand to full page'}
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-1 mr-8"
+            >
+              {#if expanded}
+                <Minimize2Icon class="size-4" />
+              {:else}
+                <Maximize2Icon class="size-4" />
+              {/if}
+            </button>
           {/if}
-        </SheetTitle>
+        </div>
       </SheetHeader>
 
       {#if internalMode === 'create'}
@@ -725,7 +747,7 @@
         </form>
       {:else}
         <!-- Edit mode: auto-save behavior -->
-        <div class="space-y-6 pb-6">
+        <div class="space-y-4 pb-6">
           <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
             {#if saveState === 'saving'}
               Saving...
@@ -738,13 +760,10 @@
 
           <!-- Basic Info Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Basic Info
-            </h3>
-            <div class="space-y-4">
+            <div class="space-y-2">
               <!-- Title -->
-              <div>
-                <Label for="title" class="text-metadata mb-2 block">Title</Label>
+              <div class="flex items-center gap-3">
+                <label for="title" class="text-xs text-foreground-muted w-20 shrink-0">Title</label>
                 <Input
                   id="title"
                   name="title"
@@ -753,53 +772,54 @@
                   onblur={handleTitleBlur}
                   required
                   disabled={loading}
-                  class="text-body"
+                  class="text-body h-8 flex-1"
                 />
               </div>
 
-              <!-- Status & Priority Row -->
-              <div class="flex gap-4">
-                <!-- Status Select -->
-                <div class="flex-1">
-                  <Label for="status" class="text-metadata mb-2 block">Status</Label>
-                  <select
-                    id="status"
-                    bind:value={localStatus}
-                    onchange={handleStatusChange}
-                    disabled={loading}
-                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="todo">Todo</option>
-                    <option value="doing">In Progress</option>
-                    <option value="in_review">In Review</option>
-                    <option value="done">Done</option>
-                    <option value="canceled">Canceled</option>
-                  </select>
-                </div>
+              <!-- Status -->
+              <div class="flex items-center gap-3">
+                <label for="status" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Status</label
+                >
+                <select
+                  id="status"
+                  bind:value={localStatus}
+                  onchange={handleStatusChange}
+                  disabled={loading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="todo">Todo</option>
+                  <option value="doing">In Progress</option>
+                  <option value="in_review">In Review</option>
+                  <option value="done">Done</option>
+                  <option value="canceled">Canceled</option>
+                </select>
+              </div>
 
-                <!-- Priority Select -->
-                <div class="flex-1">
-                  <Label for="priority" class="text-metadata mb-2 block">Priority</Label>
-                  <select
-                    id="priority"
-                    bind:value={localPriority}
-                    onchange={handlePriorityChange}
-                    disabled={loading}
-                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value={0}>P0 (Critical)</option>
-                    <option value={1}>P1 (High)</option>
-                    <option value={2}>P2 (Medium)</option>
-                    <option value={3}>P3 (Low)</option>
-                  </select>
-                </div>
+              <!-- Priority -->
+              <div class="flex items-center gap-3">
+                <label for="priority" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Priority</label
+                >
+                <select
+                  id="priority"
+                  bind:value={localPriority}
+                  onchange={handlePriorityChange}
+                  disabled={loading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value={0}>P0 (Critical)</option>
+                  <option value={1}>P1 (High)</option>
+                  <option value={2}>P2 (Medium)</option>
+                  <option value={3}>P3 (Low)</option>
+                </select>
               </div>
             </div>
           </section>
 
           <!-- Description Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
               Description
             </h3>
             <RichTextEditor
@@ -813,7 +833,7 @@
 
           <!-- Attachments Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
               Attachments
             </h3>
             <AttachmentList
@@ -824,33 +844,31 @@
             />
           </section>
 
-          <!-- Organization Section -->
+          <!-- Organization & Estimation Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
               Organization
             </h3>
-            <div class="space-y-4">
-              <!-- Epic Select -->
-              <div>
-                <Label for="epic" class="text-metadata mb-2 block">Epic</Label>
+            <div class="space-y-2">
+              <!-- Epic -->
+              <div class="flex items-center gap-3">
+                <label for="epic" class="text-xs text-foreground-muted w-20 shrink-0">Epic</label>
                 {#if issue?.parent_issue_id}
-                  <!-- Sub-issue: Show epic but don't allow changes -->
                   <div
-                    class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm items-center"
+                    class="flex h-8 flex-1 rounded-md border border-input bg-muted px-3 text-sm items-center"
                   >
-                    <span class="text-foreground-muted">
+                    <span class="text-foreground-muted truncate">
                       {projectEpics.find((e) => e.id === localEpicId)?.name}
-                      <span class="text-metadata ml-1">(inherited from parent)</span>
+                      <span class="text-metadata ml-1">(inherited)</span>
                     </span>
                   </div>
                 {:else}
-                  <!-- Top-level issue: Allow epic changes -->
                   <select
                     id="epic"
                     bind:value={localEpicId}
                     onchange={handleEpicChange}
                     disabled={loading}
-                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {#each projectEpics as epic (epic.id)}
                       <option value={epic.id}>{epic.name}</option>
@@ -859,43 +877,44 @@
                 {/if}
               </div>
 
-              <!-- Milestone Picker -->
-              <div>
-                <Label for="milestone" class="text-metadata mb-2 block">Milestone</Label>
-                <MilestonePicker
-                  selectedMilestoneId={localMilestoneId}
-                  {milestones}
-                  issues={projectIssues}
-                  disabled={loading}
-                  onChange={(id) => {
-                    localMilestoneId = id;
-                    autoSave('milestone_id', id);
-                  }}
-                />
+              <!-- Milestone -->
+              <div class="flex items-center gap-3">
+                <label for="milestone" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Milestone</label
+                >
+                <div class="flex-1">
+                  <MilestonePicker
+                    selectedMilestoneId={localMilestoneId}
+                    {milestones}
+                    issues={projectIssues}
+                    disabled={loading}
+                    onChange={(id) => {
+                      localMilestoneId = id;
+                      autoSave('milestone_id', id);
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          </section>
 
-          <!-- Estimation Section -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Estimation
-            </h3>
-            <div>
-              <Label for="story_points" class="text-metadata mb-2 block">Story Points</Label>
-              <select
-                id="story_points"
-                inputmode="numeric"
-                value={localStoryPoints?.toString() ?? 'null'}
-                onchange={handleStoryPointsChange}
-                disabled={loading}
-                class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="null">Not set</option>
-                {#each ALLOWED_STORY_POINTS as points (points)}
-                  <option value={points.toString()}>{points}</option>
-                {/each}
-              </select>
+              <!-- Story Points -->
+              <div class="flex items-center gap-3">
+                <label for="story_points" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Points</label
+                >
+                <select
+                  id="story_points"
+                  inputmode="numeric"
+                  value={localStoryPoints?.toString() ?? 'null'}
+                  onchange={handleStoryPointsChange}
+                  disabled={loading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="null">Not set</option>
+                  {#each ALLOWED_STORY_POINTS as points (points)}
+                    <option value={points.toString()}>{points}</option>
+                  {/each}
+                </select>
+              </div>
             </div>
           </section>
 
@@ -910,7 +929,7 @@
 
             <!-- Sub-issues Section -->
             <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
                 Sub-issues
               </h3>
 

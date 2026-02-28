@@ -24,7 +24,8 @@
   import type { Issue } from '$lib/types';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
-  import { isBlocked, getBlockingDependencies } from '$lib/utils/issue-helpers';
+  import DependencyChip from '$lib/components/DependencyChip.svelte';
+  import { isBlocked } from '$lib/utils/issue-helpers';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -66,9 +67,6 @@
 
   // Compute blocked status
   let blocked = $derived(isBlocked(issue));
-  let blockingDeps = $derived(getBlockingDependencies(issue));
-  let blockingCount = $derived(blockingDeps.length);
-  let firstBlockingDep = $derived(blockingDeps[0]);
 
   // Status color dot mapping (4px diameter)
   const getStatusColor = (status: string) => {
@@ -84,9 +82,7 @@
   };
 
   const formatStatusLabel = (status: string) =>
-    status
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase());
+    status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
   let statusLabel = $derived(formatStatusLabel(issue.status));
 </script>
@@ -204,26 +200,16 @@
           {issue.project?.name} / {issue.epic?.name}
         </p>
 
-        <!-- Inline blocking dependency (actionable info without opening sheet) -->
-        {#if blocked && firstBlockingDep}
-          <p class="text-xs mt-1 text-status-blocked-strong font-medium truncate">
-            Blocked by: I-{firstBlockingDep.number} ({firstBlockingDep.title})
-          </p>
-        {/if}
+        <!-- Inline dependency chip with popover -->
+        <div class="mt-1">
+          <DependencyChip {issue} />
+        </div>
       </div>
     </button>
   </div>
 
   <!-- Right side: Priority & Blocked indicators + Move buttons -->
   <div class="flex items-center gap-2 shrink-0">
-    <!-- Blocked Indicator: prominent badge with lock icon -->
-    {#if blocked}
-      <Badge variant="status-blocked-strong" class="text-xs">
-        <Lock class="h-3 w-3" />
-        Blocked ({blockingCount})
-      </Badge>
-    {/if}
-
     <!-- Move Up/Down Buttons (hover-visible) -->
     <div
       class="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity"

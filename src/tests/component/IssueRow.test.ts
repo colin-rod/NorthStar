@@ -5,7 +5,7 @@ import IssueRow from '$lib/components/IssueRow.svelte';
 import type { Issue } from '$lib/types';
 
 describe('IssueRow - Blocked State Display', () => {
-  it('should display "Blocked (2)" when issue has 2 blocking dependencies', () => {
+  it('should display dependency chip with "2 blocked" when issue has 2 blocking dependencies', () => {
     const issue: Issue = {
       id: '1',
       number: 1,
@@ -85,10 +85,11 @@ describe('IssueRow - Blocked State Display', () => {
 
     render(IssueRow, { props: { issue } });
 
-    expect(screen.getByText('Blocked (2)')).toBeInTheDocument();
+    expect(screen.getByTestId('dependency-chip')).toBeInTheDocument();
+    expect(screen.getByText('2 blocked')).toBeInTheDocument();
   });
 
-  it('should display "Blocked (1)" when issue has 1 blocking dependency', () => {
+  it('should display dependency chip with "1 blocked" when issue has 1 blocking dependency', () => {
     const issue: Issue = {
       id: '1',
       number: 1,
@@ -149,10 +150,10 @@ describe('IssueRow - Blocked State Display', () => {
 
     render(IssueRow, { props: { issue } });
 
-    expect(screen.getByText('Blocked (1)')).toBeInTheDocument();
+    expect(screen.getByText('1 blocked')).toBeInTheDocument();
   });
 
-  it('should NOT display blocked badge when issue has no blocking dependencies', () => {
+  it('should NOT display dependency chip when issue has no dependencies', () => {
     const issue: Issue = {
       id: '1',
       number: 1,
@@ -193,10 +194,10 @@ describe('IssueRow - Blocked State Display', () => {
 
     render(IssueRow, { props: { issue } });
 
-    expect(screen.queryByText(/Blocked/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dependency-chip')).not.toBeInTheDocument();
   });
 
-  it('should NOT display blocked badge when all dependencies are satisfied', () => {
+  it('should display satisfied deps chip when all dependencies are done', () => {
     const issue: Issue = {
       id: '1',
       number: 1,
@@ -276,7 +277,9 @@ describe('IssueRow - Blocked State Display', () => {
 
     render(IssueRow, { props: { issue } });
 
-    expect(screen.queryByText(/Blocked/)).not.toBeInTheDocument();
+    // Should show satisfied chip, not blocked
+    expect(screen.queryByText(/blocked/)).not.toBeInTheDocument();
+    expect(screen.getByText('2 deps')).toBeInTheDocument();
   });
 });
 
