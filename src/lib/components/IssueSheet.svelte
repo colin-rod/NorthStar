@@ -86,6 +86,7 @@
   let showSubIssueForm = $state(false);
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
+  // svelte-ignore state_referenced_locally
   let internalMode = $state<'create' | 'edit'>(mode);
 
   // Create mode state

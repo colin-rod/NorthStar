@@ -96,6 +96,8 @@
 >
   <!-- Drag Handle (left side, hover-visible) -->
   <div
+    role="button"
+    tabindex="-1"
     class="absolute left-0 flex items-center justify-center w-8 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
     aria-label="Drag to reorder"
     onmousedown={() => {
