@@ -493,6 +493,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
   });
 
   it('should show error when cycle check RPC fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { supabase } = await import('$lib/supabase');
     vi.mocked(supabase.rpc).mockResolvedValueOnce({
       data: null,
@@ -517,6 +518,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     await vi.waitFor(() => {
       expect(screen.getByText('Failed to add dependency')).toBeInTheDocument();
     });
+    consoleSpy.mockRestore();
   });
 
   it('should show error when cycle would be created', async () => {
@@ -547,6 +549,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
   });
 
   it('should show error when insert fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { supabase } = await import('$lib/supabase');
     vi.mocked(supabase.rpc).mockResolvedValueOnce({
       data: false,
@@ -574,6 +577,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     await vi.waitFor(() => {
       expect(screen.getByText('Failed to add dependency')).toBeInTheDocument();
     });
+    consoleSpy.mockRestore();
   });
 
   it('should not call supabase when issue is null', async () => {
