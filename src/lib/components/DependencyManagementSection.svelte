@@ -4,9 +4,11 @@
   import { Button } from '$lib/components/ui/button';
   import AddDependencyDialog from '$lib/components/AddDependencyDialog.svelte';
   import X from '@lucide/svelte/icons/x';
+  import Lock from '@lucide/svelte/icons/lock';
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
   import { getBlockingDependencies, getSatisfiedDependencies } from '$lib/utils/issue-helpers';
+  import { toast } from 'svelte-sonner';
 
   // Props
   let {
@@ -14,13 +16,11 @@
     projectIssues = [],
     blockedByIssues = [],
     blockingIssues = [],
-    saveError = $bindable<string | null>(null),
   }: {
     issue: Issue;
     projectIssues: Issue[];
     blockedByIssues: Issue[];
     blockingIssues: Issue[];
-    saveError?: string | null;
   } = $props();
 
   // Compute blocking vs satisfied dependencies
@@ -78,22 +78,24 @@
 
       await invalidateAll();
     } catch (err) {
-      saveError = 'Failed to remove dependency';
-      setTimeout(() => (saveError = null), 5000);
+      toast.error('Failed to remove dependency', {
+        duration: 5000,
+      });
       console.error('Remove dependency error:', err);
     }
   }
 </script>
 
 <section>
-  <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+  <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
     Dependencies
   </h3>
   <div class="space-y-4">
     <!-- Blocking Summary -->
     {#if blockingDeps.length > 0}
-      <div class="text-sm text-destructive font-medium mb-2">
-        🔒 Blocked by {blockingDeps.length}
+      <div class="flex items-center gap-1 text-sm text-destructive font-medium mb-2">
+        <Lock class="h-4 w-4" />
+        Blocked by {blockingDeps.length}
         {blockingDeps.length === 1 ? 'dependency' : 'dependencies'}
       </div>
     {/if}
@@ -115,7 +117,7 @@
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
-                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                 aria-label="Remove dependency"
               >
                 <X class="h-4 w-4" />
@@ -143,7 +145,7 @@
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
-                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                 aria-label="Remove dependency"
               >
                 <X class="h-4 w-4" />
@@ -156,7 +158,7 @@
 
     <!-- No dependencies message -->
     {#if blockedByIssues.length === 0}
-      <p class="text-metadata text-foreground-muted">No blocking dependencies</p>
+      <p class="text-sm text-foreground-muted py-1">No blocking dependencies</p>
     {/if}
 
     <!-- Blocking -->

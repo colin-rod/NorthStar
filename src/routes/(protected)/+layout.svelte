@@ -10,6 +10,7 @@
   import Header from '$lib/components/Header.svelte';
   import SideNav from '$lib/components/SideNav.svelte';
   import type { BreadcrumbItem } from '$lib/components/Breadcrumbs.svelte';
+  import { Toaster } from '$lib/components/ui/sonner';
 
   const { children, data } = $props();
 
@@ -32,3 +33,6 @@
   <!-- Mobile: Bottom navigation -->
   <BottomNav />
 </div>
+
+<!-- Toast notifications -->
+<Toaster position="bottom-center" />

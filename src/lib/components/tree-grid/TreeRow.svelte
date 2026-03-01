@@ -40,6 +40,7 @@
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
     onContextMenu?: (node: TreeNode, event: MouseEvent) => void;
+    showReorderHint?: boolean;
   }
 
   let {
@@ -57,6 +58,7 @@
     onProjectClick,
     onEpicClick,
     onContextMenu,
+    showReorderHint = false,
   }: Props = $props();
 
   // Level-based background shading (per spec)
@@ -147,12 +149,12 @@
   ondblclick={handleDoubleClick}
 >
   <!-- Drag Handle -->
-  <td class="py-4 px-4">
-    <DragHandleCell {editMode} />
+  <td class="py-4 px-4 hidden md:table-cell">
+    <DragHandleCell {editMode} {showReorderHint} />
   </td>
 
   <!-- Selection Checkbox -->
-  <td class="py-4 px-4">
+  <td class="py-4 px-4 hidden md:table-cell">
     <SelectionCell checked={isSelected} onToggle={() => onToggleSelect(node.id)} />
   </td>
 
@@ -176,7 +178,7 @@
   </td>
 
   <!-- Milestone -->
-  <td class="py-4 px-4">
+  <td class="py-4 px-4 hidden md:table-cell">
     <MilestoneCell
       {node}
       {editMode}
@@ -185,7 +187,7 @@
   </td>
 
   <!-- Story Points -->
-  <td class="py-4 px-4">
+  <td class="py-4 px-4 hidden md:table-cell">
     <StoryPointsCell
       {node}
       {editMode}
@@ -194,12 +196,12 @@
   </td>
 
   <!-- Total Story Points (Rollup) -->
-  <td class="py-4 px-4">
+  <td class="py-4 px-4 hidden md:table-cell">
     <TotalPointsCell {node} />
   </td>
 
   <!-- Progress -->
-  <td class="py-4 px-4">
+  <td class="py-4 px-4 hidden md:table-cell">
     <ProgressCell {node} />
   </td>
 </tr>

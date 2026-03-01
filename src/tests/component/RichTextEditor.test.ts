@@ -75,4 +75,21 @@ describe('RichTextEditor', () => {
     const editorContent = document.querySelector('.ProseMirror');
     expect(editorContent).not.toBeNull();
   });
+
+  it('retains editor focus when content prop updates', async () => {
+    const { rerender } = render(RichTextEditor, {
+      props: { content: '<p>Hello</p>', onchange: vi.fn() },
+    });
+
+    const editorBefore = document.querySelector('.ProseMirror') as HTMLElement | null;
+    expect(editorBefore).not.toBeNull();
+    editorBefore?.focus();
+    expect(document.activeElement).toBe(editorBefore);
+
+    await rerender({ content: '<p>Hello there</p>', onchange: vi.fn() });
+
+    const editorAfter = document.querySelector('.ProseMirror') as HTMLElement | null;
+    expect(editorAfter).not.toBeNull();
+    expect(document.activeElement).toBe(editorAfter);
+  });
 });

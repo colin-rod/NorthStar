@@ -35,17 +35,18 @@
     --accent: 239 68% 60%; /* #4F46E5 - Secondary accent */
     --accent-foreground: 0 0% 100%; /* White text on accent */
 
-    /* Status Colors - Muted, not loud */
-    --status-todo: 214 14% 82%; /* #D1D5DB - Neutral gray */
-    --status-doing: 221 83% 53%; /* #2563EB - Blue */
-    --status-in-review: 258 70% 57%; /* #7C3AED - Muted violet */
-    --status-done: 150 78% 29%; /* #166534 - Forest green */
-    --status-blocked: 36 87% 45%; /* #D97706 - Amber */
-    --status-canceled: 214 11% 64%; /* #9CA3AF - Gray */
+    /* Status Colors - Enhanced contrast for visibility */
+    --status-todo: 216 21% 73%; /* #D1D5DB - Neutral gray (keep subtle) */
+    --status-doing: 217 91% 60%; /* #2563EB - Blue (brightened) */
+    --status-in-review: 258 90% 66%; /* #7C3AED - Purple (brightened) */
+    --status-done: 142 71% 45%; /* #166534 - Forest green (richer) */
+    --status-blocked: 32 95% 54%; /* #D97706 - Amber (more saturated for warning) */
+    --status-canceled: 215 16% 57%; /* #9CA3AF - Gray (keep muted) */
 
     /* Semantic Background Tints - Very subtle */
     --bg-done: 138 76% 97%; /* #F0FDF4 - Done background */
-    --bg-blocked: 48 100% 97%; /* #FFFBEB - Blocked background */
+    --bg-blocked: 48 100% 94%; /* #FEF3C7 - Blocked background (strengthened) */
+    --status-blocked-strong: 25 95% 47%; /* #EA780C - Darker amber for blocked accents */
     --bg-review: 252 100% 98%; /* #F5F3FF - Review background */
 
     /* shadcn/svelte compatibility mappings */

@@ -7,6 +7,8 @@
   } from '$lib/components/ui/collapsible';
   import GroupHeader from '$lib/components/GroupHeader.svelte';
   import IssueList from '$lib/components/IssueList.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Inbox from '@lucide/svelte/icons/inbox';
 
   interface Props {
     issues: Issue[];
@@ -157,9 +159,11 @@
 </script>
 
 {#if groupedIssues.length === 0}
-  <div class="text-center py-12">
-    <p class="text-metadata text-foreground-muted">No issues found</p>
-  </div>
+  <EmptyState
+    icon={Inbox}
+    title="No issues found"
+    description="Try adjusting your filters or grouping"
+  />
 {:else}
   <div class="space-y-2">
     {#each groupedIssues as group (group.key)}

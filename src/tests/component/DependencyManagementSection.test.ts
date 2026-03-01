@@ -66,7 +66,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
       },
     });
 
-    expect(screen.getByText('🔒 Blocked by 2 dependencies')).toBeInTheDocument();
+    expect(screen.getByText('Blocked by 2 dependencies')).toBeInTheDocument();
   });
 
   it('should display "Blocked by 1 dependency" (singular) when issue has 1 blocking dep', () => {
@@ -82,7 +82,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
       },
     });
 
-    expect(screen.getByText('🔒 Blocked by 1 dependency')).toBeInTheDocument();
+    expect(screen.getByText('Blocked by 1 dependency')).toBeInTheDocument();
   });
 
   it('should NOT display blocking summary when no blocking dependencies', () => {
@@ -140,7 +140,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     });
 
     // Should show blocking summary
-    expect(screen.getByText('🔒 Blocked by 2 dependencies')).toBeInTheDocument();
+    expect(screen.getByText('Blocked by 2 dependencies')).toBeInTheDocument();
 
     // Should show satisfied section
     expect(screen.getByText('Satisfied dependencies')).toBeInTheDocument();

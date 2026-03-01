@@ -19,6 +19,11 @@
   import IssueRow from '$lib/components/IssueRow.svelte';
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
   import { isBlocked } from '$lib/utils/issue-helpers';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Layers from '@lucide/svelte/icons/layers';
+  import ListTodo from '@lucide/svelte/icons/list-todo';
+  import Inbox from '@lucide/svelte/icons/inbox';
+  import PartyPopper from '@lucide/svelte/icons/party-popper';
 
   interface Props {
     epics: (Epic & { counts: IssueCounts })[];
@@ -109,7 +114,12 @@
 </script>
 
 {#if epics.length === 0}
-  <div class="text-center py-8 text-metadata text-foreground-muted">No epics in this project</div>
+  <EmptyState
+    icon={Layers}
+    title="No epics in this project"
+    description="Every project starts with a default epic — this shouldn't happen"
+    variant="subtle"
+  />
 {:else}
   <!-- Epics List (no table, just rows) -->
   <div class="border border-border-divider rounded-lg divide-y">
@@ -156,9 +166,32 @@
 
             <TabsContent value={activeTab}>
               {#if visibleIssues.length === 0}
-                <div class="text-center py-8 text-metadata text-foreground-muted">
-                  No issues match this filter
-                </div>
+                {#if activeTab === 'all' && epicIssues.length === 0}
+                  <EmptyState
+                    icon={ListTodo}
+                    title="No issues in this epic"
+                    description="Create an issue to start tracking work"
+                    variant="subtle"
+                  />
+                {:else if activeTab === 'blocked'}
+                  <EmptyState
+                    icon={PartyPopper}
+                    title="Nothing blocked!"
+                    description="All issues are flowing smoothly"
+                    variant="positive"
+                  />
+                {:else}
+                  <EmptyState
+                    icon={Inbox}
+                    title="No {activeTab === 'doing'
+                      ? 'in progress'
+                      : activeTab === 'in_review'
+                        ? 'in review'
+                        : activeTab} issues"
+                    description="Issues will appear here when their status changes"
+                    variant="subtle"
+                  />
+                {/if}
               {:else}
                 <div class="border rounded-lg divide-y">
                   {#each visibleIssues as issue (issue.id)}

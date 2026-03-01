@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import { Editor } from '@tiptap/core';
   import StarterKit from '@tiptap/starter-kit';
   import Link from '@tiptap/extension-link';
@@ -9,6 +9,7 @@
   interface Props {
     content: string | null;
     onchange: (html: string) => void;
+    onblur?: () => void;
     disabled?: boolean;
     placeholder?: string;
     uploadImage?: (file: File) => Promise<string>;
@@ -17,6 +18,7 @@
   let {
     content,
     onchange,
+    onblur,
     disabled = false,
     placeholder = 'Add a description...',
     uploadImage,
@@ -25,24 +27,42 @@
   let editorElement = $state<HTMLDivElement | null>(null);
   let editor = $state<Editor | null>(null);
   let isUpdatingFromProp = false;
+  let isInitializing = $state(false);
 
   $effect(() => {
     if (!editorElement) return;
 
+    isInitializing = true; // Mark as initializing
+
+    const initialContent = untrack(() => content ?? '');
+    const initialPlaceholder = untrack(() => placeholder);
+    const initialEditable = !untrack(() => disabled);
+
     const instance = new Editor({
       element: editorElement,
       extensions: [
-        StarterKit,
+        StarterKit.configure({
+          link: false, // Exclude link from StarterKit to avoid duplicate
+        }),
         Link.configure({ openOnClick: false }),
         Image,
-        Placeholder.configure({ placeholder }),
+        Placeholder.configure({ placeholder: initialPlaceholder }),
       ],
-      content: content ?? '',
-      editable: !disabled,
+      content: initialContent,
+      editable: initialEditable,
+      onCreate: () => {
+        // Editor is fully initialized, safe to accept user changes now
+        isInitializing = false;
+      },
       onUpdate: ({ editor: e }) => {
-        if (!isUpdatingFromProp) {
+        // Don't trigger onchange during initialization or prop updates
+        if (!isUpdatingFromProp && !isInitializing) {
           onchange(e.getHTML());
         }
+      },
+      onBlur: () => {
+        // Call parent's blur handler when editor loses focus
+        onblur?.();
       },
     });
 
@@ -56,9 +76,11 @@
 
   // Sync content prop changes (e.g., when a different issue is opened)
   $effect(() => {
-    if (editor && content !== null && content !== editor.getHTML()) {
+    const nextContent = content ?? '';
+
+    if (editor && nextContent !== editor.getHTML()) {
       isUpdatingFromProp = true;
-      editor.commands.setContent(content ?? '');
+      editor.commands.setContent(nextContent);
       isUpdatingFromProp = false;
     }
   });

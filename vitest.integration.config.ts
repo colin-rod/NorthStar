@@ -31,11 +31,14 @@ const env = loadEnvVars();
 
 export default defineConfig({
   plugins: [sveltekit()],
+  resolve: {
+    conditions: ['browser'],
+  },
   test: {
     include: ['tests/integration/**/*.test.ts'],
     exclude: ['**/node_modules/**'],
     globals: true,
-    environment: 'node',
+    environment: 'jsdom',
     setupFiles: ['./tests/integration/setup.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,

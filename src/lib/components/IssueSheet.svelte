@@ -25,7 +25,10 @@
   import { Label } from '$lib/components/ui/label';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
+  import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
   import { invalidateAll } from '$app/navigation';
+  import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
@@ -35,8 +38,12 @@
   import AttachmentList from '$lib/components/AttachmentList.svelte';
   import { supabase } from '$lib/supabase';
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
+  import { normalizeDescription } from '$lib/utils/text-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
   import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
+  import { toast } from 'svelte-sonner';
+  import { get } from 'svelte/store';
+  import { createIssueContext } from '$lib/stores/issues';
 
   // Props
   let {
@@ -67,13 +74,20 @@
   let localEpicId = $state('');
   let localMilestoneId = $state<string | null>(null);
 
-  // Loading and error state
+  // Loading state
   let loading = $state(false);
-  let saveError = $state<string | null>(null);
-  let saveSuccess = $state(false);
+  type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+  let saveState = $state<SaveState>('idle');
+  let activeSaveCount = $state(0);
+  let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
+  let latestSaveRequestId = $state(0);
 
   // Sub-issues state
   let showSubIssueForm = $state(false);
+
+  // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
+  // svelte-ignore state_referenced_locally
+  let internalMode = $state<'create' | 'edit'>(mode);
 
   // Create mode state
   let selectedProjectId = $state('');
@@ -81,16 +95,31 @@
 
   // Description state
   let localDescription = $state<string | null>(null);
-  let descriptionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastPersistedDescriptionNormalized = $state('');
+  let descriptionSaveInFlight = $state(false);
+  let descriptionInFlightNormalized = $state<string | null>(null);
 
   // Attachments state
   let attachments = $state<Attachment[]>([]);
 
-  // Debounce timer for title field
-  let titleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-
   // Ref for sheet content (keyboard-aware height)
   let sheetContentRef = $state<HTMLElement | null>(null);
+
+  // Track current issue ID to prevent re-initialization on same issue
+  let currentIssueId = $state<string | null>(null);
+
+  const successToastA11y = {
+    role: 'status',
+    'aria-live': 'polite',
+  } as const;
+
+  const errorToastA11y = {
+    role: 'alert',
+    'aria-live': 'assertive',
+  } as const;
+
+  // Expand to center peek mode (desktop only)
+  let expanded = $state(false);
 
   // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -107,22 +136,30 @@
   });
 
   // Initialize local state when issue changes (edit mode)
+  // Only re-initialize when the issue ID actually changes (not just object reference)
   $effect(() => {
-    if (issue) {
+    if (internalMode === 'edit' && issue && issue.id !== currentIssueId) {
+      currentIssueId = issue.id;
+
       localTitle = issue.title;
       localStatus = issue.status;
       localPriority = issue.priority;
       localStoryPoints = issue.story_points;
       localEpicId = issue.epic_id;
       localMilestoneId = issue.milestone_id;
-      if (!descriptionDebounceTimer) {
-        localDescription = issue.description ?? null;
-      }
-      saveError = null;
-      saveSuccess = false;
+
+      // CRITICAL: Update prev values to match loaded issue to prevent false change detection
+      prevStatus = issue.status;
+      prevPriority = issue.priority;
+      prevStoryPoints = issue.story_points;
+      prevEpicId = issue.epic_id;
+      localDescription = issue.description ?? null;
+      lastPersistedDescriptionNormalized = normalizeDescription(issue.description);
+      descriptionSaveInFlight = false;
+      descriptionInFlightNormalized = null;
 
       // Load attachments for this issue
-      if (mode === 'edit') {
+      if (internalMode === 'edit') {
         supabase
           .from('attachments')
           .select('*')
@@ -138,39 +175,77 @@
 
   // Initialize create mode defaults when sheet opens
   $effect(() => {
-    if (mode === 'create' && open) {
+    if (internalMode === 'create' && open) {
       localTitle = '';
       localStatus = 'todo';
       localPriority = 2;
       localStoryPoints = null;
       localMilestoneId = null;
-      saveError = null;
-      if (projects.length > 0 && !selectedProjectId) {
+      saveState = 'idle';
+      if (saveStateResetTimeout) {
+        clearTimeout(saveStateResetTimeout);
+        saveStateResetTimeout = null;
+      }
+      const ctx = get(createIssueContext);
+      if (ctx) {
+        selectedProjectId = ctx.projectId;
+        localEpicId = ctx.epicId;
+      } else if (projects.length > 0 && !selectedProjectId) {
         selectedProjectId = projects[0].id;
       }
     }
   });
 
   // Auto-select first epic when project changes in create mode
+  // Skip if a context already set the epic for this project
   $effect(() => {
-    if (mode === 'create' && selectedProjectId) {
+    if (internalMode === 'create' && selectedProjectId) {
+      const ctx = get(createIssueContext);
+      if (ctx && ctx.projectId === selectedProjectId) return;
       const firstEpic = epics.find((e) => e.project_id === selectedProjectId);
       localEpicId = firstEpic?.id ?? '';
     }
   });
 
-  // Reset create mode state when sheet closes
+  // Reset state when sheet closes
   $effect(() => {
-    if (!open && mode === 'create') {
+    if (!open) {
+      expanded = false;
       selectedProjectId = '';
       localEpicId = '';
       createLoading = false;
+      saveState = 'idle';
+      if (saveStateResetTimeout) {
+        clearTimeout(saveStateResetTimeout);
+        saveStateResetTimeout = null;
+      }
+      // Reset internal mode back to parent's mode after close animation
+      setTimeout(() => {
+        internalMode = mode;
+      }, 300);
     }
   });
 
+  function clearSaveStateResetTimeout() {
+    if (saveStateResetTimeout) {
+      clearTimeout(saveStateResetTimeout);
+      saveStateResetTimeout = null;
+    }
+  }
+
+  function queueSaveStateIdleReset() {
+    clearSaveStateResetTimeout();
+    saveStateResetTimeout = setTimeout(() => {
+      if (saveState === 'saved') {
+        saveState = 'idle';
+      }
+      saveStateResetTimeout = null;
+    }, 1500);
+  }
+
   // Filter epics to only show those from the relevant project
   let projectEpics = $derived(
-    mode === 'create'
+    internalMode === 'create'
       ? epics.filter((epic) => epic.project_id === selectedProjectId)
       : issue
         ? epics.filter((epic) => epic.project_id === issue?.project_id)
@@ -222,12 +297,19 @@
   }
 
   // Auto-save function
-  async function autoSave(field: string, value: any) {
-    if (!issue) return;
+  async function autoSave(
+    field: string,
+    value: any,
+    options: { onSuccess?: () => void; onFinally?: () => void } = {},
+  ) {
+    if (!issue || internalMode !== 'edit' || !open) return;
 
-    loading = true;
-    saveError = null;
-    saveSuccess = false;
+    const requestId = latestSaveRequestId + 1;
+    latestSaveRequestId = requestId;
+    activeSaveCount += 1;
+    loading = activeSaveCount > 0;
+    clearSaveStateResetTimeout();
+    saveState = 'saving';
 
     try {
       const formData = new FormData();
@@ -239,40 +321,81 @@
         body: formData,
       });
 
-      const result = await response.json();
+      const result = deserialize(await response.text());
 
-      if (response.ok && result.type === 'success') {
-        // Reload data to get updated issue
-        await invalidateAll();
-        saveSuccess = true;
-        setTimeout(() => {
-          saveSuccess = false;
-        }, 2000);
+      if (result.type === 'success') {
+        if (requestId === latestSaveRequestId) {
+          saveState = 'saved';
+          queueSaveStateIdleReset();
+        }
+        // No need to reload all data for single field update
+        // The UI already shows the updated value via local state
+        options.onSuccess?.();
+        toast.success('Changes saved successfully', {
+          duration: 2000,
+          ...successToastA11y,
+        });
       } else {
-        const error = result.data?.error || 'Failed to save';
-        saveError = error;
-        setTimeout(() => {
-          saveError = null;
-        }, 5000);
+        if (requestId === latestSaveRequestId) {
+          saveState = 'error';
+        }
+        const error = (result as any).data?.error || 'Failed to save';
+        toast.error(error, {
+          duration: 5000,
+          ...errorToastA11y,
+        });
       }
     } catch (error) {
+      if (requestId === latestSaveRequestId) {
+        saveState = 'error';
+      }
       console.error('Auto-save error:', error);
-      saveError = 'Network error - please try again';
-      setTimeout(() => {
-        saveError = null;
-      }, 5000);
+      toast.error('Network error - please try again', {
+        duration: 5000,
+        ...errorToastA11y,
+      });
     } finally {
-      loading = false;
+      activeSaveCount = Math.max(0, activeSaveCount - 1);
+      loading = activeSaveCount > 0;
+      options.onFinally?.();
     }
   }
 
-  // Description auto-save (1000ms debounce)
+  // Description change handler (just updates local state)
   function handleDescriptionChange(html: string) {
     localDescription = html;
-    if (descriptionDebounceTimer) clearTimeout(descriptionDebounceTimer);
-    descriptionDebounceTimer = setTimeout(() => {
-      autoSave('description', localDescription ?? '');
-    }, 1000);
+  }
+
+  // Description blur handler (autosave on blur)
+  function handleDescriptionBlur() {
+    if (!issue || internalMode !== 'edit' || !open) return;
+
+    const normalizedCurrent = normalizeDescription(localDescription);
+
+    // Don't save if content hasn't changed
+    if (normalizedCurrent === lastPersistedDescriptionNormalized) {
+      return;
+    }
+
+    // Don't save if there's already a save in flight with the same content
+    if (descriptionSaveInFlight && descriptionInFlightNormalized === normalizedCurrent) {
+      return;
+    }
+
+    descriptionSaveInFlight = true;
+    descriptionInFlightNormalized = normalizedCurrent;
+
+    autoSave('description', localDescription ?? '', {
+      onSuccess: () => {
+        lastPersistedDescriptionNormalized = normalizedCurrent;
+      },
+      onFinally: () => {
+        if (descriptionInFlightNormalized === normalizedCurrent) {
+          descriptionSaveInFlight = false;
+          descriptionInFlightNormalized = null;
+        }
+      },
+    });
   }
 
   // Inline image upload (goes to public inline-images subfolder)
@@ -291,10 +414,10 @@
     const path = buildStoragePath(userId, 'issue', issue.id, file.name);
     const { error: uploadError } = await supabase.storage.from('attachments').upload(path, file);
     if (uploadError) {
-      saveError = 'Failed to upload file';
-      setTimeout(() => {
-        saveError = null;
-      }, 5000);
+      toast.error('Failed to upload file', {
+        duration: 5000,
+        ...errorToastA11y,
+      });
       return;
     }
     const formData = new FormData();
@@ -305,9 +428,9 @@
     formData.append('mime_type', file.type);
     formData.append('storage_path', path);
     const res = await fetch('?/createAttachment', { method: 'POST', body: formData });
-    const result = await res.json();
-    if (res.ok && result.type === 'success') {
-      attachments = [...attachments, result.data.attachment];
+    const result = deserialize(await res.text());
+    if (result.type === 'success') {
+      attachments = [...attachments, (result.data as any).attachment];
     }
   }
 
@@ -325,39 +448,68 @@
     event.preventDefault();
 
     if (!localTitle.trim()) {
-      saveError = 'Issue title is required';
+      toast.error('Issue title is required', {
+        duration: 5000,
+        ...errorToastA11y,
+      });
       return;
     }
     if (!selectedProjectId || !localEpicId) {
-      saveError = 'Project and epic are required';
+      toast.error('Project and epic are required', {
+        duration: 5000,
+        ...errorToastA11y,
+      });
       return;
     }
 
     createLoading = true;
-    saveError = null;
 
     try {
       const formData = new FormData();
       formData.append('title', localTitle.trim());
-      formData.append('project_id', selectedProjectId);
-      formData.append('epic_id', localEpicId);
+      formData.append('projectId', selectedProjectId);
+      formData.append('epicId', localEpicId);
 
       const response = await fetch('?/createIssue', {
         method: 'POST',
         body: formData,
       });
 
-      const result = await response.json();
+      const result = deserialize(await response.text());
 
-      if (response.ok && result.type === 'success') {
+      if (result.type === 'success') {
+        const newIssue = (result.data as any).issue;
+
+        // Set issue with empty relations for edit mode
+        issue = {
+          ...newIssue,
+          blocked_by: [],
+          blocking: [],
+          sub_issues: [],
+        };
+        currentIssueId = newIssue.id;
+
+        // Transition to edit mode
+        internalMode = 'edit';
+
         await invalidateAll();
-        open = false;
+
+        toast.success('Issue created', {
+          duration: 2000,
+          ...successToastA11y,
+        });
       } else {
-        saveError = result.data?.error || 'Failed to create issue';
+        toast.error((result as any).data?.error || 'Failed to create issue', {
+          duration: 5000,
+          ...errorToastA11y,
+        });
       }
     } catch (error) {
       console.error('Create issue error:', error);
-      saveError = 'Network error - please try again';
+      toast.error('Network error - please try again', {
+        duration: 5000,
+        ...errorToastA11y,
+      });
     } finally {
       createLoading = false;
     }
@@ -373,16 +525,13 @@
   function handleTitleChange(event: Event) {
     const input = event.target as HTMLInputElement;
     localTitle = input.value;
+  }
 
-    // Debounce title updates (wait 500ms after user stops typing)
-    if (titleDebounceTimer) {
-      clearTimeout(titleDebounceTimer);
+  function handleTitleBlur() {
+    if (!issue || internalMode !== 'edit' || !open) return;
+    if (localTitle !== issue.title) {
+      autoSave('title', localTitle);
     }
-    titleDebounceTimer = setTimeout(() => {
-      if (localTitle !== issue?.title) {
-        autoSave('title', localTitle);
-      }
-    }, 500);
   }
 
   function handleStatusChange(event: Event) {
@@ -411,28 +560,52 @@
 
   // Watch for changes and auto-save
   $effect(() => {
-    if (localStatus !== prevStatus && localStatus !== issue?.status) {
+    if (
+      internalMode === 'edit' &&
+      open &&
+      issue &&
+      localStatus !== prevStatus &&
+      localStatus !== issue.status
+    ) {
       autoSave('status', localStatus);
       prevStatus = localStatus;
     }
   });
 
   $effect(() => {
-    if (localPriority !== prevPriority && localPriority !== issue?.priority) {
+    if (
+      internalMode === 'edit' &&
+      open &&
+      issue &&
+      localPriority !== prevPriority &&
+      localPriority !== issue.priority
+    ) {
       autoSave('priority', localPriority);
       prevPriority = localPriority;
     }
   });
 
   $effect(() => {
-    if (localStoryPoints !== prevStoryPoints && localStoryPoints !== issue?.story_points) {
+    if (
+      internalMode === 'edit' &&
+      open &&
+      issue &&
+      localStoryPoints !== prevStoryPoints &&
+      localStoryPoints !== issue.story_points
+    ) {
       autoSave('story_points', localStoryPoints);
       prevStoryPoints = localStoryPoints;
     }
   });
 
   $effect(() => {
-    if (localEpicId !== prevEpicId && localEpicId !== issue?.epic_id) {
+    if (
+      internalMode === 'edit' &&
+      open &&
+      issue &&
+      localEpicId !== prevEpicId &&
+      localEpicId !== issue.epic_id
+    ) {
       autoSave('epic_id', localEpicId);
       prevEpicId = localEpicId;
     }
@@ -451,53 +624,61 @@
   <SheetContent
     bind:ref={sheetContentRef}
     side={sheetSide}
-    class={sheetClass}
+    {expanded}
+    class={expanded && isDesktop() ? 'p-6' : sheetClass}
     onOpenChange={(isOpen) => {
       open = isOpen;
     }}
   >
-    {#if mode === 'create' || issue}
+    {#if internalMode === 'create' || issue}
       <!-- Loading overlay -->
       {#if loading || createLoading}
         <div
+          role="status"
+          aria-live="polite"
+          aria-label="Loading"
           class="absolute inset-0 bg-background/50 flex items-center justify-center z-50 rounded-t-lg"
         >
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div
+            aria-hidden="true"
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
+          ></div>
         </div>
       {/if}
 
       <!-- Header -->
       <SheetHeader class="mb-6">
-        <SheetTitle class="font-accent text-page-title">
-          {#if mode === 'create'}
-            New Issue
-          {:else if issue}
-            <span class="text-muted-foreground font-mono text-base">I-{issue.number}</span>
-            <span class="mx-2 text-muted-foreground">·</span>
-            {issue.title}
-          {:else}
-            Edit Issue
+        <div class="flex items-start justify-between gap-2">
+          <SheetTitle class="font-accent text-page-title flex-1 min-w-0 flex items-baseline gap-0">
+            {#if internalMode === 'create'}
+              New Issue
+            {:else if issue}
+              <span class="text-muted-foreground font-mono text-base shrink-0"
+                >I-{issue.number}</span
+              >
+              <span class="mx-2 text-muted-foreground shrink-0">·</span>
+              <span>{issue.title}</span>
+            {:else}
+              Edit Issue
+            {/if}
+          </SheetTitle>
+          {#if isDesktop()}
+            <button
+              onclick={() => (expanded = !expanded)}
+              aria-label={expanded ? 'Collapse to sidebar' : 'Expand to full page'}
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-1 mr-8"
+            >
+              {#if expanded}
+                <Minimize2Icon class="size-4" />
+              {:else}
+                <Maximize2Icon class="size-4" />
+              {/if}
+            </button>
           {/if}
-        </SheetTitle>
+        </div>
       </SheetHeader>
 
-      <!-- Success/Error Toast -->
-      {#if saveSuccess}
-        <div
-          class="mb-4 p-3 rounded-md bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 text-sm"
-        >
-          Changes saved successfully
-        </div>
-      {/if}
-      {#if saveError}
-        <div
-          class="mb-4 p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 text-sm"
-        >
-          {saveError}
-        </div>
-      {/if}
-
-      {#if mode === 'create'}
+      {#if internalMode === 'create'}
         <!-- Create mode: form with submit button -->
         <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
           <!-- Basic Info Section -->
@@ -569,75 +750,124 @@
         </form>
       {:else}
         <!-- Edit mode: auto-save behavior -->
-        <div class="space-y-6 pb-6">
+        <div class="space-y-4 pb-6">
+          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
+            {#if saveState === 'saving'}
+              Saving...
+            {:else if saveState === 'saved'}
+              ✓ Saved
+            {:else if saveState === 'error'}
+              Save failed. Please retry.
+            {/if}
+          </div>
+
           <!-- Basic Info Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Basic Info
-            </h3>
-            <div class="space-y-4">
+            <div class="space-y-2">
               <!-- Title -->
-              <div>
-                <Label for="title" class="text-metadata mb-2 block">Title</Label>
+              <div class="flex items-center gap-3">
+                <label for="title" class="text-xs text-foreground-muted w-20 shrink-0">Title</label>
                 <Input
                   id="title"
                   name="title"
                   value={localTitle}
                   oninput={handleTitleChange}
+                  onblur={handleTitleBlur}
                   required
                   disabled={loading}
-                  class="text-body"
+                  class="text-body h-8 flex-1"
                 />
               </div>
 
-              <!-- Status & Priority Row -->
-              <div class="flex gap-4">
-                <!-- Status Select -->
-                <div class="flex-1">
-                  <Label for="status" class="text-metadata mb-2 block">Status</Label>
-                  <select
-                    id="status"
-                    bind:value={localStatus}
-                    onchange={handleStatusChange}
-                    disabled={loading}
-                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="todo">Todo</option>
-                    <option value="doing">In Progress</option>
-                    <option value="in_review">In Review</option>
-                    <option value="done">Done</option>
-                    <option value="canceled">Canceled</option>
-                  </select>
-                </div>
+              <!-- Status -->
+              <div class="flex items-center gap-3">
+                <label for="status" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Status</label
+                >
+                <select
+                  id="status"
+                  bind:value={localStatus}
+                  onchange={handleStatusChange}
+                  disabled={loading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="todo">Todo</option>
+                  <option value="doing">In Progress</option>
+                  <option value="in_review">In Review</option>
+                  <option value="done">Done</option>
+                  <option value="canceled">Canceled</option>
+                </select>
+              </div>
 
-                <!-- Priority Select -->
+              <!-- Priority -->
+              <div class="flex items-center gap-3">
+                <label for="priority" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Priority</label
+                >
+                <select
+                  id="priority"
+                  bind:value={localPriority}
+                  onchange={handlePriorityChange}
+                  disabled={loading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value={0}>P0 (Critical)</option>
+                  <option value={1}>P1 (High)</option>
+                  <option value={2}>P2 (Medium)</option>
+                  <option value={3}>P3 (Low)</option>
+                </select>
+              </div>
+
+              <!-- Milestone -->
+              <div class="flex items-center gap-3">
+                <label for="milestone" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Milestone</label
+                >
                 <div class="flex-1">
-                  <Label for="priority" class="text-metadata mb-2 block">Priority</Label>
-                  <select
-                    id="priority"
-                    bind:value={localPriority}
-                    onchange={handlePriorityChange}
+                  <MilestonePicker
+                    selectedMilestoneId={localMilestoneId}
+                    {milestones}
+                    issues={projectIssues}
                     disabled={loading}
-                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value={0}>P0 (Critical)</option>
-                    <option value={1}>P1 (High)</option>
-                    <option value={2}>P2 (Medium)</option>
-                    <option value={3}>P3 (Low)</option>
-                  </select>
+                    onChange={(id) => {
+                      localMilestoneId = id;
+                      autoSave('milestone_id', id);
+                    }}
+                  />
                 </div>
+              </div>
+
+              <!-- Story Points -->
+              <div class="flex items-center gap-3">
+                <label for="story_points" class="text-xs text-foreground-muted w-20 shrink-0"
+                  >Points</label
+                >
+                <select
+                  id="story_points"
+                  inputmode="numeric"
+                  value={localStoryPoints?.toString() ?? 'null'}
+                  onchange={handleStoryPointsChange}
+                  disabled={loading}
+                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="null">Not set</option>
+                  {#each ALLOWED_STORY_POINTS as points (points)}
+                    <option value={points.toString()}>{points}</option>
+                  {/each}
+                </select>
               </div>
             </div>
           </section>
 
           <!-- Description Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
               Description
             </h3>
             <RichTextEditor
               content={localDescription}
               onchange={handleDescriptionChange}
+              onblur={handleDescriptionBlur}
               {uploadImage}
               disabled={loading}
             />
@@ -645,7 +875,7 @@
 
           <!-- Attachments Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
               Attachments
             </h3>
             <AttachmentList
@@ -656,33 +886,31 @@
             />
           </section>
 
-          <!-- Organization Section -->
+          <!-- Organization & Estimation Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
               Organization
             </h3>
-            <div class="space-y-4">
-              <!-- Epic Select -->
-              <div>
-                <Label for="epic" class="text-metadata mb-2 block">Epic</Label>
+            <div class="space-y-2">
+              <!-- Epic -->
+              <div class="flex items-center gap-3">
+                <label for="epic" class="text-xs text-foreground-muted w-20 shrink-0">Epic</label>
                 {#if issue?.parent_issue_id}
-                  <!-- Sub-issue: Show epic but don't allow changes -->
                   <div
-                    class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm items-center"
+                    class="flex h-8 flex-1 rounded-md border border-input bg-muted px-3 text-sm items-center"
                   >
-                    <span class="text-foreground-muted">
+                    <span class="text-foreground-muted truncate">
                       {projectEpics.find((e) => e.id === localEpicId)?.name}
-                      <span class="text-metadata ml-1">(inherited from parent)</span>
+                      <span class="text-metadata ml-1">(inherited)</span>
                     </span>
                   </div>
                 {:else}
-                  <!-- Top-level issue: Allow epic changes -->
                   <select
                     id="epic"
                     bind:value={localEpicId}
                     onchange={handleEpicChange}
                     disabled={loading}
-                    class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {#each projectEpics as epic (epic.id)}
                       <option value={epic.id}>{epic.name}</option>
@@ -690,44 +918,6 @@
                   </select>
                 {/if}
               </div>
-
-              <!-- Milestone Picker -->
-              <div>
-                <Label for="milestone" class="text-metadata mb-2 block">Milestone</Label>
-                <MilestonePicker
-                  selectedMilestoneId={localMilestoneId}
-                  {milestones}
-                  issues={projectIssues}
-                  disabled={loading}
-                  onChange={(id) => {
-                    localMilestoneId = id;
-                    autoSave('milestone_id', id);
-                  }}
-                />
-              </div>
-            </div>
-          </section>
-
-          <!-- Estimation Section -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Estimation
-            </h3>
-            <div>
-              <Label for="story_points" class="text-metadata mb-2 block">Story Points</Label>
-              <select
-                id="story_points"
-                inputmode="numeric"
-                value={localStoryPoints?.toString() ?? 'null'}
-                onchange={handleStoryPointsChange}
-                disabled={loading}
-                class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="null">Not set</option>
-                {#each ALLOWED_STORY_POINTS as points (points)}
-                  <option value={points.toString()}>{points}</option>
-                {/each}
-              </select>
             </div>
           </section>
 
@@ -738,12 +928,11 @@
               {projectIssues}
               {blockedByIssues}
               {blockingIssues}
-              bind:saveError
             />
 
             <!-- Sub-issues Section -->
             <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
+              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
                 Sub-issues
               </h3>
 
@@ -753,11 +942,12 @@
                   {#each subIssues as subIssue (subIssue.id)}
                     <button
                       type="button"
-                      ondblclick={() => {
+                      onclick={() => {
                         issue = subIssue;
                         showSubIssueForm = false;
                       }}
                       class="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted w-full text-left transition-colors"
+                      title="Open sub-issue"
                     >
                       <Badge variant={getStatusVariant(subIssue.status)} class="shrink-0">
                         {formatStatus(subIssue.status)}

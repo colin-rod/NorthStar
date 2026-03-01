@@ -24,7 +24,11 @@
 
   import type { Issue, IssueStatus } from '$lib/types';
   import Badge from '$lib/components/ui/badge/badge.svelte';
+  import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
+  import Lock from '@lucide/svelte/icons/lock';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Inbox from '@lucide/svelte/icons/inbox';
 
   interface Props {
     issues: Issue[];
@@ -53,32 +57,27 @@
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
-
-  type PriorityVariant = 'priority-p0' | 'priority-p1' | 'priority-p2' | 'priority-p3';
-
-  function getPriorityVariant(priority: number): PriorityVariant {
-    const priorityMap: Record<number, PriorityVariant> = {
-      0: 'priority-p0',
-      1: 'priority-p1',
-      2: 'priority-p2',
-      3: 'priority-p3',
-    };
-
-    return priorityMap[priority] ?? 'priority-p3';
-  }
 </script>
 
 <!-- North Design: Clean table with subtle borders -->
 {#if issues.length === 0}
-  <div class="text-center py-12">
-    <p class="text-metadata text-foreground-muted">No issues found</p>
-  </div>
+  <EmptyState
+    icon={Inbox}
+    title="No issues found"
+    description="Try adjusting your filters"
+    variant="subtle"
+  />
 {:else}
   <div class="border border-border-divider rounded-lg overflow-hidden">
     <table class="w-full" aria-label="Issues list">
       <!-- Table Header -->
       <thead class="bg-surface-subtle border-b border-border-divider">
         <tr>
+          <!-- Priority Column (first for scanability) -->
+          <th class="text-left px-3 py-3">
+            <span class="text-metadata uppercase text-foreground-muted">Priority</span>
+          </th>
+
           <!-- Status Column -->
           <th class="text-left px-3 py-3">
             <span class="text-metadata uppercase text-foreground-muted">Status</span>
@@ -89,7 +88,7 @@
             <span class="text-metadata uppercase text-foreground-muted">Title</span>
           </th>
 
-          <!-- Project Column (NEW) -->
+          <!-- Project Column -->
           <th class="text-left px-3 py-3">
             <span class="text-metadata uppercase text-foreground-muted">Project</span>
           </th>
@@ -97,11 +96,6 @@
           <!-- Epic Column -->
           <th class="text-left px-3 py-3">
             <span class="text-metadata uppercase text-foreground-muted">Epic</span>
-          </th>
-
-          <!-- Priority Column -->
-          <th class="text-left px-3 py-3">
-            <span class="text-metadata uppercase text-foreground-muted">Priority</span>
           </th>
 
           <!-- Milestone Column -->
@@ -127,12 +121,21 @@
           {@const blocked = isBlocked(issue)}
           <tr
             onclick={() => onRowClick(issue)}
-            class="hover:bg-surface-subtle transition-colors cursor-pointer"
+            class="hover:bg-surface-subtle transition-colors cursor-pointer {blocked
+              ? 'bg-bg-blocked/40 border-l-[3px] border-l-status-blocked'
+              : ''}"
           >
+            <!-- Priority Cell (first for scanability) -->
+            <td class="px-3 py-4">
+              <PriorityBadge priority={issue.priority} />
+            </td>
+
             <!-- Status Cell -->
             <td class="px-3 py-4">
               <div class="flex items-center gap-2">
-                <div class={`w-1.5 h-1.5 rounded-full ${getStatusColor(issue.status)}`}></div>
+                <div
+                  class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}
+                ></div>
                 <span class="text-metadata">{formatStatus(issue.status)}</span>
               </div>
             </td>
@@ -142,7 +145,7 @@
               <span class="text-body truncate block max-w-md">{issue.title}</span>
             </td>
 
-            <!-- Project Cell (NEW) -->
+            <!-- Project Cell -->
             <td class="px-3 py-4">
               <span class="text-metadata text-foreground-muted">
                 {issue.project?.name || '—'}
@@ -154,11 +157,6 @@
               <span class="text-metadata text-foreground-muted truncate block max-w-xs">
                 {issue.epic?.name || '—'}
               </span>
-            </td>
-
-            <!-- Priority Cell -->
-            <td class="px-3 py-4">
-              <Badge variant={getPriorityVariant(issue.priority)} class="text-xs">P{issue.priority}</Badge>
             </td>
 
             <!-- Milestone Cell -->
@@ -180,7 +178,10 @@
             <!-- Blocked Cell -->
             <td class="px-3 py-4">
               {#if blocked}
-                <Badge variant="status-blocked" class="text-xs">Blocked</Badge>
+                <Badge variant="status-blocked-strong" class="text-xs">
+                  <Lock class="h-3 w-3" />
+                  Blocked
+                </Badge>
               {/if}
             </td>
           </tr>

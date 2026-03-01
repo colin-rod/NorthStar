@@ -21,6 +21,7 @@
   import { computeProgress, type IssueCounts } from '$lib/utils/issue-counts';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
+  import PriorityBadge from '$lib/components/PriorityBadge.svelte';
 
   interface Props {
     epic: Epic;
@@ -60,14 +61,7 @@
               >
             {/if}
             {#if epic.priority !== null && epic.priority !== undefined}
-              <Badge
-                variant={('priority-p' + epic.priority) as
-                  | 'priority-p0'
-                  | 'priority-p1'
-                  | 'priority-p2'
-                  | 'priority-p3'}
-                class="text-xs">P{epic.priority}</Badge
-              >
+              <PriorityBadge priority={epic.priority} />
             {/if}
             {#if epic.milestone}
               <Badge variant="outline" class="text-xs text-foreground-secondary">
@@ -146,14 +140,7 @@
               >
             {/if}
             {#if epic.priority !== null && epic.priority !== undefined}
-              <Badge
-                variant={('priority-p' + epic.priority) as
-                  | 'priority-p0'
-                  | 'priority-p1'
-                  | 'priority-p2'
-                  | 'priority-p3'}
-                class="text-xs">P{epic.priority}</Badge
-              >
+              <PriorityBadge priority={epic.priority} />
             {/if}
             {#if epic.milestone}
               <Badge variant="outline" class="text-xs text-foreground-secondary">

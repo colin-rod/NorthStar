@@ -22,11 +22,22 @@
   import PriorityFilter from '$lib/components/PriorityFilter.svelte';
   import MilestoneFilter from '$lib/components/MilestoneFilter.svelte';
   import { Button } from '$lib/components/ui/button';
-  import { openIssueSheet } from '$lib/stores/issues';
+  import {
+    isIssueSheetOpen,
+    selectedIssue as selectedIssueStore,
+    openIssueSheet,
+    openCreateIssueSheet,
+  } from '$lib/stores/issues';
   import { isBlocked } from '$lib/utils/issue-helpers';
   import { calculateNewSortOrders, moveIssueUp, moveIssueDown } from '$lib/utils/reorder';
   import { dndzone } from 'svelte-dnd-action';
   import type { Issue } from '$lib/types';
+  import { dismissReorderHint } from '$lib/stores/ui-hints';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import Inbox from '@lucide/svelte/icons/inbox';
+  import ListTodo from '@lucide/svelte/icons/list-todo';
+  import PartyPopper from '@lucide/svelte/icons/party-popper';
+  import CircleCheckBig from '@lucide/svelte/icons/circle-check-big';
 
   let { data }: { data: PageData } = $props();
 
@@ -41,7 +52,8 @@
 
   // Issue filtering
   let allIssues = $derived(data.issues || []);
-  let todoIssues = $derived(allIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
+  let readyIssues = $derived(allIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
+  let totalTodoCount = $derived(allIssues.filter((i) => i.status === 'todo').length);
   let doingIssues = $derived(allIssues.filter((i) => i.status === 'doing'));
   let inReviewIssues = $derived(allIssues.filter((i) => i.status === 'in_review'));
   let blockedIssues = $derived(allIssues.filter((i) => isBlocked(i)));
@@ -52,7 +64,7 @@
   let filteredIssues = $derived.by(() => {
     switch (filter) {
       case 'todo':
-        return todoIssues;
+        return readyIssues;
       case 'doing':
         return doingIssues;
       case 'in_review':
@@ -118,6 +130,7 @@
   let isReordering = $state(false);
 
   async function handleDndConsider(e: CustomEvent) {
+    dismissReorderHint();
     visibleIssues = e.detail.items;
   }
 
@@ -220,9 +233,7 @@
     }
   });
 
-  // Issue sheet state
-  let sheetOpen = $state(false);
-  let selectedIssue = $state<Issue | null>(null);
+  // Note: Using global stores for issue sheet state (isIssueSheetOpen, selectedIssueStore)
 </script>
 
 <div class="space-y-6">
@@ -245,8 +256,11 @@
       <Button onclick={() => (showAllSubIssues = !showAllSubIssues)} variant="outline">
         {showAllSubIssues ? 'Hide Sub-issues' : 'Show All Sub-issues'}
       </Button>
-      <Button onclick={() => (showInlineForm = !showInlineForm)}>
-        {showInlineForm ? 'Cancel' : 'Add Issue'}
+      <Button
+        onclick={() => openCreateIssueSheet()}
+        class="bg-primary hover:bg-primary-hover text-white"
+      >
+        New Issue
       </Button>
     </div>
   </div>
@@ -271,8 +285,13 @@
         <TabsTrigger value="all" onclick={() => setFilter('all')}
           >All ({allIssues.length})</TabsTrigger
         >
-        <TabsTrigger value="todo" onclick={() => setFilter('todo')}
-          >Todo ({todoIssues.length})</TabsTrigger
+        <TabsTrigger
+          value="todo"
+          onclick={() => setFilter('todo')}
+          title="Todo status with no blockers"
+          >Ready ({readyIssues.length}{blockedIssues.length > 0
+            ? ` of ${totalTodoCount}`
+            : ''})</TabsTrigger
         >
         <TabsTrigger value="doing" onclick={() => setFilter('doing')}
           >In Progress ({doingIssues.length})</TabsTrigger
@@ -294,7 +313,40 @@
       <!-- Issue List -->
       <TabsContent value={filter} class="mt-4">
         {#if visibleIssues.length === 0}
-          <p class="text-center text-muted-foreground py-8">No issues in this filter</p>
+          {#if filter === 'all' && allIssues.length === 0}
+            <EmptyState
+              icon={ListTodo}
+              title="No issues in this epic"
+              description="Add an issue to start tracking work"
+              ctaLabel="New Issue"
+              onCtaClick={() => (showInlineForm = true)}
+            />
+          {:else if filter === 'blocked'}
+            <EmptyState
+              icon={PartyPopper}
+              title="Nothing blocked!"
+              description="All issues in this epic are flowing smoothly"
+              variant="positive"
+            />
+          {:else if filter === 'done'}
+            <EmptyState
+              icon={CircleCheckBig}
+              title="No completed issues"
+              description="Completed issues will appear here"
+              variant="subtle"
+            />
+          {:else}
+            <EmptyState
+              icon={Inbox}
+              title="No {filter === 'doing'
+                ? 'in progress'
+                : filter === 'in_review'
+                  ? 'in review'
+                  : filter} issues"
+              description="Issues will appear here when their status changes"
+              variant="subtle"
+            />
+          {/if}
         {:else}
           <div
             class="border rounded-lg divide-y"
@@ -323,6 +375,7 @@
                 onMoveDown={index < visibleIssues.length - 1
                   ? () => handleMoveDown(issue.id)
                   : null}
+                showReorderHint={index === 0}
               />
             {/each}
           </div>
@@ -344,11 +397,13 @@
 
 <!-- Issue Detail Sheet -->
 <IssueSheet
-  bind:open={sheetOpen}
-  issue={selectedIssue}
+  bind:open={$isIssueSheetOpen}
+  mode={$selectedIssueStore ? 'edit' : 'create'}
+  issue={$selectedIssueStore}
   epics={data.epics || []}
   milestones={data.milestones || []}
   projectIssues={data.issues || []}
+  projects={[{ id: data.epic?.project_id || '', name: data.epic?.project?.name || '' }]}
   userId={data.session?.user?.id ?? ''}
 />
 

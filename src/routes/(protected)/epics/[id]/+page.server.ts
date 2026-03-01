@@ -140,8 +140,8 @@ export const actions: Actions = {
     // 2. Parse form data
     const formData = await request.formData();
     const titleRaw = formData.get('title')?.toString().trim();
-    let epicId = formData.get('epic_id')?.toString();
-    const projectId = formData.get('project_id')?.toString();
+    let epicId = formData.get('epicId')?.toString();
+    const projectId = formData.get('projectId')?.toString();
     const parentIssueId = formData.get('parent_issue_id')?.toString() || null;
 
     // 3. Validation

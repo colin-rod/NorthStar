@@ -19,6 +19,7 @@
   import TreeToolbar from './TreeToolbar.svelte';
   import TreeRow from './TreeRow.svelte';
   import AddRow from './AddRow.svelte';
+  import GroupHeader from '$lib/components/GroupHeader.svelte';
   import { flattenTree, getVisibleNodes, calculateIndentation } from '$lib/utils/tree-grid-helpers';
   import { updateAllNodeRollups } from '$lib/utils/rollup-calculations';
   import { dndzone } from 'svelte-dnd-action';
@@ -26,6 +27,8 @@
   import { calculateNewSortOrders, calculateReparentUpdates } from '$lib/utils/reorder';
   import { invalidateAll } from '$app/navigation';
   import { buildBreadcrumb } from '$lib/utils/breadcrumb';
+  import { groupIssues } from '$lib/utils/group-issues';
+  import { dismissReorderHint } from '$lib/stores/ui-hints';
 
   interface Props {
     projects: (Project & {
@@ -37,6 +40,7 @@
     expandedIds: Set<string>;
     selectedIds: Set<string>;
     editMode: boolean;
+    groupBy?: string;
     onToggleExpand: (id: string) => void;
     onToggleSelect: (id: string) => void;
     onEditModeChange: (enabled: boolean) => void;
@@ -60,6 +64,7 @@
     expandedIds,
     selectedIds,
     editMode,
+    groupBy = 'none',
     onToggleExpand,
     onToggleSelect,
     onEditModeChange,
@@ -82,6 +87,107 @@
 
   // Filter to visible nodes based on expansion
   let visibleNodes = $derived(getVisibleNodes(allNodes, expandedIds));
+
+  // When grouping is enabled, inject group headers between issue groups within each epic
+  interface GroupHeaderNode {
+    id: string;
+    type: 'group-header';
+    level: 2;
+    parentId: string;
+    groupKey: string;
+    label: string;
+    issueCount: number;
+    totalStoryPoints: number;
+    completionPercent: number;
+    isExpanded: boolean;
+  }
+
+  type DisplayNode = TreeNode | GroupHeaderNode;
+
+  let groupExpandedIds = $state<Set<string>>(new Set());
+
+  let displayNodes = $derived.by((): DisplayNode[] => {
+    if (groupBy === 'none') {
+      return visibleNodes;
+    }
+
+    const result: DisplayNode[] = [];
+
+    for (let i = 0; i < visibleNodes.length; i++) {
+      const node = visibleNodes[i];
+      result.push(node);
+
+      // Check if this is an expanded epic
+      if (node.type === 'epic' && expandedIds.has(node.id)) {
+        // Get all child issues of this epic
+        const epicIssues = visibleNodes
+          .filter((n) => n.parentId === node.id && n.type === 'issue')
+          .map((n) => n.data as Issue);
+
+        if (epicIssues.length > 0) {
+          // Group the issues
+          const groups = groupIssues(epicIssues, groupBy);
+
+          // For each group, add group header and issues
+          for (const group of groups) {
+            const groupHeaderId = `${node.id}-group-${group.groupKey}`;
+            const isGroupExpanded = groupExpandedIds.has(groupHeaderId);
+
+            // Calculate completion percentage
+            const doneIssues = group.items.filter((issue) => issue.status === 'done').length;
+            const completionPercent = group.count > 0 ? (doneIssues / group.count) * 100 : 0;
+
+            // Calculate total story points
+            const totalStoryPoints = group.items.reduce(
+              (sum, issue) => sum + (issue.story_points || 0),
+              0,
+            );
+
+            // Add group header
+            result.push({
+              id: groupHeaderId,
+              type: 'group-header',
+              level: 2,
+              parentId: node.id,
+              groupKey: group.groupKey,
+              label: group.label || 'Ungrouped',
+              issueCount: group.count,
+              totalStoryPoints,
+              completionPercent,
+              isExpanded: isGroupExpanded,
+            });
+
+            // Add issues in this group (only if group is expanded)
+            if (isGroupExpanded) {
+              const groupIssueIds = new Set(group.items.map((issue) => issue.id));
+              const groupIssueNodes = visibleNodes.filter(
+                (n) => groupIssueIds.has(n.id) && n.type === 'issue',
+              );
+              result.push(...groupIssueNodes);
+
+              // Also include sub-issues if their parent issue is expanded
+              for (const issueNode of groupIssueNodes) {
+                if (expandedIds.has(issueNode.id)) {
+                  const subIssues = visibleNodes.filter(
+                    (n) => n.parentId === issueNode.id && n.type === 'sub-issue',
+                  );
+                  result.push(...subIssues);
+                }
+              }
+            }
+          }
+
+          // Skip the original issue nodes (we've already added them via groups)
+          // Move index forward to skip all issues belonging to this epic
+          while (i + 1 < visibleNodes.length && visibleNodes[i + 1].parentId === node.id) {
+            i++;
+          }
+        }
+      }
+    }
+
+    return result;
+  });
 
   // Get the deepest expanded node for breadcrumb
   // When multiple nodes are expanded (e.g., project + epic), use the deepest one
@@ -112,12 +218,27 @@
 
   // Mark nodes with drag metadata
   let nodesWithDragState = $derived.by(() => {
-    return visibleNodes.map((node) => ({
-      ...node,
-      isDragging: node.id === dragDropState.draggingNodeId,
-      isValidDropTarget: dragDropState.validDropTargetIds.has(node.id),
-    }));
+    return displayNodes.map((node) => {
+      if (node.type === 'group-header') {
+        return node; // Group headers don't have drag state
+      }
+      return {
+        ...node,
+        isDragging: node.id === dragDropState.draggingNodeId,
+        isValidDropTarget: dragDropState.validDropTargetIds.has(node.id),
+      };
+    });
   });
+
+  function toggleGroupExpansion(groupId: string) {
+    const newExpanded = new Set(groupExpandedIds);
+    if (newExpanded.has(groupId)) {
+      newExpanded.delete(groupId);
+    } else {
+      newExpanded.add(groupId);
+    }
+    groupExpandedIds = newExpanded;
+  }
 
   /**
    * Determines if an AddRow should be shown after the current node.
@@ -155,26 +276,27 @@
 
   // Column definitions (per spec)
   const columns = [
-    { key: 'drag', header: '', width: '40px' },
-    { key: 'select', header: '', width: '40px' },
-    { key: 'title', header: 'Title', width: 'flex min-w-[340px]' },
-    { key: 'status', header: 'Status', width: '140px' },
-    { key: 'milestone', header: 'Milestone', width: '140px' },
-    { key: 'sp', header: 'SP', width: '72px' },
-    { key: 'total_sp', header: 'Total SP', width: '96px' },
-    { key: 'progress', header: 'Progress', width: '140px' },
+    { key: 'drag', header: '', width: '40px', hideOnMobile: true },
+    { key: 'select', header: '', width: '40px', hideOnMobile: true },
+    { key: 'title', header: 'Title', width: 'flex min-w-[340px]', hideOnMobile: false },
+    { key: 'status', header: 'Status', width: '140px', hideOnMobile: false },
+    { key: 'milestone', header: 'Milestone', width: '140px', hideOnMobile: true },
+    { key: 'sp', header: 'SP', width: '72px', hideOnMobile: true },
+    { key: 'total_sp', header: 'Total SP', width: '96px', hideOnMobile: true },
+    { key: 'progress', header: 'Progress', width: '140px', hideOnMobile: true },
   ];
 
   // Drag-drop handlers
   function handleDragStart(e: any) {
+    dismissReorderHint();
     const draggingNode = nodesWithDragState.find((n) => n.id === e.detail.info.id);
 
-    if (!draggingNode) return;
+    if (!draggingNode || draggingNode.type === 'group-header') return;
 
     dragDropState = {
       draggingNodeId: draggingNode.id,
       draggingNodeType: draggingNode.type,
-      validDropTargetIds: getValidDropTargets(draggingNode, allNodes),
+      validDropTargetIds: getValidDropTargets(draggingNode as TreeNode, allNodes),
     };
   }
 
@@ -305,7 +427,9 @@
         <tr class="border-b border-border-divider">
           {#each columns as col}
             <th
-              class="text-left py-3 px-4 text-metadata uppercase text-foreground-muted tracking-wide"
+              class="text-left py-3 px-4 text-metadata uppercase text-foreground-muted tracking-wide {col.hideOnMobile
+                ? 'hidden md:table-cell'
+                : ''}"
               style="width: {col.width}"
             >
               {col.header}
@@ -317,7 +441,7 @@
       <!-- Body Rows -->
       <tbody
         use:dndzone={{
-          items: nodesWithDragState,
+          items: nodesWithDragState.filter((n) => n.type !== 'group-header'),
           dragDisabled,
           flipDurationMs: 150,
           type: 'tree-nodes',
@@ -328,47 +452,67 @@
         onfinalize={handleDndFinalize}
       >
         {#each nodesWithDragState as node, index (node.id)}
-          <TreeRow
-            {node}
-            {allNodes}
-            isExpanded={expandedIds.has(node.id)}
-            {expandedIds}
-            isSelected={selectedIds.has(node.id)}
-            {editMode}
-            {dragDropState}
-            {onToggleExpand}
-            {onToggleSelect}
-            {onCellEdit}
-            {onIssueClick}
-            {onProjectClick}
-            {onEpicClick}
-            {onContextMenu}
-          />
-
-          <!-- Check if we should show AddRow after this node -->
-          {@const nextNode = nodesWithDragState[index + 1]}
-          {@const parentNode = shouldShowAddRowAfter(node, nextNode, expandedIds, allNodes)}
-          {#if parentNode}
-            {@const childLevel = (parentNode.level + 1) as 1 | 2 | 3}
-            <AddRow
-              {parentNode}
-              level={childLevel}
-              indentation={calculateIndentation(childLevel)}
-              onCreate={(data) => onCreateChild(parentNode.id, parentNode.type, data)}
+          {#if node.type === 'group-header'}
+            <!-- Render GroupHeader -->
+            <tr>
+              <td colspan={columns.length} class="p-0">
+                <GroupHeader
+                  groupName={node.label}
+                  issueCount={node.issueCount}
+                  totalStoryPoints={node.totalStoryPoints}
+                  completionPercent={node.completionPercent}
+                  isExpanded={node.isExpanded}
+                  onclick={() => toggleGroupExpansion(node.id)}
+                />
+              </td>
+            </tr>
+          {:else}
+            <TreeRow
+              {node}
+              {allNodes}
+              isExpanded={expandedIds.has(node.id)}
+              {expandedIds}
+              isSelected={selectedIds.has(node.id)}
+              {editMode}
+              {dragDropState}
+              {onToggleExpand}
+              {onToggleSelect}
+              {onCellEdit}
+              {onIssueClick}
+              {onProjectClick}
+              {onEpicClick}
+              {onContextMenu}
+              showReorderHint={nodesWithDragState.filter((n) => n.type !== 'group-header')[0]
+                ?.id === node.id}
             />
-          {:else if node.type === 'epic' && expandedIds.has(node.id)}
-            <!-- Show AddRow after expanded epic with no visible children -->
-            {@const hasVisibleChildren = nodesWithDragState.some(
-              (n) => n.parentId === node.id && n.type === 'issue',
-            )}
-            {#if !hasVisibleChildren}
-              {@const childLevel = 2}
+
+            <!-- Check if we should show AddRow after this node -->
+            {@const nextNode = nodesWithDragState[index + 1]}
+            {@const nextTreeNode =
+              nextNode && nextNode.type !== 'group-header' ? (nextNode as TreeNode) : undefined}
+            {@const parentNode = shouldShowAddRowAfter(node, nextTreeNode, expandedIds, allNodes)}
+            {#if parentNode}
+              {@const childLevel = (parentNode.level + 1) as 1 | 2 | 3}
               <AddRow
-                parentNode={node}
+                {parentNode}
                 level={childLevel}
                 indentation={calculateIndentation(childLevel)}
-                onCreate={(data) => onCreateChild(node.id, node.type, data)}
+                onCreate={(data) => onCreateChild(parentNode.id, parentNode.type, data)}
               />
+            {:else if node.type === 'epic' && expandedIds.has(node.id) && groupBy === 'none'}
+              <!-- Show AddRow after expanded epic with no visible children (only when not grouping) -->
+              {@const hasVisibleChildren = nodesWithDragState.some(
+                (n) => n.type !== 'group-header' && n.parentId === node.id && n.type === 'issue',
+              )}
+              {#if !hasVisibleChildren}
+                {@const childLevel = 2}
+                <AddRow
+                  parentNode={node}
+                  level={childLevel}
+                  indentation={calculateIndentation(childLevel)}
+                  onCreate={(data) => onCreateChild(node.id, node.type, data)}
+                />
+              {/if}
             {/if}
           {/if}
         {/each}

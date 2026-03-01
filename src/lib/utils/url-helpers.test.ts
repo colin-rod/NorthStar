@@ -200,6 +200,31 @@ describe('parseStatuses', () => {
       'canceled',
     ]);
   });
+
+  it('parses "ready" virtual status', () => {
+    expect(parseStatuses('ready')).toEqual(['ready']);
+  });
+
+  it('parses "blocked" virtual status', () => {
+    expect(parseStatuses('blocked')).toEqual(['blocked']);
+  });
+
+  it('parses virtual statuses combined with real statuses', () => {
+    expect(parseStatuses('ready,doing')).toEqual(['ready', 'doing']);
+    expect(parseStatuses('blocked,todo')).toEqual(['blocked', 'todo']);
+  });
+
+  it('handles all statuses including virtual ones', () => {
+    expect(parseStatuses('ready,blocked,todo,doing,in_review,done,canceled')).toEqual([
+      'ready',
+      'blocked',
+      'todo',
+      'doing',
+      'in_review',
+      'done',
+      'canceled',
+    ]);
+  });
 });
 
 describe('parseStoryPoints', () => {

@@ -36,9 +36,14 @@
   // Status dot color mapping
   const getStatusColor = (status: string) => {
     if (status === 'active') return 'bg-primary';
-    if (status === 'done') return 'bg-green-500';
+    if (status === 'done') return 'bg-status-done';
     return 'bg-muted-foreground'; // canceled
   };
+
+  const formatStatusLabel = (status: string) =>
+    status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+
+  let statusLabel = $derived(formatStatusLabel(epic.status));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -64,50 +69,56 @@
       {/if}
     </button>
 
-    <!-- Status Dot -->
-    <div class="flex items-center pt-1.5 shrink-0">
-      <div class="w-1.5 h-1.5 rounded-full {getStatusColor(epic.status)}"></div>
-    </div>
-
     <!-- Clickable Content Area -->
-    <button onclick={onOpenSheet} class="flex-1 text-left min-w-0">
-      <!-- Epic Name: 16px, weight 500 (medium bold-ish) -->
-      <h3 class="text-section-header truncate">{epic.name}</h3>
-
-      <!-- Counts Row with Badges -->
-      <div class="flex gap-3 mt-2">
-        <div class="flex items-center gap-1.5">
-          <Badge variant="default" class="text-xs">{counts.ready}</Badge>
-          <span class="text-metadata text-foreground-secondary">Ready</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
-          <span class="text-metadata text-foreground-secondary">Doing</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
-          <span class="text-metadata text-foreground-secondary">In Review</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
-          <span class="text-metadata text-foreground-secondary">Blocked</span>
-        </div>
+    <button onclick={onOpenSheet} class="flex-1 text-left min-w-0 flex items-start gap-3">
+      <!-- Status Dot -->
+      <div class="flex items-center pt-1.5 shrink-0">
+        <div
+          class="w-2 h-2 md:w-3 md:h-3 rounded-full {getStatusColor(epic.status)}"
+          aria-hidden="true"
+        ></div>
+        <span class="sr-only">{statusLabel}</span>
       </div>
 
-      <!-- Progress Bar -->
-      {#if progress.total > 0}
-        <div class="mt-3 flex items-center gap-2">
-          <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-            <div
-              class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-              style="width: {progress.percentage}%"
-            ></div>
+      <div class="flex-1 min-w-0">
+        <!-- Epic Name: 16px, weight 500 (medium bold-ish) -->
+        <h3 class="text-section-header truncate">{epic.name}</h3>
+
+        <!-- Counts Row with Badges -->
+        <div class="flex gap-3 mt-2">
+          <div class="flex items-center gap-1.5">
+            <Badge variant="default" class="text-xs">{counts.ready}</Badge>
+            <span class="text-metadata text-foreground-secondary">Ready</span>
           </div>
-          <span class="text-metadata text-foreground-secondary shrink-0">
-            {progress.percentage}%
-          </span>
+          <div class="flex items-center gap-1.5">
+            <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
+            <span class="text-metadata text-foreground-secondary">Doing</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
+            <span class="text-metadata text-foreground-secondary">In Review</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
+            <span class="text-metadata text-foreground-secondary">Blocked</span>
+          </div>
         </div>
-      {/if}
+
+        <!-- Progress Bar -->
+        {#if progress.total > 0}
+          <div class="mt-3 flex items-center gap-2">
+            <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+              <div
+                class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+                style="width: {progress.percentage}%"
+              ></div>
+            </div>
+            <span class="text-metadata text-foreground-secondary shrink-0">
+              {progress.percentage}%
+            </span>
+          </div>
+        {/if}
+      </div>
     </button>
   </div>
 </div>

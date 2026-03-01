@@ -13,6 +13,9 @@
         left: 'data-[state=closed]:slide-out-to-start data-[state=open]:slide-in-from-start inset-y-0 start-0 h-full w-3/4 border-e border-border sm:max-w-sm rounded-e-lg',
         right:
           'data-[state=closed]:slide-out-to-end data-[state=open]:slide-in-from-end inset-y-0 end-0 h-full w-full border-s border-border sm:max-w-[600px] rounded-s-lg',
+        /* Center peek: full-screen centered modal for desktop expand mode */
+        center:
+          'data-[state=open]:fade-in data-[state=closed]:fade-out inset-4 md:inset-8 w-auto h-auto max-h-[calc(100vh-4rem)] overflow-y-auto rounded-xl border border-border',
       },
     },
     defaultVariants: {
@@ -37,6 +40,7 @@
     ref = $bindable(null),
     class: className,
     side = 'bottom',
+    expanded = false,
     portalProps,
     onOpenChange,
     children,
@@ -44,13 +48,16 @@
   }: WithoutChildrenOrChild<SheetPrimitive.ContentProps> & {
     portalProps?: WithoutChildrenOrChild<ComponentProps<typeof SheetPortal>>;
     side?: Side;
+    expanded?: boolean;
     onOpenChange?: (open: boolean) => void;
     children: Snippet;
   } = $props();
 
+  const effectiveSide = $derived<Side>(expanded ? 'center' : side);
+
   // Enable swipe-to-dismiss for bottom sheet only
   $effect(() => {
-    if (side === 'bottom' && ref && onOpenChange) {
+    if (effectiveSide === 'bottom' && ref && onOpenChange) {
       useSwipeToDismiss(ref, () => onOpenChange(false));
     }
   });
@@ -61,7 +68,7 @@
   <SheetPrimitive.Content
     bind:ref
     data-slot="sheet-content"
-    class={cn(sheetVariants({ side }), className)}
+    class={cn(sheetVariants({ side: effectiveSide }), className)}
     {...restProps}
   >
     {@render children?.()}

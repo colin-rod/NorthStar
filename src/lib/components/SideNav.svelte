@@ -15,13 +15,14 @@
   import { cn } from '$lib/utils';
 
   // Derive active states from current pathname
-  $: pathname = $page.url.pathname;
-  $: isHome = pathname === '/';
-  $: isProjects = pathname.startsWith('/projects');
+  const pathname = $derived($page.url.pathname);
+  const isHome = $derived(pathname === '/');
+  const isProjects = $derived(pathname.startsWith('/projects'));
 </script>
 
 <!-- North Design: Clean sidebar with subtle styling -->
 <nav
+  aria-label="Main navigation"
   class="fixed left-0 top-0 h-screen w-64 border-r border-border-divider bg-surface hidden md:block"
 >
   <div class="flex flex-col h-full">
@@ -31,12 +32,11 @@
     </div>
 
     <!-- Navigation items -->
-    <div class="flex-1 p-4 space-y-1" style="display: flex; flex-direction: column; gap: 0.25rem;">
+    <div class="flex-1 p-4 space-y-1">
       <a
         href="/"
         aria-label="Home"
         aria-current={isHome ? 'page' : undefined}
-        style="display: flex; align-items: center; gap: 0.75rem;"
         class={cn(
           'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
           isHome
@@ -52,7 +52,6 @@
         href="/projects"
         aria-label="Projects"
         aria-current={isProjects ? 'page' : undefined}
-        style="display: flex; align-items: center; gap: 0.75rem;"
         class={cn(
           'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
           isProjects

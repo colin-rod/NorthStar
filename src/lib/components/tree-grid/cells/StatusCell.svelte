@@ -64,7 +64,7 @@
 {:else}
   <!-- Display Mode: Dot + Label -->
   <div class="flex items-center gap-2">
-    <div class="w-1.5 h-1.5 rounded-full {currentOption?.color || 'bg-gray-400'}"></div>
+    <div class="w-2 h-2 md:w-3 md:h-3 rounded-full {currentOption?.color || 'bg-gray-400'}"></div>
     <span class="text-foreground {compact ? 'text-xs' : ''}">{currentOption?.label || status}</span>
   </div>
 {/if}

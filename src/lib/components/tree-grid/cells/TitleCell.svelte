@@ -14,6 +14,7 @@
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import TreeLine from './TreeLine.svelte';
+  import DependencyChip from '$lib/components/DependencyChip.svelte';
   import { isLastChild } from '$lib/utils/tree-grid-helpers';
 
   interface Props {
@@ -70,6 +71,9 @@
       return 'I';
     }
   });
+
+  // Check if node is an issue type for dependency chip
+  const isIssueNode = $derived(node.type === 'issue' || node.type === 'sub-issue');
 
   // Compute if this node is the last child
   const nodeIsLastChild = $derived(isLastChild(node, allNodes));
@@ -156,21 +160,30 @@
       onblur={saveEdit}
       class="flex-1 px-2 py-1 text-sm border border-accent rounded focus:outline-none focus:ring-1 focus:ring-accent {fontWeight}"
     />
-  {:else}
-    <span
-      class="text-issue-title {fontWeight} truncate flex-1 {editMode ? 'cursor-text' : ''}"
+  {:else if editMode}
+    <button
+      type="button"
+      class="text-issue-title {fontWeight} truncate flex-1 cursor-text text-left bg-transparent border-0 p-0 hover:bg-transparent"
       onclick={startEditing}
-      onkeydown={editMode
-        ? (e) => {
-            if (e.key === 'Enter' || e.key === ' ') startEditing();
-          }
-        : undefined}
-      role={editMode ? 'button' : undefined}
-      tabindex={editMode ? 0 : undefined}
+      onkeydown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') startEditing();
+      }}
     >
       <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
       <span class="mx-1 text-muted-foreground">·</span>
       {title}
+    </button>
+    {#if isIssueNode}
+      <DependencyChip issue={node.data as Issue} />
+    {/if}
+  {:else}
+    <span class="text-issue-title {fontWeight} truncate flex-1">
+      <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
+      <span class="mx-1 text-muted-foreground">·</span>
+      {title}
     </span>
+    {#if isIssueNode}
+      <DependencyChip issue={node.data as Issue} />
+    {/if}
   {/if}
 </div>

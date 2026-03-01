@@ -217,7 +217,8 @@ export type SortByColumn =
   | 'project'
   | 'epic'
   | 'milestone'
-  | 'story_points';
+  | 'story_points'
+  | 'progress';
 
 export type SortDirection = 'asc' | 'desc';
 

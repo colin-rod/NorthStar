@@ -2,15 +2,22 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
+import type { Project } from '$lib/types';
+import { filterTree } from '$lib/utils/filter-tree';
 import { computeIssueCounts } from '$lib/utils/issue-counts';
 import { computeProjectMetrics } from '$lib/utils/project-helpers';
+import { sortTree } from '$lib/utils/sort-tree';
+import { parseTreeFilterParams } from '$lib/utils/tree-filter-params';
 
-export const load: PageServerLoad = async ({ locals: { supabase, session } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase, session }, url }) => {
   if (!session) {
     redirect(303, '/auth/login');
   }
 
-  // Load all active projects
+  // Parse filter params from URL
+  const filterParams = parseTreeFilterParams(url.searchParams);
+
+  // Load all active projects (unfiltered)
   const { data: projects, error: projectsError } = await supabase
     .from('projects')
     .select('*')
@@ -19,7 +26,10 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
 
   if (projectsError) {
     console.error('Error loading projects:', projectsError);
-    return { projects: [] };
+    return {
+      projects: [],
+      filterParams,
+    };
   }
 
   // For each project, load epics with issues and dependencies
@@ -75,6 +85,18 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     }),
   );
 
+  // Apply server-side filters
+  const filteredProjects = filterTree(projectsWithData as Project[], {
+    projectStatus: filterParams.projectStatus,
+    epicStatus: filterParams.epicStatus,
+    issuePriority: filterParams.issuePriority,
+    issueStatus: filterParams.issueStatus,
+    issueStoryPoints: filterParams.issueStoryPoints,
+  }) as typeof projectsWithData;
+
+  // Apply sorting
+  const sortedProjects = sortTree(filteredProjects, filterParams.sortBy, filterParams.sortDir);
+
   // Load milestones for EpicDetailSheet milestone picker
   const { data: milestones } = await supabase
     .from('milestones')
@@ -82,8 +104,9 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     .order('due_date', { ascending: true, nullsFirst: false });
 
   return {
-    projects: projectsWithData,
+    projects: sortedProjects,
     milestones: milestones || [],
+    filterParams,
   };
 };
 
@@ -129,24 +152,43 @@ export const actions: Actions = {
 
     const formData = await request.formData();
     const id = formData.get('id')?.toString();
-    const name = formData.get('name')?.toString().trim();
 
     if (!id) {
       return fail(400, { error: 'Project ID is required' });
     }
-    if (!name || name.length === 0) {
-      return fail(400, { error: 'Project name is required' });
-    }
-    if (name.length > 100) {
-      return fail(400, { error: 'Project name must be 100 characters or less' });
-    }
 
-    const updates: Record<string, unknown> = { name };
+    const updates: Record<string, unknown> = {};
+
+    const name = formData.get('name');
+    if (name !== null) {
+      const trimmedName = name.toString().trim();
+      if (trimmedName.length === 0) {
+        return fail(400, { error: 'Project name is required' });
+      }
+      if (trimmedName.length > 100) {
+        return fail(400, { error: 'Project name must be 100 characters or less' });
+      }
+      updates.name = trimmedName;
+    }
 
     // Description (rich text HTML, optional field)
     const description = formData.get('description');
     if (description !== null) {
       updates.description = description.toString() === '' ? null : description.toString();
+    }
+
+    // Status
+    const status = formData.get('status');
+    if (status !== null) {
+      const s = status.toString();
+      if (!['active', 'done', 'canceled'].includes(s)) {
+        return fail(400, { error: 'Invalid status value' });
+      }
+      updates.status = s;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return { success: true, action: 'update' };
     }
 
     const { error } = await supabase
@@ -430,6 +472,149 @@ export const actions: Actions = {
     return { success: true, action: 'createSubIssue', subIssue: data };
   },
 
+  updateIssue: async ({ request, locals: { supabase, session } }) => {
+    // 1. Auth check
+    if (!session) {
+      return fail(401, { error: 'Unauthorized' });
+    }
+
+    // 2. Parse form data
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) {
+      return fail(400, { error: 'Issue ID is required' });
+    }
+
+    // 3. Build update object from form data
+    const updates: Record<string, string | number | null> = {};
+
+    // Title
+    const title = formData.get('title')?.toString();
+    if (title !== undefined) {
+      if (title.trim().length === 0) {
+        return fail(400, { error: 'Issue title cannot be empty' });
+      }
+      updates.title = title.trim();
+    }
+
+    // Status
+    const status = formData.get('status')?.toString();
+    if (status !== undefined) {
+      const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+      if (!validStatuses.includes(status)) {
+        return fail(400, { error: 'Invalid status value' });
+      }
+      updates.status = status;
+    }
+
+    // Priority
+    const priority = formData.get('priority')?.toString();
+    if (priority !== undefined) {
+      const priorityNum = parseInt(priority);
+      if (isNaN(priorityNum) || priorityNum < 0 || priorityNum > 3) {
+        return fail(400, { error: 'Priority must be between 0 and 3' });
+      }
+      updates.priority = priorityNum;
+    }
+
+    // Story points
+    const storyPointsStr = formData.get('story_points')?.toString();
+    if (storyPointsStr !== undefined) {
+      if (storyPointsStr === '' || storyPointsStr === 'null') {
+        updates.story_points = null;
+      } else {
+        const storyPoints = parseInt(storyPointsStr);
+        if (isNaN(storyPoints)) {
+          return fail(400, { error: 'Invalid story points value' });
+        }
+        const validStoryPoints = [1, 2, 3, 5, 8, 13, 21];
+        if (!validStoryPoints.includes(storyPoints)) {
+          return fail(400, { error: 'Story points must be one of: 1, 2, 3, 5, 8, 13, 21' });
+        }
+        updates.story_points = storyPoints;
+      }
+    }
+
+    // Epic ID
+    const epicId = formData.get('epic_id')?.toString();
+    if (epicId !== undefined) {
+      // Check if this is a sub-issue (has parent_issue_id)
+      const { data: issue } = await supabase
+        .from('issues')
+        .select('parent_issue_id, project_id')
+        .eq('id', id)
+        .single();
+
+      if (!issue) {
+        return fail(404, { error: 'Issue not found' });
+      }
+
+      // Block epic changes for sub-issues
+      if (issue.parent_issue_id) {
+        return fail(400, {
+          error: 'Cannot change epic for sub-issues - they inherit from parent',
+        });
+      }
+
+      // Verify epic exists and belongs to same project as issue
+      const { data: epic, error: epicError } = await supabase
+        .from('epics')
+        .select('id, project_id')
+        .eq('id', epicId)
+        .eq('project_id', issue.project_id)
+        .single();
+
+      if (epicError || !epic) {
+        return fail(400, { error: 'Epic not found or does not belong to same project' });
+      }
+
+      updates.epic_id = epicId;
+    }
+
+    // Milestone ID
+    const milestoneId = formData.get('milestone_id')?.toString();
+    if (milestoneId !== undefined) {
+      if (milestoneId === '' || milestoneId === 'null') {
+        updates.milestone_id = null;
+      } else {
+        // Verify milestone exists
+        const { data: milestone, error: milestoneError } = await supabase
+          .from('milestones')
+          .select('id')
+          .eq('id', milestoneId)
+          .single();
+
+        if (milestoneError || !milestone) {
+          return fail(400, { error: 'Milestone not found' });
+        }
+
+        updates.milestone_id = milestoneId;
+      }
+    }
+
+    // Description (rich text HTML)
+    const description = formData.get('description');
+    if (description !== null) {
+      updates.description = description.toString() === '' ? null : description.toString();
+    }
+
+    // 4. Update issue in database
+    const { data, error: updateError } = await supabase
+      .from('issues')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Failed to update issue:', updateError);
+      return fail(500, { error: 'Failed to update issue' });
+    }
+
+    return { success: true, action: 'updateIssue', issue: data };
+  },
+
   updateCell: async ({ request, locals: { supabase, session } }) => {
     if (!session) return fail(401, { error: 'Unauthorized' });
 
@@ -663,6 +848,29 @@ export const actions: Actions = {
     const id = formData.get('id')?.toString();
 
     if (!id) return fail(400, { error: 'Epic ID is required' });
+
+    // Get the epic's project_id
+    const { data: epic } = await supabase.from('epics').select('project_id').eq('id', id).single();
+    if (!epic) return fail(404, { error: 'Epic not found' });
+
+    // Find the project's default (Unassigned) epic
+    const { data: defaultEpic } = await supabase
+      .from('epics')
+      .select('id')
+      .eq('project_id', epic.project_id)
+      .eq('is_default', true)
+      .single();
+    if (!defaultEpic) return fail(500, { error: 'Default epic not found' });
+
+    // Reassign all issues from deleted epic to Unassigned
+    const { error: reassignError } = await supabase
+      .from('issues')
+      .update({ epic_id: defaultEpic.id })
+      .eq('epic_id', id);
+    if (reassignError) {
+      console.error('Reassign issues error:', reassignError);
+      return fail(500, { error: 'Failed to reassign issues' });
+    }
 
     const { error } = await supabase.from('epics').delete().eq('id', id);
 

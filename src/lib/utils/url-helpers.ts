@@ -70,7 +70,7 @@ export function parseStatuses(param: string | null): string[] {
     return [];
   }
 
-  const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+  const validStatuses = ['ready', 'blocked', 'todo', 'doing', 'in_review', 'done', 'canceled'];
 
   return param
     .split(',')

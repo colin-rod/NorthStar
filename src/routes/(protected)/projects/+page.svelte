@@ -9,18 +9,29 @@
   import { page } from '$app/stores';
   import { goto, invalidateAll } from '$app/navigation';
   import TreeGrid from '$lib/components/tree-grid/TreeGrid.svelte';
-  import ProjectSheet from '$lib/components/ProjectSheet.svelte';
   import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
-  import EpicSheet from '$lib/components/EpicSheet.svelte';
   import EpicDetailSheet from '$lib/components/EpicDetailSheet.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
-  import { Button } from '$lib/components/ui/button';
+  import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
+  import FilterPanel from '$lib/components/FilterPanel.svelte';
+  import IssueGroupBySelector from '$lib/components/IssueGroupBySelector.svelte';
+  import IssueSortBySelector from '$lib/components/IssueSortBySelector.svelte';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
+  import { computeIssueCounts } from '$lib/utils/issue-counts';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
-  import { isIssueSheetOpen, selectedIssue, openIssueSheet } from '$lib/stores/issues';
+  import {
+    isIssueSheetOpen,
+    selectedIssue,
+    openIssueSheet,
+    openCreateIssueSheet,
+    projectSheetOpen,
+  } from '$lib/stores/issues';
   import ContextMenu from '$lib/components/ContextMenu.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import FolderOpen from '@lucide/svelte/icons/folder-open';
+  import SearchX from '@lucide/svelte/icons/search-x';
   import type { TreeNode } from '$lib/types/tree-grid';
 
   let { data }: { data: PageData } = $props();
@@ -42,26 +53,21 @@
   let selectedIds = $state<Set<string>>(new Set());
   let editMode = $state(false);
 
-  // Sheet state management
-  let projectSheetOpen = $state(false);
-  let projectSheetMode: 'create' | 'edit' = $state('create');
-  let selectedProject: Project | undefined = $state(undefined);
-
-  let epicSheetOpen = $state(false);
-  let epicSheetMode: 'create' | 'edit' = $state('create');
-  let selectedEpic: Epic | undefined = $state(undefined);
-  let epicCreateProjectId: string | undefined = $state(undefined);
-
-  // Detail sheet state (opened via double-click)
+  // Project detail sheet state (handles both create and edit)
   let projectDetailSheetOpen = $state(false);
+  let projectDetailSheetMode: 'create' | 'edit' = $state('edit');
   let selectedProjectForDetail: Project | null = $state(null);
   let selectedProjectCounts: IssueCounts | null = $state(null);
   let selectedProjectMetrics: ProjectMetrics | null = $state(null);
   let selectedProjectEpics: Epic[] = $state([]);
 
+  // Epic detail sheet state (handles both create and edit)
   let epicDetailSheetOpen = $state(false);
+  let epicDetailSheetMode: 'create' | 'edit' = $state('edit');
+  let epicCreateProjectId: string | null = $state(null);
   let selectedEpicForDetail: Epic | null = $state(null);
   let selectedEpicCounts: IssueCounts | null = $state(null);
+  let selectedEpicIssues: Issue[] = $state([]);
 
   // Context menu state
   let contextMenuOpen = $state(false);
@@ -73,6 +79,41 @@
   let feedbackMessage = $state('');
   let feedbackType: 'success' | 'error' = $state('success');
   let showFeedback = $state(false);
+
+  // Filter panel state
+  let filterPanelOpen = $state(false);
+
+  function toggleFilterPanel() {
+    filterPanelOpen = !filterPanelOpen;
+  }
+
+  // Count active filters
+  let activeFilterCount = $derived.by(() => {
+    const { projectStatus, epicStatus, issuePriority, issueStatus, issueStoryPoints } =
+      data.filterParams;
+    return (
+      projectStatus.length +
+      epicStatus.length +
+      issuePriority.length +
+      issueStatus.length +
+      issueStoryPoints.length
+    );
+  });
+
+  // Sync store with local state for project sheet
+  $effect(() => {
+    if ($projectSheetOpen && !projectDetailSheetOpen) {
+      // Store requested open - trigger create mode
+      openProjectSheetForCreate();
+    }
+  });
+
+  // Sync local state back to store when sheet closes
+  $effect(() => {
+    if (!projectDetailSheetOpen && $projectSheetOpen) {
+      projectSheetOpen.set(false);
+    }
+  });
 
   function toggleExpand(id: string) {
     const url = new URL($page.url);
@@ -222,7 +263,7 @@
       let projectId = '';
 
       for (const project of data.projects) {
-        const issue = project.issues?.find((i: Issue) => i.id === parentId);
+        const issue = project.epics?.flatMap((e) => e.issues || []).find((i) => i.id === parentId);
         if (issue) {
           epicId = issue.epic_id;
           projectId = project.id;
@@ -266,9 +307,12 @@
   }
 
   function openProjectSheetForCreate() {
-    projectSheetMode = 'create';
-    selectedProject = undefined;
-    projectSheetOpen = true;
+    projectDetailSheetMode = 'create';
+    selectedProjectForDetail = null;
+    selectedProjectCounts = null;
+    selectedProjectMetrics = null;
+    selectedProjectEpics = [];
+    projectDetailSheetOpen = true;
   }
 
   function handleProjectDoubleClick(
@@ -277,6 +321,7 @@
     metrics: ProjectMetrics,
     epics: Epic[],
   ) {
+    projectDetailSheetMode = 'edit';
     selectedProjectForDetail = project;
     selectedProjectCounts = counts;
     selectedProjectMetrics = metrics;
@@ -285,8 +330,28 @@
   }
 
   function handleEpicDoubleClick(epic: Epic, counts: IssueCounts) {
+    epicDetailSheetMode = 'edit';
     selectedEpicForDetail = epic;
     selectedEpicCounts = counts;
+    selectedEpicIssues = epic.issues ?? [];
+    epicDetailSheetOpen = true;
+  }
+
+  function handleEpicClickFromProjectSheet(epic: Epic) {
+    epicDetailSheetMode = 'edit';
+    selectedEpicForDetail = epic;
+    selectedEpicCounts = computeIssueCounts(epic.issues ?? []);
+    selectedEpicIssues = epic.issues ?? [];
+    epicDetailSheetOpen = true;
+  }
+
+  function handleAddEpicFromProjectSheet() {
+    if (!selectedProjectForDetail) return;
+    epicDetailSheetMode = 'create';
+    epicCreateProjectId = selectedProjectForDetail.id;
+    selectedEpicForDetail = null;
+    selectedEpicCounts = null;
+    selectedEpicIssues = [];
     epicDetailSheetOpen = true;
   }
 
@@ -335,27 +400,38 @@
 
   function handleContextRename(node: TreeNode) {
     if (node.type === 'project') {
+      projectDetailSheetMode = 'edit';
       selectedProjectForDetail = node.data as Project;
+      // Would need to fetch counts/metrics/epics, but for rename we can use null
+      selectedProjectCounts = null;
+      selectedProjectMetrics = null;
+      selectedProjectEpics = [];
       projectDetailSheetOpen = true;
     } else if (node.type === 'epic') {
+      epicDetailSheetMode = 'edit';
       selectedEpicForDetail = node.data as Epic;
+      selectedEpicCounts = null;
+      selectedEpicIssues = (node.data as Epic).issues ?? [];
       epicDetailSheetOpen = true;
     }
   }
 
   function handleContextAddChild(node: TreeNode) {
     if (node.type === 'project') {
+      // Add Epic to project
+      epicDetailSheetMode = 'create';
       epicCreateProjectId = node.id;
-      epicSheetMode = 'create';
-      selectedEpic = undefined;
-      epicSheetOpen = true;
+      selectedEpicForDetail = null;
+      selectedEpicCounts = null;
+      epicDetailSheetOpen = true;
     } else if (node.type === 'epic') {
-      // Find the project for this epic
-      const project = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === node.id));
-      if (project) {
-        handleCreateChild(node.id, 'epic', { title: '' });
-      }
+      // Add Issue to epic - open create issue sheet pre-seeded with this epic's project
+      const parentProject = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === node.id));
+      openCreateIssueSheet(
+        parentProject ? { projectId: parentProject.id, epicId: node.id } : undefined,
+      );
     } else if (node.type === 'issue') {
+      // Add Sub-issue to issue - use inline form
       handleCreateChild(node.id, 'issue', { title: '' });
     }
   }
@@ -435,18 +511,65 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Projects</h1>
-    <Button
-      onclick={openProjectSheetForCreate}
-      class="bg-primary hover:bg-primary-hover text-white"
-    >
-      New Project
-    </Button>
+    <div class="flex gap-2 items-center">
+      <!-- Grouping Selector -->
+      <IssueGroupBySelector selectedGroupBy={data.filterParams.groupBy} />
+
+      <!-- Sorting Selector -->
+      <IssueSortBySelector
+        selected={data.filterParams.sortBy}
+        direction={data.filterParams.sortDir}
+      />
+
+      <!-- Filters Button -->
+      <button
+        onclick={toggleFilterPanel}
+        class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+      >
+        Filters
+        {#if activeFilterCount > 0}
+          <span class="rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs">
+            {activeFilterCount}
+          </span>
+        {/if}
+        <span class="text-muted-foreground">{filterPanelOpen ? '▲' : '▼'}</span>
+      </button>
+      <NewButtonDropdown />
+    </div>
   </div>
 
+  <!-- Filter Panel -->
+  <FilterPanel filterParams={data.filterParams} open={filterPanelOpen} />
+
   {#if data.projects.length === 0}
-    <div class="text-center py-12">
-      <p class="text-muted-foreground text-lg">No projects yet. Create your first project.</p>
-    </div>
+    {#if activeFilterCount > 0}
+      <EmptyState
+        icon={SearchX}
+        title="No projects match"
+        description="Try adjusting your filters to see more results"
+        ctaLabel="Clear filters"
+        onCtaClick={() => {
+          const params = new URLSearchParams($page.url.searchParams);
+          params.delete('project_status');
+          params.delete('epic_status');
+          params.delete('priority');
+          params.delete('status');
+          params.delete('story_points');
+          goto(`${$page.url.pathname}?${params.toString()}`, {
+            replaceState: false,
+            noScroll: true,
+          });
+        }}
+      />
+    {:else}
+      <EmptyState
+        icon={FolderOpen}
+        title="No projects yet"
+        description="Projects organize your work into epics and issues"
+        ctaLabel="New Project"
+        onCtaClick={() => projectSheetOpen.set(true)}
+      />
+    {/if}
   {:else}
     <!-- Tree Grid View -->
     <TreeGrid
@@ -454,6 +577,7 @@
       {expandedIds}
       {selectedIds}
       {editMode}
+      groupBy={data.filterParams.groupBy}
       onToggleExpand={toggleExpand}
       onToggleSelect={toggleSelect}
       onEditModeChange={handleEditModeChange}
@@ -469,32 +593,28 @@
   {/if}
 </div>
 
-<!-- Project create/edit sheet -->
-<ProjectSheet bind:open={projectSheetOpen} mode={projectSheetMode} project={selectedProject} />
-
-<!-- Project detail sheet (opened via double-click) -->
+<!-- Project detail sheet (handles both create and edit) -->
 <ProjectDetailSheet
   bind:open={projectDetailSheetOpen}
+  mode={projectDetailSheetMode}
   project={selectedProjectForDetail}
   counts={selectedProjectCounts}
   metrics={selectedProjectMetrics}
   epics={selectedProjectEpics}
   userId={data.session?.user?.id ?? ''}
+  onEpicClick={handleEpicClickFromProjectSheet}
+  onAddEpic={handleAddEpicFromProjectSheet}
 />
 
-<!-- Epic create/edit sheet -->
-<EpicSheet
-  bind:open={epicSheetOpen}
-  mode={epicSheetMode}
-  epic={selectedEpic}
-  projectId={epicCreateProjectId}
-/>
-
-<!-- Epic detail sheet (opened via double-click) -->
+<!-- Epic detail sheet (handles both create and edit) -->
 <EpicDetailSheet
   bind:open={epicDetailSheetOpen}
+  mode={epicDetailSheetMode}
   epic={selectedEpicForDetail}
+  projectId={epicCreateProjectId ?? undefined}
+  projectName={data.projects.find((p) => p.id === epicCreateProjectId)?.name}
   counts={selectedEpicCounts}
+  issues={selectedEpicIssues}
   userId={data.session?.user?.id ?? ''}
   milestones={data.milestones ?? []}
 />
@@ -506,7 +626,7 @@
   issue={$selectedIssue}
   epics={data.projects.flatMap((p) => p.epics || [])}
   milestones={[]}
-  projectIssues={data.projects.flatMap((p) => p.issues || [])}
+  projectIssues={data.projects.flatMap((p) => p.epics?.flatMap((e) => e.issues || []) || [])}
   projects={data.projects}
   userId={data.session?.user?.id ?? ''}
 />
@@ -532,6 +652,8 @@
 <!-- Simple toast-style feedback -->
 {#if showFeedback}
   <div
+    role={feedbackType === 'success' ? 'status' : 'alert'}
+    aria-live={feedbackType === 'success' ? 'polite' : 'assertive'}
     class="fixed bottom-4 right-4 px-4 py-3 rounded-md shadow-lg transition-opacity z-50 {feedbackType ===
     'success'
       ? 'bg-primary text-white'

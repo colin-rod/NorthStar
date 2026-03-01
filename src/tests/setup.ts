@@ -1,6 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
+// Mock scrollIntoView for jsdom (not available in test environment)
+Element.prototype.scrollIntoView = vi.fn();
+
 // Mock the Supabase client module for component tests
 // This prevents components from trying to create a real Supabase client
 vi.mock('$lib/supabase', () => ({

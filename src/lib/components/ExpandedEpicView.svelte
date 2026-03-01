@@ -6,6 +6,10 @@
   import IssueRow from '$lib/components/IssueRow.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
   import X from '@lucide/svelte/icons/x';
+  import EmptyState from '$lib/components/EmptyState.svelte';
+  import ListTodo from '@lucide/svelte/icons/list-todo';
+  import Inbox from '@lucide/svelte/icons/inbox';
+  import PartyPopper from '@lucide/svelte/icons/party-popper';
 
   interface Props {
     epic: Epic;
@@ -135,9 +139,32 @@
 
     <TabsContent value={activeTab} class="mt-4">
       {#if visibleIssues.length === 0}
-        <div class="text-center py-8 text-metadata text-foreground-muted">
-          No issues match this filter
-        </div>
+        {#if activeTab === 'all' && epicIssues.length === 0}
+          <EmptyState
+            icon={ListTodo}
+            title="No issues in this epic"
+            description="Create an issue to start tracking work"
+            variant="subtle"
+          />
+        {:else if activeTab === 'blocked'}
+          <EmptyState
+            icon={PartyPopper}
+            title="Nothing blocked!"
+            description="All issues are flowing smoothly"
+            variant="positive"
+          />
+        {:else}
+          <EmptyState
+            icon={Inbox}
+            title="No {activeTab === 'doing'
+              ? 'in progress'
+              : activeTab === 'in_review'
+                ? 'in review'
+                : activeTab} issues"
+            description="Issues will appear here when their status changes"
+            variant="subtle"
+          />
+        {/if}
       {:else}
         <div class="border rounded-lg divide-y">
           {#each visibleIssues as issue (issue.id)}

@@ -4,7 +4,7 @@
    *
    * Renders context-sensitive actions based on node type:
    * - project: Rename, Status, Add Epic, Archive, Delete
-   * - epic: Rename, Status, Add Issue, Delete
+   * - epic: Rename, Status, Priority, Milestone, Add Issue, Delete
    * - issue: Status, Priority, Story Points, Add Sub-issue, Delete
    * - sub-issue: Status, Priority, Story Points, Delete
    */
@@ -52,6 +52,7 @@
 
   let triggerRef: HTMLElement | null = $state(null);
   let deleteDialogOpen = $state(false);
+  let nodeToDelete = $state<TreeNode | null>(null);
 
   // bits-ui positions the menu content based on the clientX/Y from the contextmenu
   // browser event fired on the trigger — not from the trigger's DOM position.
@@ -95,7 +96,8 @@
 
   function handleDelete() {
     deleteDialogOpen = false;
-    if (node) onDelete?.(node);
+    if (nodeToDelete) onDelete?.(nodeToDelete);
+    nodeToDelete = null;
     onClose();
   }
 </script>
@@ -165,6 +167,7 @@
         <CM.ContextMenuItem
           class="text-destructive focus:text-destructive"
           onclick={() => {
+            nodeToDelete = node;
             deleteDialogOpen = true;
           }}
         >
@@ -194,6 +197,22 @@
                 }}
               >
                 {s.label}
+              </CM.ContextMenuItem>
+            {/each}
+          </CM.ContextMenuSubContent>
+        </CM.ContextMenuSub>
+
+        <CM.ContextMenuSub>
+          <CM.ContextMenuSubTrigger>Priority</CM.ContextMenuSubTrigger>
+          <CM.ContextMenuSubContent>
+            {#each priorities as p}
+              <CM.ContextMenuItem
+                onclick={() => {
+                  onPriorityChange?.(node!, p.value);
+                  onClose();
+                }}
+              >
+                {p.label}
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
@@ -237,6 +256,7 @@
         <CM.ContextMenuItem
           class="text-destructive focus:text-destructive"
           onclick={() => {
+            nodeToDelete = node;
             deleteDialogOpen = true;
           }}
         >
@@ -294,6 +314,30 @@
           </CM.ContextMenuSubContent>
         </CM.ContextMenuSub>
 
+        <CM.ContextMenuSub>
+          <CM.ContextMenuSubTrigger>Milestone</CM.ContextMenuSubTrigger>
+          <CM.ContextMenuSubContent>
+            <CM.ContextMenuItem
+              onclick={() => {
+                onMilestoneChange?.(node!, null);
+                onClose();
+              }}
+            >
+              No Milestone
+            </CM.ContextMenuItem>
+            {#each milestones as m}
+              <CM.ContextMenuItem
+                onclick={() => {
+                  onMilestoneChange?.(node!, m.id);
+                  onClose();
+                }}
+              >
+                {m.name}
+              </CM.ContextMenuItem>
+            {/each}
+          </CM.ContextMenuSubContent>
+        </CM.ContextMenuSub>
+
         {#if isIssue}
           <CM.ContextMenuSeparator />
           <CM.ContextMenuItem
@@ -311,6 +355,7 @@
         <CM.ContextMenuItem
           class="text-destructive focus:text-destructive"
           onclick={() => {
+            nodeToDelete = node;
             deleteDialogOpen = true;
           }}
         >
@@ -327,7 +372,8 @@
     <Dialog.Header>
       <Dialog.Title>Are you sure?</Dialog.Title>
       <Dialog.Description>
-        This will permanently delete the {node?.type}. This action cannot be undone.
+        This will permanently delete the {nodeToDelete?.type ?? node?.type}. This action cannot be
+        undone.
       </Dialog.Description>
     </Dialog.Header>
     <Dialog.Footer>

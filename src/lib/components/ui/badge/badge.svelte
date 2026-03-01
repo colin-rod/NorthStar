@@ -20,11 +20,14 @@
         'status-in-review': 'bg-status-in-review/10 text-status-in-review border-transparent',
         'status-done': 'bg-bg-done text-status-done border-transparent',
         'status-blocked': 'bg-bg-blocked text-status-blocked border-transparent',
+        'status-blocked-strong':
+          'bg-status-blocked-strong text-white border-transparent font-semibold',
         'status-canceled': 'bg-surface-subtle text-foreground-muted border-transparent',
         /* Priority variants */
-        'priority-p0': 'bg-destructive/10 text-destructive border-transparent',
-        'priority-p1': 'bg-primary-tint text-primary border-transparent',
-        'priority-p2': 'bg-bg-blocked text-status-blocked border-transparent',
+        'priority-p0':
+          'bg-destructive text-destructive-foreground border-transparent font-semibold',
+        'priority-p1': 'bg-primary text-primary-foreground border-transparent font-semibold',
+        'priority-p2': 'bg-amber-50 text-amber-700 border-amber-200',
         'priority-p3': 'bg-surface-subtle text-foreground-muted border-transparent',
       },
     },

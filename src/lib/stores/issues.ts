@@ -40,6 +40,18 @@ export const selectedIssue: Writable<Issue | null> = writable(null);
 export const isIssueSheetOpen: Writable<boolean> = writable(false);
 
 /**
+ * Pre-selected project/epic context for create mode
+ * Set when opening the sheet from a context menu on an epic
+ */
+export const createIssueContext: Writable<{ projectId: string; epicId: string } | null> =
+  writable(null);
+
+/**
+ * Project sheet open state
+ */
+export const projectSheetOpen: Writable<boolean> = writable(false);
+
+/**
  * Helper function to open issue sheet
  */
 export function openIssueSheet(issue: Issue) {
@@ -49,9 +61,11 @@ export function openIssueSheet(issue: Issue) {
 
 /**
  * Helper function to open issue sheet in create mode (no selected issue)
+ * Optionally accepts a context to pre-select project and epic
  */
-export function openCreateIssueSheet() {
+export function openCreateIssueSheet(context?: { projectId: string; epicId: string }) {
   selectedIssue.set(null);
+  createIssueContext.set(context ?? null);
   isIssueSheetOpen.set(true);
 }
 
@@ -60,8 +74,25 @@ export function openCreateIssueSheet() {
  */
 export function closeIssueSheet() {
   isIssueSheetOpen.set(false);
-  // Delay clearing selected issue for animation
-  setTimeout(() => selectedIssue.set(null), 300);
+  // Delay clearing selected issue and context for animation
+  setTimeout(() => {
+    selectedIssue.set(null);
+    createIssueContext.set(null);
+  }, 300);
+}
+
+/**
+ * Helper function to open project sheet in create mode
+ */
+export function openCreateProjectSheet() {
+  projectSheetOpen.set(true);
+}
+
+/**
+ * Helper function to close project sheet
+ */
+export function closeProjectSheet() {
+  projectSheetOpen.set(false);
 }
 
 /**
