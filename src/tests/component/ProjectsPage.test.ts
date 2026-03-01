@@ -302,6 +302,7 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
   });
 
   it('shows error toast when fetch throws', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error('network error'));
     render(ProjectsPage, { props: { data: pageData } });
 
@@ -309,6 +310,7 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
 
     const toast = await screen.findByRole('alert');
     expect(toast).toHaveTextContent('Failed to update');
+    consoleSpy.mockRestore();
   });
 });
 
