@@ -45,7 +45,7 @@
   }: Props = $props();
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
-  let internalMode = $state<'create' | 'edit'>(mode);
+  let internalMode = $state<'create' | 'edit'>((() => mode)());
   let internalEpic = $state<Epic | null>(null);
   let effectiveEpic = $derived(internalEpic ?? epic);
 

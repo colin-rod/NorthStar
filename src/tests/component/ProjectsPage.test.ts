@@ -201,7 +201,7 @@ describe('ProjectsPage - toggleExpand via TreeGrid', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Toggle expand project' }));
 
     expect(mockGoto).toHaveBeenCalledOnce();
-    const calledUrl: URL = mockGoto.mock.calls[0][0];
+    const calledUrl = mockGoto.mock.calls[0][0] as URL;
     expect(calledUrl.searchParams.get('project')).toBe('project-1');
   });
 
@@ -213,7 +213,7 @@ describe('ProjectsPage - toggleExpand via TreeGrid', () => {
     render(ProjectsPage, { props: { data: pageData } });
     await fireEvent.click(screen.getByRole('button', { name: 'Toggle expand project' }));
 
-    const calledUrl: URL = mockGoto.mock.calls[0][0];
+    const calledUrl = mockGoto.mock.calls[0][0] as URL;
     expect(calledUrl.searchParams.get('project')).toBeNull();
     expect(calledUrl.searchParams.get('epic')).toBeNull();
   });
@@ -222,7 +222,7 @@ describe('ProjectsPage - toggleExpand via TreeGrid', () => {
     render(ProjectsPage, { props: { data: pageData } });
     await fireEvent.click(screen.getByRole('button', { name: 'Toggle expand epic' }));
 
-    const calledUrl: URL = mockGoto.mock.calls[0][0];
+    const calledUrl = mockGoto.mock.calls[0][0] as URL;
     expect(calledUrl.searchParams.get('epic')).toBe('epic-1');
   });
 
@@ -234,7 +234,7 @@ describe('ProjectsPage - toggleExpand via TreeGrid', () => {
     render(ProjectsPage, { props: { data: pageData } });
     await fireEvent.click(screen.getByRole('button', { name: 'Toggle expand epic' }));
 
-    const calledUrl: URL = mockGoto.mock.calls[0][0];
+    const calledUrl = mockGoto.mock.calls[0][0] as URL;
     expect(calledUrl.searchParams.get('epic')).toBeNull();
     expect(calledUrl.searchParams.get('project')).toBe('project-1');
   });
@@ -275,7 +275,7 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Cell edit project' }));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-    const formData: FormData = vi.mocked(global.fetch).mock.calls[0][1].body;
+    const formData = vi.mocked(global.fetch).mock.calls[0][1]!.body as FormData;
     expect(formData.get('nodeType')).toBe('project');
   });
 
@@ -286,7 +286,7 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Cell edit epic' }));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-    const formData: FormData = vi.mocked(global.fetch).mock.calls[0][1].body;
+    const formData = vi.mocked(global.fetch).mock.calls[0][1]!.body as FormData;
     expect(formData.get('nodeType')).toBe('epic');
   });
 
@@ -297,7 +297,7 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Cell edit issue' }));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-    const formData: FormData = vi.mocked(global.fetch).mock.calls[0][1].body;
+    const formData = vi.mocked(global.fetch).mock.calls[0][1]!.body as FormData;
     expect(formData.get('nodeType')).toBe('issue');
   });
 

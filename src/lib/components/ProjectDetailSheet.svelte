@@ -45,7 +45,7 @@
   }: Props = $props();
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
-  let internalMode = $state<'create' | 'edit'>(mode);
+  let internalMode = $state<'create' | 'edit'>((() => mode)());
   let internalProject = $state<Project | null>(null);
   let effectiveProject = $derived(internalProject ?? project);
 

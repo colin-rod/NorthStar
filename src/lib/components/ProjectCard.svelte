@@ -38,7 +38,7 @@
   let { project, counts, onEdit, onArchive, onToggle }: Props = $props();
 
   let archiveDialogOpen = $state(false);
-  let archiveForm: HTMLFormElement;
+  let archiveForm = $state<HTMLFormElement | undefined>(undefined);
 
   const defaultCounts: IssueCounts = {
     ready: 0,
@@ -64,7 +64,7 @@
 
   function handleArchiveConfirm() {
     archiveDialogOpen = false;
-    archiveForm.requestSubmit();
+    archiveForm?.requestSubmit();
   }
 </script>
 
