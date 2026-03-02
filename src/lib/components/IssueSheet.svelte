@@ -27,11 +27,17 @@
   import { Button } from '$lib/components/ui/button';
   import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
   import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
-  import { invalidateAll } from '$app/navigation';
+  import { invalidateAll, goto } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
-  import { getStatusBadgeVariant, formatStatus } from '$lib/utils/design-tokens';
+  import {
+    getStatusBadgeVariant,
+    formatStatus,
+    getEpicStatusVariant,
+  } from '$lib/utils/design-tokens';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import { computeIssueCounts, computeProgress } from '$lib/utils/issue-counts';
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
   import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
   import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
@@ -842,29 +848,64 @@
             <h3 class="section-header">Organization</h3>
             <div class="space-y-2">
               <!-- Epic -->
-              <div class="flex items-center gap-3">
-                <label for="epic" class="text-xs text-foreground-muted w-20 shrink-0">Epic</label>
+              <div class="space-y-1">
+                <label class="text-xs text-foreground-muted uppercase tracking-wide">Epic</label>
                 {#if issue?.parent_issue_id}
-                  <div
-                    class="flex h-8 flex-1 rounded-md border border-input bg-muted px-3 text-sm items-center"
-                  >
-                    <span class="text-foreground-muted truncate">
-                      {projectEpics.find((e) => e.id === localEpicId)?.name}
-                      <span class="text-metadata ml-1">(inherited)</span>
-                    </span>
-                  </div>
+                  {@const inheritedEpic = projectEpics.find((e) => e.id === localEpicId)}
+                  {#if inheritedEpic}
+                    <div class="w-full flex flex-col gap-1 p-2 rounded-md bg-muted/50">
+                      <div class="flex items-center gap-2">
+                        <Badge
+                          variant={getEpicStatusVariant(inheritedEpic.status)}
+                          class="text-xs shrink-0"
+                        >
+                          {inheritedEpic.status}
+                        </Badge>
+                        <span class="text-body flex-1 truncate">{inheritedEpic.name}</span>
+                        <span class="text-metadata text-foreground-secondary">(inherited)</span>
+                      </div>
+                    </div>
+                  {/if}
                 {:else}
-                  <select
-                    id="epic"
-                    bind:value={localEpicId}
-                    onchange={handleEpicChange}
-                    disabled={loading}
-                    class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
+                  <div class="space-y-1">
                     {#each projectEpics as epic (epic.id)}
-                      <option value={epic.id}>{epic.name}</option>
+                      {@const epicIssues = projectIssues.filter(
+                        (i) => i.epic_id === epic.id && !i.parent_issue_id,
+                      )}
+                      {@const epicCounts = computeIssueCounts(epicIssues)}
+                      {@const epicProgress = computeProgress(epicCounts)}
+                      <button
+                        type="button"
+                        onclick={() => goto(`/epics/${epic.id}`)}
+                        class="w-full flex flex-col gap-1 p-2 rounded-md text-left transition-colors {localEpicId ===
+                        epic.id
+                          ? 'bg-primary/10 ring-1 ring-primary/30'
+                          : 'bg-muted/50 hover:bg-muted'}"
+                      >
+                        <div class="flex items-center gap-2">
+                          <Badge
+                            variant={getEpicStatusVariant(epic.status)}
+                            class="text-xs shrink-0"
+                          >
+                            {epic.status}
+                          </Badge>
+                          <span class="text-body flex-1 truncate">{epic.name}</span>
+                          {#if epicProgress.total > 0}
+                            <span class="text-metadata text-foreground-secondary shrink-0">
+                              {epicProgress.completed}/{epicProgress.total} done
+                            </span>
+                          {/if}
+                        </div>
+                        {#if epicProgress.total > 0}
+                          <ProgressBar
+                            percentage={epicProgress.percentage}
+                            label={false}
+                            ariaLabel="{epic.name} completion"
+                          />
+                        {/if}
+                      </button>
                     {/each}
-                  </select>
+                  </div>
                 {/if}
               </div>
             </div>

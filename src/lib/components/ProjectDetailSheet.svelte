@@ -400,7 +400,7 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-6 pb-6">
-          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
+          <div aria-live="polite" class="text-metadata text-foreground-muted">
             {#if saveState === 'saving'}
               Saving...
             {:else if saveState === 'saved'}

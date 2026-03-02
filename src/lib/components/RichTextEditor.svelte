@@ -50,6 +50,27 @@
       ],
       content: initialContent,
       editable: initialEditable,
+      editorProps: {
+        handlePaste(_view, event) {
+          if (!uploadImage) return false;
+          const items = Array.from(event.clipboardData?.items ?? []);
+          const imageItems = items.filter((item) => item.type.startsWith('image/'));
+          if (imageItems.length === 0) return false;
+          event.preventDefault();
+          for (const item of imageItems) {
+            const file = item.getAsFile();
+            if (!file) continue;
+            uploadImage(file)
+              .then((url) => {
+                instance.chain().focus().setImage({ src: url }).run();
+              })
+              .catch((err) => {
+                console.error('Failed to paste image:', err);
+              });
+          }
+          return true;
+        },
+      },
       onCreate: () => {
         // Editor is fully initialized, safe to accept user changes now
         isInitializing = false;
