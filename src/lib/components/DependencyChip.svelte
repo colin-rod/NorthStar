@@ -9,6 +9,7 @@
 
   import type { Issue } from '$lib/types';
   import { getBlockingDependencies, getSatisfiedDependencies } from '$lib/utils/issue-helpers';
+  import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
   import { openIssueSheet } from '$lib/stores/issues';
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
   import Lock from '@lucide/svelte/icons/lock';
@@ -26,21 +27,6 @@
   let totalDeps = $derived(blockingDeps.length + satisfiedDeps.length);
   let hasBlockers = $derived(blockingDeps.length > 0);
 
-  // Status dot color mapping
-  const getStatusDotColor = (status: string) => {
-    const colors: Record<string, string> = {
-      todo: 'bg-status-todo',
-      doing: 'bg-status-doing',
-      in_review: 'bg-status-in-review',
-      done: 'bg-status-done',
-      canceled: 'bg-status-canceled',
-    };
-    return colors[status] || 'bg-status-todo';
-  };
-
-  const formatStatus = (status: string) =>
-    status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-
   function handleDepClick(dep: Issue, event: MouseEvent) {
     event.stopPropagation();
     openIssueSheet(dep);
@@ -54,7 +40,7 @@
         <button
           type="button"
           data-testid="dependency-chip"
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-status-blocked/15 text-status-blocked-strong border border-status-blocked/30 hover:bg-status-blocked/25 transition-colors cursor-pointer"
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-bg-blocked text-status-blocked-strong border border-status-blocked/20 hover:bg-bg-blocked/70 transition-colors cursor-pointer"
           onclick={(e) => e.stopPropagation()}
         >
           <Lock class="h-3 w-3" />
@@ -73,7 +59,7 @@
       {/if}
     </PopoverTrigger>
 
-    <PopoverContent class="w-64 p-0" align="start" sideOffset={8}>
+    <PopoverContent class="w-[calc(100vw-2rem)] max-w-64 p-0" align="start" sideOffset={8}>
       <div class="p-3 space-y-2" data-testid="dependency-popover">
         <!-- Blocking dependencies -->
         {#if blockingDeps.length > 0}
@@ -89,14 +75,14 @@
                   onclick={(e) => handleDepClick(dep, e)}
                 >
                   <div
-                    class={`w-2 h-2 rounded-full shrink-0 ${getStatusDotColor(dep.status)}`}
+                    class={`w-2 h-2 rounded-full shrink-0 ${getStatusDotClass(dep.status)}`}
                   ></div>
                   <span class="text-xs text-muted-foreground font-mono shrink-0"
                     >I-{dep.number}</span
                   >
                   <span class="text-xs truncate flex-1">{dep.title}</span>
                   <ArrowRight
-                    class="h-3 w-3 text-muted-foreground opacity-0 group-hover/dep:opacity-100 transition-opacity shrink-0"
+                    class="h-3 w-3 text-muted-foreground opacity-100 md:opacity-0 md:group-hover/dep:opacity-100 transition-opacity shrink-0"
                   />
                 </button>
               {/each}
@@ -118,14 +104,14 @@
                   onclick={(e) => handleDepClick(dep, e)}
                 >
                   <div
-                    class={`w-2 h-2 rounded-full shrink-0 ${getStatusDotColor(dep.status)}`}
+                    class={`w-2 h-2 rounded-full shrink-0 ${getStatusDotClass(dep.status)}`}
                   ></div>
                   <span class="text-xs text-muted-foreground font-mono shrink-0"
                     >I-{dep.number}</span
                   >
                   <span class="text-xs truncate flex-1 text-muted-foreground">{dep.title}</span>
                   <ArrowRight
-                    class="h-3 w-3 text-muted-foreground opacity-0 group-hover/dep:opacity-100 transition-opacity shrink-0"
+                    class="h-3 w-3 text-muted-foreground opacity-100 md:opacity-0 md:group-hover/dep:opacity-100 transition-opacity shrink-0"
                   />
                 </button>
               {/each}

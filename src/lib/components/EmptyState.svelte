@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Component } from 'svelte';
+  import { Button } from '$lib/components/ui/button';
 
   interface Props {
     icon: Component;
@@ -24,7 +25,7 @@
   <div class="flex flex-col items-center gap-3">
     <div
       class="rounded-full p-3 {variant === 'positive'
-        ? 'bg-emerald-500/10 text-emerald-500'
+        ? 'bg-bg-done text-status-done'
         : 'bg-muted text-muted-foreground'}"
     >
       <Icon class="h-6 w-6" />
@@ -33,7 +34,7 @@
       <p
         class="{variant === 'subtle' ? 'text-metadata' : 'text-base'} font-medium {variant ===
         'positive'
-          ? 'text-emerald-600 dark:text-emerald-400'
+          ? 'text-status-done'
           : 'text-foreground'}"
       >
         {title}
@@ -43,13 +44,9 @@
       </p>
     </div>
     {#if ctaLabel && onCtaClick}
-      <button
-        type="button"
-        onclick={onCtaClick}
-        class="mt-2 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-white hover:bg-primary-hover h-9 px-4"
-      >
+      <Button size="sm" class="mt-2" onclick={onCtaClick}>
         {ctaLabel}
-      </button>
+      </Button>
     {/if}
   </div>
 </div>

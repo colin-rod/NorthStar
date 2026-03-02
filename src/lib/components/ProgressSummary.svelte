@@ -73,7 +73,7 @@
   {#if blockedCount > 0}
     <p class="text-xs text-muted-foreground">
       {blockedCount}
-      {blockedCount === 1 ? 'todo is' : 'todos are'} blocked — resolve dependencies to unblock
+      {blockedCount === 1 ? 'issue is' : 'issues are'} waiting on dependencies
     </p>
   {/if}
 </div>

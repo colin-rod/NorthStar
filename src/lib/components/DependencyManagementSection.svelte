@@ -8,6 +8,7 @@
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
   import { getBlockingDependencies, getSatisfiedDependencies } from '$lib/utils/issue-helpers';
+  import { getStatusBadgeVariant, formatStatus } from '$lib/utils/design-tokens';
   import { toast } from 'svelte-sonner';
 
   // Props
@@ -33,37 +34,6 @@
 
   // Local state
   let dialogOpen = $state(false);
-
-  // Helper to get status badge variant
-  function getStatusVariant(
-    status: string,
-  ):
-    | 'status-todo'
-    | 'status-doing'
-    | 'status-in-review'
-    | 'status-done'
-    | 'status-canceled'
-    | undefined {
-    const variantMap: Record<
-      string,
-      'status-todo' | 'status-doing' | 'status-in-review' | 'status-done' | 'status-canceled'
-    > = {
-      todo: 'status-todo',
-      doing: 'status-doing',
-      in_review: 'status-in-review',
-      done: 'status-done',
-      canceled: 'status-canceled',
-    };
-    return variantMap[status];
-  }
-
-  // Format status for display
-  function formatStatus(status: string): string {
-    return status
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
 
   // Remove dependency handler
   async function removeDependency(dependsOnIssueId: string) {
@@ -103,11 +73,11 @@
     <!-- Blocking Dependencies -->
     {#if blockingDeps.length > 0}
       <div>
-        <p class="text-metadata text-foreground-muted mb-2">Blocked by:</p>
+        <p class="text-metadata text-foreground-muted mb-2">Waiting on:</p>
         <div class="space-y-2">
           {#each blockingDeps as dep (dep.id)}
             <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
-              <Badge variant={getStatusVariant(dep.status)} class="shrink-0">
+              <Badge variant={getStatusBadgeVariant(dep.status)} class="shrink-0">
                 {formatStatus(dep.status)}
               </Badge>
               <span class="text-body flex-1 truncate">{dep.title}</span>
@@ -131,11 +101,11 @@
     <!-- Satisfied Dependencies -->
     {#if satisfiedDeps.length > 0}
       <div>
-        <p class="text-metadata text-foreground-muted mb-2">Satisfied dependencies</p>
+        <p class="text-metadata text-foreground-muted mb-2">Completed:</p>
         <div class="space-y-2">
           {#each satisfiedDeps as dep (dep.id)}
             <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
-              <Badge variant={getStatusVariant(dep.status)} class="shrink-0">
+              <Badge variant={getStatusBadgeVariant(dep.status)} class="shrink-0">
                 {formatStatus(dep.status)}
               </Badge>
               <span class="text-body flex-1 truncate">{dep.title}</span>
@@ -158,17 +128,17 @@
 
     <!-- No dependencies message -->
     {#if blockedByIssues.length === 0}
-      <p class="text-sm text-foreground-muted py-1">No blocking dependencies</p>
+      <p class="text-sm text-foreground-muted py-1">No dependencies</p>
     {/if}
 
     <!-- Blocking -->
     {#if blockingIssues.length > 0}
       <div>
-        <p class="text-metadata text-foreground-muted mb-2">Blocking:</p>
+        <p class="text-metadata text-foreground-muted mb-2">Blocking these issues:</p>
         <div class="space-y-2">
           {#each blockingIssues as blocked (blocked.id)}
             <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-              <Badge variant={getStatusVariant(blocked.status)} class="shrink-0">
+              <Badge variant={getStatusBadgeVariant(blocked.status)} class="shrink-0">
                 {formatStatus(blocked.status)}
               </Badge>
               <span class="text-body flex-1 truncate">{blocked.title}</span>

@@ -5,6 +5,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
+  import { getStatusBadgeVariant, formatStatus } from '$lib/utils/design-tokens';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import SearchX from '@lucide/svelte/icons/search-x';
   import Link from '@lucide/svelte/icons/link';
@@ -52,37 +53,6 @@
       error = null;
     }
   });
-
-  // Helper to get status badge variant
-  function getStatusVariant(
-    status: string,
-  ):
-    | 'status-todo'
-    | 'status-doing'
-    | 'status-in-review'
-    | 'status-done'
-    | 'status-canceled'
-    | undefined {
-    const variantMap: Record<
-      string,
-      'status-todo' | 'status-doing' | 'status-in-review' | 'status-done' | 'status-canceled'
-    > = {
-      todo: 'status-todo',
-      doing: 'status-doing',
-      in_review: 'status-in-review',
-      done: 'status-done',
-      canceled: 'status-canceled',
-    };
-    return variantMap[status];
-  }
-
-  // Format status for display
-  function formatStatus(status: string): string {
-    return status
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
 
   // Add dependency handler
   async function addDependency(dependsOnIssueId: string) {
@@ -165,7 +135,7 @@
           <EmptyState
             icon={Link}
             title="No available issues"
-            description="All other issues are already dependencies or there are none to add"
+            description="All other issues in this project are already linked"
             variant="subtle"
           />
         {/if}
@@ -177,7 +147,7 @@
             disabled={loading}
             class="w-full flex items-center gap-2 p-3 rounded-md bg-muted/50 hover:bg-muted text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Badge variant={getStatusVariant(availableIssue.status)} class="shrink-0">
+            <Badge variant={getStatusBadgeVariant(availableIssue.status)} class="shrink-0">
               P{availableIssue.priority}
             </Badge>
             <div class="flex-1 min-w-0">

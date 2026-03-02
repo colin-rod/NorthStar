@@ -2,7 +2,7 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
-import type { Project } from '$lib/types';
+import type { Project, Issue } from '$lib/types';
 import { filterTree } from '$lib/utils/filter-tree';
 import { computeIssueCounts } from '$lib/utils/issue-counts';
 import { computeProjectMetrics } from '$lib/utils/project-helpers';
@@ -32,58 +32,75 @@ export const load: PageServerLoad = async ({ locals: { supabase, session }, url 
     };
   }
 
-  // For each project, load epics with issues and dependencies
-  const projectsWithData = await Promise.all(
-    (projects || []).map(async (project) => {
-      // Load epics with nested issues and milestone
-      const { data: epics } = await supabase
-        .from('epics')
-        .select(
-          `
-          *,
-          milestone:milestones(*),
-          issues(
-            *,
-            dependencies!dependencies_issue_id_fkey(
-              depends_on_issue_id,
-              depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*)
-            )
-          )
-        `,
+  // Batch load all epics and issues in 2 queries instead of N+1
+  const projectIds = (projects || []).map((p) => p.id);
+
+  const [{ data: allEpics }, { data: allIssues }] = await Promise.all([
+    supabase
+      .from('epics')
+      .select(
+        `
+        id, project_id, number, name, description, status, priority, sort_order, is_default,
+        milestone:milestones(id, name, due_date)
+      `,
+      )
+      .in('project_id', projectIds)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('issues')
+      .select(
+        `
+        id, project_id, epic_id, parent_issue_id, number, title, description, status,
+        priority, story_points, sort_order, milestone_id, created_at,
+        dependencies!dependencies_issue_id_fkey(
+          issue_id,
+          depends_on_issue_id,
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status)
         )
-        .eq('project_id', project.id)
-        .order('sort_order', { ascending: true });
+      `,
+      )
+      .in('project_id', projectIds)
+      .order('sort_order', { ascending: true }),
+  ]);
 
-      // Compute counts for each epic
-      const epicsWithCounts = (epics || []).map((epic) => ({
-        ...epic,
-        counts: computeIssueCounts(epic.issues || []),
-      }));
+  // Group epics and issues by their parent IDs
+  function groupByKey<T>(arr: T[], key: keyof T): Record<string, T[]> {
+    return (arr || []).reduce(
+      (acc, item) => {
+        const k = String(item[key]);
+        (acc[k] ??= []).push(item);
+        return acc;
+      },
+      {} as Record<string, T[]>,
+    );
+  }
 
-      // Flatten all issues for project
-      const allIssues = epicsWithCounts.flatMap((epic) =>
-        (epic.issues || []).map((issue: Record<string, unknown>) => ({
-          ...issue,
-          epic: { id: epic.id, name: epic.name, status: epic.status },
-          project: { id: project.id, name: project.name },
-        })),
-      );
+  const epicsByProjectId = groupByKey(allEpics || [], 'project_id');
+  const issuesByEpicId = groupByKey(allIssues || [], 'epic_id');
 
-      // Compute project-level counts
-      const projectCounts = computeIssueCounts(allIssues);
+  const projectsWithData = (projects || []).map((project) => {
+    const epics = (epicsByProjectId[project.id] || []).map((epic) => ({
+      ...epic,
+      issues: issuesByEpicId[epic.id] || [],
+      counts: computeIssueCounts((issuesByEpicId[epic.id] || []) as unknown as Issue[]),
+    }));
 
-      // Compute project metrics (story points and issue count)
-      const projectMetrics = computeProjectMetrics(allIssues);
+    const allProjectIssues = epics.flatMap((epic) =>
+      (issuesByEpicId[epic.id] || []).map((issue) => ({
+        ...issue,
+        epic: { id: epic.id, name: epic.name, status: epic.status },
+        project: { id: project.id, name: project.name },
+      })),
+    );
 
-      return {
-        ...project,
-        epics: epicsWithCounts,
-        issues: allIssues,
-        counts: projectCounts,
-        metrics: projectMetrics,
-      };
-    }),
-  );
+    return {
+      ...project,
+      epics,
+      issues: allProjectIssues,
+      counts: computeIssueCounts(allProjectIssues as unknown as Issue[]),
+      metrics: computeProjectMetrics(allProjectIssues as unknown as Issue[]),
+    };
+  });
 
   // Apply server-side filters
   const filteredProjects = filterTree(projectsWithData as Project[], {

@@ -91,6 +91,16 @@ export const epicStatusVariants = {
 export type EpicStatus = keyof typeof epicStatusVariants;
 
 /**
+ * Format a status value for display (e.g. 'in_review' → 'In Review')
+ */
+export function formatStatus(status: string): string {
+  return status
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
  * Get badge variant for epic status
  */
 export function getEpicStatusVariant(

@@ -18,6 +18,7 @@
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { computeProgress } from '$lib/utils/issue-counts';
   import Badge from '$lib/components/ui/badge/badge.svelte';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
 
@@ -95,16 +96,8 @@
 
       <!-- Progress Bar -->
       {#if progress.total > 0}
-        <div class="mt-3 flex items-center gap-2">
-          <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-            <div
-              class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-              style="width: {progress.percentage}%"
-            ></div>
-          </div>
-          <span class="text-metadata text-foreground-secondary shrink-0">
-            {progress.percentage}%
-          </span>
+        <div class="mt-3">
+          <ProgressBar percentage={progress.percentage} ariaLabel="{project.name} completion" />
         </div>
       {/if}
     </button>

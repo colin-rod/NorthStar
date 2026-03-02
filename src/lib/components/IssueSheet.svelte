@@ -31,8 +31,10 @@
   import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
+  import { getStatusBadgeVariant, formatStatus } from '$lib/utils/design-tokens';
   import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
   import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
+  import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
@@ -270,31 +272,6 @@
 
   // Get sub-issues
   let subIssues = $derived(issue?.sub_issues || []);
-
-  // Helper to get status badge variant
-  function getStatusVariant(
-    status: IssueStatus,
-  ):
-    | 'secondary'
-    | 'default'
-    | 'outline'
-    | 'destructive'
-    | 'status-todo'
-    | 'status-doing'
-    | 'status-in-review'
-    | 'status-done'
-    | 'status-blocked'
-    | 'status-canceled'
-    | undefined {
-    const variantMap: Record<IssueStatus, any> = {
-      todo: 'status-todo',
-      doing: 'status-doing',
-      in_review: 'status-in-review',
-      done: 'status-done',
-      canceled: 'status-canceled',
-    };
-    return variantMap[status];
-  }
 
   // Auto-save function
   async function autoSave(
@@ -610,14 +587,6 @@
       prevEpicId = localEpicId;
     }
   });
-
-  // Format status for display
-  function formatStatus(status: IssueStatus): string {
-    return status
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
 </script>
 
 <Sheet bind:open>
@@ -633,17 +602,7 @@
     {#if internalMode === 'create' || issue}
       <!-- Loading overlay -->
       {#if loading || createLoading}
-        <div
-          role="status"
-          aria-live="polite"
-          aria-label="Loading"
-          class="absolute inset-0 bg-background/50 flex items-center justify-center z-50 rounded-t-lg"
-        >
-          <div
-            aria-hidden="true"
-            class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
-          ></div>
-        </div>
+        <LoadingOverlay />
       {/if}
 
       <!-- Header -->
@@ -683,9 +642,7 @@
         <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
           <!-- Basic Info Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Basic Info
-            </h3>
+            <h3 class="section-header">Basic Info</h3>
             <div>
               <Label for="title" class="text-metadata mb-2 block">Title</Label>
               <Input
@@ -705,9 +662,7 @@
 
           <!-- Organization Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Organization
-            </h3>
+            <h3 class="section-header">Organization</h3>
             <div class="space-y-4">
               <!-- Project Select -->
               <div>
@@ -861,9 +816,7 @@
 
           <!-- Description Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Description
-            </h3>
+            <h3 class="section-header">Description</h3>
             <RichTextEditor
               content={localDescription}
               onchange={handleDescriptionChange}
@@ -875,9 +828,7 @@
 
           <!-- Attachments Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Attachments
-            </h3>
+            <h3 class="section-header">Attachments</h3>
             <AttachmentList
               {attachments}
               onUpload={handleAttachmentUpload}
@@ -888,9 +839,7 @@
 
           <!-- Organization & Estimation Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Organization
-            </h3>
+            <h3 class="section-header">Organization</h3>
             <div class="space-y-2">
               <!-- Epic -->
               <div class="flex items-center gap-3">
@@ -932,9 +881,7 @@
 
             <!-- Sub-issues Section -->
             <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-                Sub-issues
-              </h3>
+              <h3 class="section-header">Sub-issues</h3>
 
               <div class="space-y-2">
                 <!-- Sub-issues List -->
@@ -949,7 +896,7 @@
                       class="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted w-full text-left transition-colors"
                       title="Open sub-issue"
                     >
-                      <Badge variant={getStatusVariant(subIssue.status)} class="shrink-0">
+                      <Badge variant={getStatusBadgeVariant(subIssue.status)} class="shrink-0">
                         {formatStatus(subIssue.status)}
                       </Badge>
                       <span class="text-body flex-1 truncate">{subIssue.title}</span>

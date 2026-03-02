@@ -49,7 +49,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       milestone:milestones(*),
       dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
-        depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*, epic:epics(*), project:projects(*))
+        depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status)
       ),
       blocked_by:dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
@@ -117,7 +117,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   // 5. Load all epics for the user (for epic picker in IssueSheet)
   const { data: epics } = await locals.supabase
     .from('epics')
-    .select('*')
+    .select('id, number, name, description, project_id, status, priority, sort_order, is_default')
     .order('sort_order', { ascending: true });
 
   // 6. Load all milestones for the user (global, cross-project)

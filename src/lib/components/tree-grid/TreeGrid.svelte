@@ -119,10 +119,12 @@
 
       // Check if this is an expanded epic
       if (node.type === 'epic' && expandedIds.has(node.id)) {
-        // Get all child issues of this epic
-        const epicIssues = visibleNodes
-          .filter((n) => n.parentId === node.id && n.type === 'issue')
-          .map((n) => n.data as Issue);
+        // Get all child issue nodes once, indexed by id for O(1) group lookup
+        const epicIssueNodes = visibleNodes.filter(
+          (n) => n.parentId === node.id && n.type === 'issue',
+        );
+        const epicIssueNodeById = new Map(epicIssueNodes.map((n) => [n.id, n]));
+        const epicIssues = epicIssueNodes.map((n) => n.data as Issue);
 
         if (epicIssues.length > 0) {
           // Group the issues
@@ -159,10 +161,9 @@
 
             // Add issues in this group (only if group is expanded)
             if (isGroupExpanded) {
-              const groupIssueIds = new Set(group.items.map((issue) => issue.id));
-              const groupIssueNodes = visibleNodes.filter(
-                (n) => groupIssueIds.has(n.id) && n.type === 'issue',
-              );
+              const groupIssueNodes = group.items
+                .map((issue) => epicIssueNodeById.get(issue.id))
+                .filter((n): n is TreeNode => n !== undefined);
               result.push(...groupIssueNodes);
 
               // Also include sub-issues if their parent issue is expanded
@@ -281,8 +282,8 @@
     { key: 'title', header: 'Title', width: 'flex min-w-[340px]', hideOnMobile: false },
     { key: 'status', header: 'Status', width: '140px', hideOnMobile: false },
     { key: 'milestone', header: 'Milestone', width: '140px', hideOnMobile: true },
-    { key: 'sp', header: 'SP', width: '72px', hideOnMobile: true },
-    { key: 'total_sp', header: 'Total SP', width: '96px', hideOnMobile: true },
+    { key: 'sp', header: 'Pts', width: '72px', hideOnMobile: true },
+    { key: 'total_sp', header: 'Total pts', width: '96px', hideOnMobile: true },
     { key: 'progress', header: 'Progress', width: '140px', hideOnMobile: true },
   ];
 

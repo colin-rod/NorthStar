@@ -26,6 +26,7 @@
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import DependencyChip from '$lib/components/DependencyChip.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
+  import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -68,23 +69,7 @@
   // Compute blocked status
   let blocked = $derived(isBlocked(issue));
 
-  // Status color dot mapping (4px diameter)
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      todo: 'bg-status-todo',
-      doing: 'bg-status-doing',
-      in_review: 'bg-status-in-review',
-      done: 'bg-status-done',
-      blocked: 'bg-status-blocked',
-      canceled: 'bg-status-canceled',
-    };
-    return colors[status] || 'bg-status-todo';
-  };
-
-  const formatStatusLabel = (status: string) =>
-    status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-
-  let statusLabel = $derived(formatStatusLabel(issue.status));
+  let statusLabel = $derived(formatStatus(issue.status));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -137,10 +122,7 @@
   {/if}
 
   <!-- Main Content Area (non-interactive container) -->
-  <div
-    class="flex-1 flex items-start gap-3 min-w-0"
-    style={isSubIssue ? 'margin-left: 3rem;' : 'margin-left: 2rem;'}
-  >
+  <div class="flex-1 flex items-start gap-3 min-w-0 {isSubIssue ? 'ml-12' : 'ml-8'}">
     <!-- Expand/Collapse Chevron (sibling button for parents with sub-issues) -->
     {#if hasSubIssues}
       <button
@@ -169,7 +151,7 @@
       <!-- Status indicator: small colored dot per North spec -->
       <div class="flex items-center gap-1 pt-1 shrink-0">
         <div
-          class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}
+          class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusDotClass(issue.status)}`}
           aria-hidden="true"
         ></div>
         <span class="sr-only">{statusLabel}</span>

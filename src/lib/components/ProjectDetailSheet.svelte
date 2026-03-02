@@ -13,6 +13,9 @@
   import { deserialize } from '$app/forms';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import IssueCountsBadges from '$lib/components/IssueCountsBadges.svelte';
+  import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
   import { supabase } from '$lib/supabase';
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
   import { normalizeDescription } from '$lib/utils/text-helpers';
@@ -337,11 +340,7 @@
     {#if internalMode === 'create' || effectiveProject}
       <!-- Loading overlay -->
       {#if createLoading}
-        <div
-          class="absolute inset-0 bg-background/50 flex items-center justify-center z-50 rounded-t-lg"
-        >
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <LoadingOverlay />
       {/if}
 
       <SheetHeader class="mb-6">
@@ -472,25 +471,23 @@
           <!-- Stats -->
           {#if metrics}
             <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-                Stats
-              </h3>
+              <h3 class="section-header">Stats</h3>
               <div class="grid grid-cols-3 gap-3 text-metadata">
                 <div class="flex flex-col gap-1">
-                  <span class="text-lg font-semibold">{metrics.totalIssues}</span>
+                  <span class="text-section-header">{metrics.totalIssues}</span>
                   <span class="text-foreground-secondary">Issues</span>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-lg font-semibold">{epics.length}</span>
+                  <span class="text-section-header">{epics.length}</span>
                   <span class="text-foreground-secondary">Epics</span>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-lg font-semibold">{metrics.activeStoryPoints}</span>
-                  <span class="text-foreground-secondary">Active SP</span>
+                  <span class="text-section-header">{metrics.activeStoryPoints}</span>
+                  <span class="text-foreground-secondary">Active pts</span>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-lg font-semibold">{metrics.totalStoryPoints}</span>
-                  <span class="text-foreground-secondary">Total SP</span>
+                  <span class="text-section-header">{metrics.totalStoryPoints}</span>
+                  <span class="text-foreground-secondary">Total pts</span>
                 </div>
               </div>
             </section>
@@ -499,56 +496,14 @@
           <!-- Progress -->
           {#if counts}
             <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-                Progress
-              </h3>
-              <div class="grid grid-cols-3 gap-3 text-metadata">
-                <div class="flex items-center gap-2">
-                  <Badge variant="default" class="text-xs">{counts.ready}</Badge>
-                  <span class="text-foreground-secondary">Ready</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
-                  <span class="text-foreground-secondary">Doing</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
-                  <span class="text-foreground-secondary">In Review</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
-                  <span class="text-foreground-secondary">Blocked</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-done" class="text-xs">{counts.done}</Badge>
-                  <span class="text-foreground-secondary">Done</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-canceled" class="text-xs">{counts.canceled}</Badge>
-                  <span class="text-foreground-secondary">Canceled</span>
-                </div>
-              </div>
+              <h3 class="section-header">Progress</h3>
+              <IssueCountsBadges {counts} />
               {#if computeProgress(counts).total > 0}
-                <div class="mt-3 flex items-center gap-2">
-                  <div
-                    class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden"
-                    role="progressbar"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow={Math.max(
-                      0,
-                      Math.min(100, Number(computeProgress(counts).percentage) || 0),
-                    )}
-                    aria-label="Project completion progress"
-                  >
-                    <div
-                      class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                      style="width: {computeProgress(counts).percentage}%"
-                    ></div>
-                  </div>
-                  <span class="text-metadata text-foreground-secondary shrink-0">
-                    {computeProgress(counts).percentage}%
-                  </span>
+                <div class="mt-3">
+                  <ProgressBar
+                    percentage={computeProgress(counts).percentage}
+                    ariaLabel="Project completion progress"
+                  />
                 </div>
               {/if}
             </section>
@@ -557,9 +512,7 @@
           <!-- Epics -->
           {#if epics.length > 0 || onAddEpic}
             <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-                Epics
-              </h3>
+              <h3 class="section-header">Epics</h3>
               <div class="space-y-2">
                 {#each epics as epic (epic.id)}
                   {@const epicCounts = computeIssueCounts(epic.issues ?? [])}
@@ -583,19 +536,11 @@
                       {/if}
                     </div>
                     {#if epicProgress.total > 0}
-                      <div
-                        class="h-0.75 w-full bg-muted rounded-full overflow-hidden"
-                        role="progressbar"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        aria-valuenow={epicProgress.percentage}
-                        aria-label="{epic.name} completion"
-                      >
-                        <div
-                          class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                          style="width: {epicProgress.percentage}%"
-                        ></div>
-                      </div>
+                      <ProgressBar
+                        percentage={epicProgress.percentage}
+                        label={false}
+                        ariaLabel="{epic.name} completion"
+                      />
                     {/if}
                   </button>
                 {/each}

@@ -524,7 +524,7 @@
       <!-- Filters Button -->
       <button
         onclick={toggleFilterPanel}
-        class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+        class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-surface-subtle hover:text-foreground"
       >
         Filters
         {#if activeFilterCount > 0}

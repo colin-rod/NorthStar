@@ -161,9 +161,11 @@
 
       if (!response.ok) {
         console.error('Reorder failed:', response);
+        showToast('Failed to reorder issues', 'error');
       }
     } catch (error) {
       console.error('Reorder error:', error);
+      showToast('Failed to reorder issues', 'error');
     } finally {
       isReordering = false;
     }
@@ -343,7 +345,7 @@
                 : filter === 'in_review'
                   ? 'in review'
                   : filter} issues"
-              description="Issues will appear here when their status changes"
+              description="Move issues to this status to see them here"
               variant="subtle"
             />
           {/if}

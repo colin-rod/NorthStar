@@ -79,7 +79,7 @@
               <button
                 type="submit"
                 disabled={loggingOut}
-                class="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-sm hover:bg-surface-subtle transition-colors text-foreground disabled:opacity-50"
+                class="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-sm hover:bg-surface-subtle transition-colors text-foreground disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               >
                 <LogOut class="w-4 h-4" />
                 {loggingOut ? 'Logging out...' : 'Logout'}

@@ -24,6 +24,7 @@
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Pencil, Archive } from '@lucide/svelte';
 
@@ -136,27 +137,8 @@
       <!-- Progress bar -->
       {@const progress = computeProgress(effectiveCounts)}
       {#if progress.total > 0}
-        {@const clampedProgressPercentage = Math.max(
-          0,
-          Math.min(100, Number(progress.percentage) || 0),
-        )}
-        <div class="mt-3 flex items-center gap-2">
-          <div
-            class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            aria-valuenow={clampedProgressPercentage}
-            aria-label="Project completion progress"
-          >
-            <div
-              class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-              style="width: {progress.percentage}%"
-            ></div>
-          </div>
-          <span class="text-metadata text-foreground-secondary shrink-0">
-            {progress.percentage}%
-          </span>
+        <div class="mt-3">
+          <ProgressBar percentage={progress.percentage} ariaLabel="Project completion progress" />
         </div>
       {/if}
     </CardContent>
