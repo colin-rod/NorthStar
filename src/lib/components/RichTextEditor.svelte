@@ -264,10 +264,16 @@
     margin-bottom: 0;
   }
 
-  .editor-content :global(.ProseMirror ul),
+  .editor-content :global(.ProseMirror ul) {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+    list-style-type: disc;
+  }
+
   .editor-content :global(.ProseMirror ol) {
     padding-left: 1.5em;
     margin: 0.5em 0;
+    list-style-type: decimal;
   }
 
   .editor-content :global(.ProseMirror li) {
