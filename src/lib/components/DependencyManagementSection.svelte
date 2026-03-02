@@ -101,7 +101,7 @@
     <!-- Satisfied Dependencies -->
     {#if satisfiedDeps.length > 0}
       <div>
-        <p class="text-metadata text-foreground-muted mb-2">Completed:</p>
+        <p class="text-metadata text-foreground-muted mb-2">Satisfied dependencies</p>
         <div class="space-y-2">
           {#each satisfiedDeps as dep (dep.id)}
             <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
@@ -134,7 +134,7 @@
     <!-- Blocking -->
     {#if blockingIssues.length > 0}
       <div>
-        <p class="text-metadata text-foreground-muted mb-2">Blocking these issues:</p>
+        <p class="text-metadata text-foreground-muted mb-2">Blocking:</p>
         <div class="space-y-2">
           {#each blockingIssues as blocked (blocked.id)}
             <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
