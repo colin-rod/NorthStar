@@ -835,51 +835,6 @@
             />
           </section>
 
-          <!-- Organization & Estimation Section -->
-          <section>
-            <h3 class="section-header">Organization</h3>
-            <div class="space-y-2">
-              <!-- Epic -->
-              <div class="space-y-1">
-                <label class="text-xs text-foreground-muted uppercase tracking-wide">Epic</label>
-                <div class="space-y-1">
-                  {#each projectEpics as epic (epic.id)}
-                    {@const epicIssues = projectIssues.filter((i) => i.epic_id === epic.id)}
-                    {@const epicCounts = computeIssueCounts(epicIssues)}
-                    {@const epicProgress = computeProgress(epicCounts)}
-                    <button
-                      type="button"
-                      onclick={() => goto(`/epics/${epic.id}`)}
-                      class="w-full flex flex-col gap-1 p-2 rounded-md text-left transition-colors {localEpicId ===
-                      epic.id
-                        ? 'bg-primary/10 ring-1 ring-primary/30'
-                        : 'bg-muted/50 hover:bg-muted'}"
-                    >
-                      <div class="flex items-center gap-2">
-                        <Badge variant={getEpicStatusVariant(epic.status)} class="text-xs shrink-0">
-                          {epic.status}
-                        </Badge>
-                        <span class="text-body flex-1 truncate">{epic.name}</span>
-                        {#if epicProgress.total > 0}
-                          <span class="text-metadata text-foreground-secondary shrink-0">
-                            {epicProgress.completed}/{epicProgress.total} done
-                          </span>
-                        {/if}
-                      </div>
-                      {#if epicProgress.total > 0}
-                        <ProgressBar
-                          percentage={epicProgress.percentage}
-                          label={false}
-                          ariaLabel="{epic.name} completion"
-                        />
-                      {/if}
-                    </button>
-                  {/each}
-                </div>
-              </div>
-            </div>
-          </section>
-
           <!-- Dependencies Section -->
           {#if issue}
             <DependencyManagementSection
