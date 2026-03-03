@@ -70,8 +70,19 @@
   const isIssue = $derived(node?.type === 'issue');
 
   const projectStatuses = [
+    { value: 'backlog', label: 'Backlog' },
+    { value: 'planned', label: 'Planned' },
     { value: 'active', label: 'Active' },
-    { value: 'done', label: 'Done' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'canceled', label: 'Canceled' },
+  ];
+
+  const epicStatuses = [
+    { value: 'backlog', label: 'Backlog' },
+    { value: 'active', label: 'Active' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'completed', label: 'Completed' },
     { value: 'canceled', label: 'Canceled' },
   ];
 
@@ -188,7 +199,7 @@
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Status</CM.ContextMenuSubTrigger>
           <CM.ContextMenuSubContent>
-            {#each projectStatuses as s}
+            {#each epicStatuses as s}
               <CM.ContextMenuItem
                 onclick={() => {
                   onStatusChange?.(node!, s.value);
