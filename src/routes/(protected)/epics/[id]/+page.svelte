@@ -9,7 +9,6 @@
    * - URL-persisted filter state
    * - Inline "Add issue" functionality
    * - Drag-and-drop + up/down button reordering
-   * - Sub-issue expand/collapse with global toggle
    */
 
   import type { PageData } from './$types';
@@ -80,47 +79,13 @@
     }
   });
 
-  // Sub-issue visibility state
-  let showAllSubIssues = $state(false);
-  let expandedParents = $state<Set<string>>(new Set());
-
-  // Filter out sub-issues unless global toggle is on or parent is expanded
   // Note: Using $state instead of $derived because drag-and-drop mutates this
   let visibleIssues = $state<Issue[]>([]);
 
   // Update visible issues when filters change
   $effect(() => {
-    visibleIssues = filteredIssues.filter((issue) => {
-      if (!issue.parent_issue_id) return true; // Top-level always shown
-      if (showAllSubIssues) return true; // Global toggle
-      return expandedParents.has(issue.parent_issue_id); // Parent expanded
-    });
+    visibleIssues = filteredIssues;
   });
-
-  // Track which issues have sub-issues
-  let issuesWithSubIssues = $derived(
-    new Set(allIssues.filter((i) => i.parent_issue_id).map((i) => i.parent_issue_id!)),
-  );
-
-  // Compute sub-issue counts for display
-  let subIssueCounts = $derived.by(() => {
-    const counts = new Map<string, number>();
-    for (const issue of allIssues) {
-      if (issue.sub_issues?.length) {
-        counts.set(issue.id, issue.sub_issues.length);
-      }
-    }
-    return counts;
-  });
-
-  function toggleParent(parentId: string) {
-    if (expandedParents.has(parentId)) {
-      expandedParents.delete(parentId);
-    } else {
-      expandedParents.add(parentId);
-    }
-    expandedParents = new Set(expandedParents); // Trigger reactivity
-  }
 
   // Inline form state
   let showInlineForm = $state(false);
@@ -255,9 +220,6 @@
       </p>
     </div>
     <div class="flex gap-2">
-      <Button onclick={() => (showAllSubIssues = !showAllSubIssues)} variant="outline">
-        {showAllSubIssues ? 'Hide Sub-issues' : 'Show All Sub-issues'}
-      </Button>
       <Button
         onclick={() => openCreateIssueSheet()}
         class="bg-primary hover:bg-primary-hover text-white"
@@ -366,13 +328,6 @@
                 {issue}
                 bind:dragDisabled
                 onClick={() => openIssueSheet(issue)}
-                hasSubIssues={issuesWithSubIssues.has(issue.id)}
-                subIssueCount={subIssueCounts.get(issue.id) || 0}
-                isExpanded={expandedParents.has(issue.id)}
-                isSubIssue={!!issue.parent_issue_id}
-                onToggleExpand={issuesWithSubIssues.has(issue.id)
-                  ? () => toggleParent(issue.id)
-                  : null}
                 onMoveUp={index > 0 ? () => handleMoveUp(issue.id) : null}
                 onMoveDown={index < visibleIssues.length - 1
                   ? () => handleMoveDown(issue.id)

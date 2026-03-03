@@ -50,7 +50,6 @@ function makeIssue(overrides: Partial<Issue> = {}): Issue {
     project_id: 'project-1',
     epic_id: 'epic-1',
     number: 1,
-    parent_issue_id: null,
     milestone_id: null,
     title: 'Issue One',
     description: '<p>original description</p>',

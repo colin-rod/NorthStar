@@ -149,22 +149,15 @@ export const actions: Actions = {
     // Epic ID
     const epicId = formData.get('epic_id')?.toString();
     if (epicId !== undefined && epicId !== '') {
-      // Check if this is a sub-issue (has parent_issue_id)
+      // Fetch issue to verify project ownership
       const { data: issue } = await supabase
         .from('issues')
-        .select('parent_issue_id, project_id')
+        .select('project_id')
         .eq('id', id)
         .single();
 
       if (!issue) {
         return fail(404, { error: 'Issue not found' });
-      }
-
-      // Block epic changes for sub-issues
-      if (issue.parent_issue_id) {
-        return fail(400, {
-          error: 'Cannot change epic for sub-issues - they inherit from parent',
-        });
       }
 
       // Verify epic exists and belongs to same project as issue

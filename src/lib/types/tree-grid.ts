@@ -12,17 +12,17 @@ import type { ProjectMetrics } from '$lib/utils/project-helpers';
 
 /**
  * TreeNode represents a unified row in the tree grid
- * Can be a Project (level 0), Epic (level 1), Issue (level 2), or Sub-issue (level 3)
+ * Can be a Project (level 0), Epic (level 1), or Issue (level 2)
  */
 export interface TreeNode {
   /** Unique identifier (project.id, epic.id, or issue.id) */
   id: string;
 
   /** Node type determines which columns are visible/editable */
-  type: 'project' | 'epic' | 'issue' | 'sub-issue';
+  type: 'project' | 'epic' | 'issue';
 
-  /** Hierarchy level: 0=Project, 1=Epic, 2=Issue, 3=Sub-issue */
-  level: 0 | 1 | 2 | 3;
+  /** Hierarchy level: 0=Project, 1=Epic, 2=Issue */
+  level: 0 | 1 | 2;
 
   /** Parent node ID (null for top-level projects) */
   parentId: string | null;
@@ -39,10 +39,10 @@ export interface TreeNode {
   /** Computed metrics (total issues, story points) */
   metrics: ProjectMetrics;
 
-  /** Total story points (rollup) - null for sub-issues */
+  /** Total story points (rollup) */
   totalPoints: number | null;
 
-  /** Progress (rollup) - null for sub-issues */
+  /** Progress (rollup) */
   progress: Progress | null;
 
   /** Drag-drop state: Whether this node is currently being dragged */
@@ -118,7 +118,7 @@ export interface DragDropState {
   draggingNodeId: string | null;
 
   /** Type of the dragging node */
-  draggingNodeType: 'project' | 'epic' | 'issue' | 'sub-issue' | null;
+  draggingNodeType: 'project' | 'epic' | 'issue' | null;
 
   /** Set of node IDs that are valid drop targets for the current drag */
   validDropTargetIds: Set<string>;
@@ -139,14 +139,10 @@ export function isIssue(node: TreeNode): node is TreeNode & { data: Issue } {
   return node.type === 'issue';
 }
 
-export function isSubIssue(node: TreeNode): node is TreeNode & { data: Issue } {
-  return node.type === 'sub-issue';
-}
-
 /**
  * Get level from node type
  */
-export function getLevelFromType(type: TreeNode['type']): 0 | 1 | 2 | 3 {
+export function getLevelFromType(type: TreeNode['type']): 0 | 1 | 2 {
   switch (type) {
     case 'project':
       return 0;
@@ -154,7 +150,5 @@ export function getLevelFromType(type: TreeNode['type']): 0 | 1 | 2 | 3 {
       return 1;
     case 'issue':
       return 2;
-    case 'sub-issue':
-      return 3;
   }
 }

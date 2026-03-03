@@ -29,7 +29,6 @@ export function flattenTree(
   const nodes: TreeNode[] = [];
 
   for (const project of projects) {
-    // All issues for this project (flatten sub-issues into same array)
     const projectIssues = project.issues || [];
 
     // Level 0: Project
@@ -37,20 +36,13 @@ export function flattenTree(
 
     // Level 1: Epics
     for (const epic of project.epics || []) {
-      const epicIssues = projectIssues.filter((i) => i.epic_id === epic.id && !i.parent_issue_id);
+      const epicIssues = projectIssues.filter((i) => i.epic_id === epic.id);
 
       nodes.push(createEpicNode(epic, project.id, epicIssues, projectIssues));
 
-      // Level 2: Top-level Issues (no parent_issue_id)
+      // Level 2: Issues
       for (const issue of epicIssues) {
-        const subIssues = projectIssues.filter((i) => i.parent_issue_id === issue.id);
-
-        nodes.push(createIssueNode(issue, epic.id, project.id, subIssues));
-
-        // Level 3: Sub-issues
-        for (const subIssue of subIssues) {
-          nodes.push(createSubIssueNode(subIssue, issue.id, epic.id, project.id));
-        }
+        nodes.push(createIssueNode(issue, epic.id, project.id));
       }
     }
   }
@@ -78,12 +70,12 @@ export function getVisibleNodes(allNodes: TreeNode[], expandedIds: Set<string>):
 /**
  * Calculate indentation for a given hierarchy level
  *
- * Per spec: Project=0px, Epic=16px, Issue=32px, Sub-issue=48px
+ * Per spec: Project=0px, Epic=16px, Issue=32px
  *
- * @param level - Hierarchy level (0-3)
+ * @param level - Hierarchy level (0-2)
  * @returns Indentation in pixels
  */
-export function calculateIndentation(level: 0 | 1 | 2 | 3): string {
+export function calculateIndentation(level: 0 | 1 | 2): string {
   return `${level * 16}px`;
 }
 
@@ -139,49 +131,18 @@ function createEpicNode(
 /**
  * Create a TreeNode for an issue (level 2)
  */
-function createIssueNode(
-  issue: Issue,
-  epicId: string,
-  projectId: string,
-  subIssues: Issue[],
-): TreeNode {
-  const hasChildren = subIssues.length > 0;
-  const allIssues = [issue, ...subIssues];
-
+function createIssueNode(issue: Issue, epicId: string, _projectId: string): TreeNode {
   return {
     id: issue.id,
     type: 'issue',
     level: 2,
     parentId: epicId,
-    hasChildren,
+    hasChildren: false,
     data: issue,
-    counts: computeIssueCounts(allIssues),
-    metrics: computeProjectMetrics(allIssues),
+    counts: computeIssueCounts([issue]),
+    metrics: computeProjectMetrics([issue]),
     totalPoints: null, // Computed dynamically
     progress: null, // Computed dynamically
-  };
-}
-
-/**
- * Create a TreeNode for a sub-issue (level 3)
- */
-function createSubIssueNode(
-  subIssue: Issue,
-  parentIssueId: string,
-  _epicId: string,
-  _projectId: string,
-): TreeNode {
-  return {
-    id: subIssue.id,
-    type: 'sub-issue',
-    level: 3,
-    parentId: parentIssueId,
-    hasChildren: false, // Sub-issues cannot have children
-    data: subIssue,
-    counts: computeIssueCounts([subIssue]),
-    metrics: computeProjectMetrics([subIssue]),
-    totalPoints: null, // Sub-issues don't have rollup
-    progress: null, // Sub-issues don't have progress
   };
 }
 
@@ -208,15 +169,15 @@ export function getDescendantNodes(node: TreeNode, allNodes: TreeNode[]): TreeNo
 }
 
 /**
- * Get all descendant issue nodes (level 2 or 3) for calculating progress
+ * Get all descendant issue nodes (level 2) for calculating progress
  *
  * @param node - Parent node
  * @param allNodes - All tree nodes
- * @returns Array of issue/sub-issue nodes
+ * @returns Array of issue nodes
  */
 export function getDescendantIssues(node: TreeNode, allNodes: TreeNode[]): TreeNode[] {
   const descendants = getDescendantNodes(node, allNodes);
-  return descendants.filter((n) => n.type === 'issue' || n.type === 'sub-issue');
+  return descendants.filter((n) => n.type === 'issue');
 }
 
 /**

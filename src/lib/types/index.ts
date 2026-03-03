@@ -86,7 +86,6 @@ export interface Issue {
   project_id: string;
   epic_id: string;
   number: number;
-  parent_issue_id: string | null;
   milestone_id: string | null;
   title: string;
   description: string | null;
@@ -100,8 +99,6 @@ export interface Issue {
   project?: Project;
   epic?: Epic;
   milestone?: Milestone;
-  parent_issue?: Issue;
-  sub_issues?: Issue[];
   dependencies?: Dependency[]; // Issues this depends on
   blocked_by?: Dependency[]; // Dependencies where this issue is blocked (with depends_on_issue populated)
   blocking?: Dependency[]; // Dependencies where this issue blocks others (with issue populated)
@@ -153,7 +150,6 @@ export interface CreateIssueInput {
   status?: IssueStatus;
   priority?: number;
   story_points?: StoryPoints | null;
-  parent_issue_id?: string | null;
   milestone_id?: string | null;
 }
 
@@ -201,7 +197,6 @@ export interface EpicPageData {
 export interface IssuePageData {
   issue: Issue;
   dependencies: Dependency[];
-  subIssues: Issue[];
 }
 
 /**

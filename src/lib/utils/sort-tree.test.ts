@@ -59,7 +59,6 @@ const createIssue = (
   project_id,
   epic_id,
   number: parseInt(id, 36),
-  parent_issue_id: null,
   milestone_id: null,
   title,
   description: null,

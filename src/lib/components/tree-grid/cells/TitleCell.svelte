@@ -73,7 +73,7 @@
   });
 
   // Check if node is an issue type for dependency chip
-  const isIssueNode = $derived(node.type === 'issue' || node.type === 'sub-issue');
+  const isIssueNode = $derived(node.type === 'issue');
 
   // Compute if this node is the last child
   const nodeIsLastChild = $derived(isLastChild(node, allNodes));

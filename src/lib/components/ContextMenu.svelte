@@ -68,8 +68,6 @@
   const isProject = $derived(node?.type === 'project');
   const isEpic = $derived(node?.type === 'epic');
   const isIssue = $derived(node?.type === 'issue');
-  const isSubIssue = $derived(node?.type === 'sub-issue');
-  const isIssueOrSub = $derived(isIssue || isSubIssue);
 
   const projectStatuses = [
     { value: 'active', label: 'Active' },
@@ -264,8 +262,8 @@
         </CM.ContextMenuItem>
       {/if}
 
-      <!-- ===== ISSUE or SUB-ISSUE ===== -->
-      {#if isIssueOrSub}
+      <!-- ===== ISSUE ===== -->
+      {#if isIssue}
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Status</CM.ContextMenuSubTrigger>
           <CM.ContextMenuSubContent>
@@ -337,18 +335,6 @@
             {/each}
           </CM.ContextMenuSubContent>
         </CM.ContextMenuSub>
-
-        {#if isIssue}
-          <CM.ContextMenuSeparator />
-          <CM.ContextMenuItem
-            onclick={() => {
-              onAddChild?.(node!);
-              onClose();
-            }}
-          >
-            Add Sub-issue
-          </CM.ContextMenuItem>
-        {/if}
 
         <CM.ContextMenuSeparator />
 

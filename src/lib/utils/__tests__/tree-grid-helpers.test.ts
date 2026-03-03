@@ -15,8 +15,8 @@ import type { TreeNode } from '$lib/types/tree-grid';
 // Helper to create mock tree nodes
 function createMockNode(
   id: string,
-  type: 'project' | 'epic' | 'issue' | 'sub-issue',
-  level: 0 | 1 | 2 | 3,
+  type: 'project' | 'epic' | 'issue',
+  level: 0 | 1 | 2,
   parentId: string | null = null,
 ): TreeNode {
   return {
@@ -88,22 +88,6 @@ describe('isLastChild', () => {
 
     expect(isLastChild(visibleNodes[1], visibleNodes)).toBe(false); // epic1
     expect(isLastChild(visibleNodes[2], visibleNodes)).toBe(true); // epic3
-  });
-
-  it('should handle deeply nested hierarchies', () => {
-    const nodes: TreeNode[] = [
-      createMockNode('project1', 'project', 0),
-      createMockNode('epic1', 'epic', 1, 'project1'),
-      createMockNode('issue1', 'issue', 2, 'epic1'),
-      createMockNode('issue2', 'issue', 2, 'epic1'),
-      createMockNode('subissue1', 'sub-issue', 3, 'issue2'),
-      createMockNode('subissue2', 'sub-issue', 3, 'issue2'),
-    ];
-
-    expect(isLastChild(nodes[2], nodes)).toBe(false); // issue1 - not last
-    expect(isLastChild(nodes[3], nodes)).toBe(true); // issue2 - last issue under epic1
-    expect(isLastChild(nodes[4], nodes)).toBe(false); // subissue1 - not last
-    expect(isLastChild(nodes[5], nodes)).toBe(true); // subissue2 - last under issue2
   });
 
   it('should handle nodes from different parents correctly', () => {
@@ -217,72 +201,6 @@ describe('flattenTree', () => {
     });
   });
 
-  it('should flatten full hierarchy (project → epic → issue → sub-issue)', () => {
-    const projects = [
-      {
-        id: 'project1',
-        number: 1,
-        name: 'Test Project',
-        user_id: 'user1',
-        created_at: new Date().toISOString(),
-        archived_at: null,
-        status: 'active' as const,
-        description: null,
-        epics: [
-          {
-            id: 'epic1',
-            project_id: 'project1',
-            number: 1,
-            name: 'Epic 1',
-            status: 'active' as const,
-            is_default: false,
-            sort_order: 0,
-            description: null,
-            priority: null,
-          },
-        ],
-        issues: [
-          {
-            id: 'issue1',
-            project_id: 'project1',
-            epic_id: 'epic1',
-            title: 'Issue 1',
-            status: 'todo' as const,
-            priority: 0,
-            story_points: 5,
-            sort_order: 0,
-            created_at: new Date().toISOString(),
-          } as Issue,
-          {
-            id: 'subissue1',
-            project_id: 'project1',
-            epic_id: 'epic1',
-            parent_issue_id: 'issue1',
-            title: 'Sub-issue 1',
-            status: 'todo' as const,
-            priority: 0,
-            story_points: 3,
-            sort_order: 0,
-            created_at: new Date().toISOString(),
-          } as Issue,
-        ],
-      },
-    ];
-
-    const result = flattenTree(projects);
-
-    expect(result).toHaveLength(4); // project + epic + issue + sub-issue
-    expect(result[0]).toMatchObject({ id: 'project1', type: 'project', level: 0 });
-    expect(result[1]).toMatchObject({ id: 'epic1', type: 'epic', level: 1, parentId: 'project1' });
-    expect(result[2]).toMatchObject({ id: 'issue1', type: 'issue', level: 2, parentId: 'epic1' });
-    expect(result[3]).toMatchObject({
-      id: 'subissue1',
-      type: 'sub-issue',
-      level: 3,
-      parentId: 'issue1',
-    });
-  });
-
   it('should flatten multiple projects with mixed content', () => {
     const projects = [
       {
@@ -341,67 +259,6 @@ describe('flattenTree', () => {
     expect(result[2]).toMatchObject({ id: 'issue1', type: 'issue' });
     expect(result[3]).toMatchObject({ id: 'project2', type: 'project', hasChildren: false });
   });
-
-  it('should correctly filter epic issues (only those without parent_issue_id)', () => {
-    const projects = [
-      {
-        id: 'project1',
-        number: 1,
-        name: 'Project 1',
-        user_id: 'user1',
-        created_at: new Date().toISOString(),
-        archived_at: null,
-        status: 'active' as const,
-        description: null,
-        epics: [
-          {
-            id: 'epic1',
-            project_id: 'project1',
-            number: 1,
-            name: 'Epic 1',
-            status: 'active' as const,
-            is_default: false,
-            sort_order: 0,
-            description: null,
-            priority: null,
-          },
-        ],
-        issues: [
-          {
-            id: 'issue1',
-            project_id: 'project1',
-            epic_id: 'epic1',
-            title: 'Issue 1',
-            status: 'todo' as const,
-            priority: 0,
-            sort_order: 0,
-            created_at: new Date().toISOString(),
-          } as Issue,
-          {
-            id: 'subissue1',
-            project_id: 'project1',
-            epic_id: 'epic1',
-            parent_issue_id: 'issue1',
-            title: 'Sub-issue 1',
-            status: 'todo' as const,
-            priority: 0,
-            sort_order: 0,
-            created_at: new Date().toISOString(),
-          } as Issue,
-        ],
-      },
-    ];
-
-    const result = flattenTree(projects);
-
-    // Epic should only have issue1 as direct child, not subissue1
-    const epicNode = result.find((n) => n.id === 'epic1');
-    expect(epicNode?.hasChildren).toBe(true);
-
-    // Issue1 should have subissue1 as child
-    const issueNode = result.find((n) => n.id === 'issue1');
-    expect(issueNode?.hasChildren).toBe(true);
-  });
 });
 
 describe('getVisibleNodes', () => {
@@ -411,7 +268,6 @@ describe('getVisibleNodes', () => {
     createMockNode('epic2', 'epic', 1, 'project1'),
     createMockNode('issue1', 'issue', 2, 'epic1'),
     createMockNode('issue2', 'issue', 2, 'epic1'),
-    createMockNode('subissue1', 'sub-issue', 3, 'issue1'),
   ];
 
   it('should show only projects when nothing is expanded', () => {
@@ -436,21 +292,6 @@ describe('getVisibleNodes', () => {
 
     expect(result).toHaveLength(5);
     expect(result.map((n) => n.id)).toEqual(['project1', 'epic1', 'epic2', 'issue1', 'issue2']);
-  });
-
-  it('should show sub-issues when issue is expanded', () => {
-    const expandedIds = new Set(['project1', 'epic1', 'issue1']);
-    const result = getVisibleNodes(mockNodes, expandedIds);
-
-    expect(result).toHaveLength(6);
-    expect(result.map((n) => n.id)).toEqual([
-      'project1',
-      'epic1',
-      'epic2',
-      'issue1',
-      'issue2',
-      'subissue1',
-    ]);
   });
 
   it('should handle mixed expansion states', () => {
@@ -488,10 +329,6 @@ describe('calculateIndentation', () => {
   it('should return 32px for level 2 (issue)', () => {
     expect(calculateIndentation(2)).toBe('32px');
   });
-
-  it('should return 48px for level 3 (sub-issue)', () => {
-    expect(calculateIndentation(3)).toBe('48px');
-  });
 });
 
 describe('getDescendantNodes', () => {
@@ -501,11 +338,10 @@ describe('getDescendantNodes', () => {
     createMockNode('epic2', 'epic', 1, 'project1'),
     createMockNode('issue1', 'issue', 2, 'epic1'),
     createMockNode('issue2', 'issue', 2, 'epic1'),
-    createMockNode('subissue1', 'sub-issue', 3, 'issue1'),
   ];
 
   it('should return empty array for node with no descendants', () => {
-    const node = mockNodes.find((n) => n.id === 'subissue1')!;
+    const node = mockNodes.find((n) => n.id === 'issue1')!;
     const result = getDescendantNodes(node, mockNodes);
 
     expect(result).toEqual([]);
@@ -522,26 +358,25 @@ describe('getDescendantNodes', () => {
     const node = mockNodes.find((n) => n.id === 'project1')!;
     const result = getDescendantNodes(node, mockNodes);
 
-    expect(result).toHaveLength(5);
-    // Depth-first order: epic1, then epic1's children (issue1, issue2, subissue1), then epic2
-    expect(result.map((n) => n.id)).toEqual(['epic1', 'issue1', 'subissue1', 'issue2', 'epic2']);
+    expect(result).toHaveLength(4);
+    // Depth-first order: epic1, then epic1's children (issue1, issue2), then epic2
+    expect(result.map((n) => n.id)).toEqual(['epic1', 'issue1', 'issue2', 'epic2']);
   });
 
   it('should return all descendants for epic node', () => {
     const node = mockNodes.find((n) => n.id === 'epic1')!;
     const result = getDescendantNodes(node, mockNodes);
 
-    expect(result).toHaveLength(3);
-    // Depth-first order: issue1, subissue1, issue2
-    expect(result.map((n) => n.id)).toEqual(['issue1', 'subissue1', 'issue2']);
+    expect(result).toHaveLength(2);
+    // Depth-first order: issue1, issue2
+    expect(result.map((n) => n.id)).toEqual(['issue1', 'issue2']);
   });
 
-  it('should return only direct sub-issue for issue node', () => {
-    const node = mockNodes.find((n) => n.id === 'issue1')!;
+  it('should return empty array for leaf issue node', () => {
+    const node = mockNodes.find((n) => n.id === 'issue2')!;
     const result = getDescendantNodes(node, mockNodes);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('subissue1');
+    expect(result).toHaveLength(0);
   });
 });
 
@@ -552,23 +387,22 @@ describe('getDescendantIssues', () => {
     createMockNode('epic2', 'epic', 1, 'project1'),
     createMockNode('issue1', 'issue', 2, 'epic1'),
     createMockNode('issue2', 'issue', 2, 'epic1'),
-    createMockNode('subissue1', 'sub-issue', 3, 'issue1'),
   ];
 
-  it('should return only issue and sub-issue nodes from descendants', () => {
+  it('should return only issue nodes from descendants', () => {
     const node = mockNodes.find((n) => n.id === 'project1')!;
     const result = getDescendantIssues(node, mockNodes);
 
-    expect(result).toHaveLength(3);
-    // Filters to only issues/sub-issues, maintaining depth-first order
-    expect(result.map((n) => n.id)).toEqual(['issue1', 'subissue1', 'issue2']);
+    expect(result).toHaveLength(2);
+    // Filters to only issues, maintaining depth-first order
+    expect(result.map((n) => n.id)).toEqual(['issue1', 'issue2']);
   });
 
   it('should filter out epic nodes from descendants', () => {
     const node = mockNodes.find((n) => n.id === 'project1')!;
     const result = getDescendantIssues(node, mockNodes);
 
-    expect(result.every((n) => n.type === 'issue' || n.type === 'sub-issue')).toBe(true);
+    expect(result.every((n) => n.type === 'issue')).toBe(true);
   });
 
   it('should return empty array for epic with no issues', () => {
@@ -578,20 +412,19 @@ describe('getDescendantIssues', () => {
     expect(result).toEqual([]);
   });
 
-  it('should return issues and sub-issues for epic node', () => {
+  it('should return issues for epic node', () => {
     const node = mockNodes.find((n) => n.id === 'epic1')!;
     const result = getDescendantIssues(node, mockNodes);
 
-    expect(result).toHaveLength(3);
-    // Filters to only issues/sub-issues, maintaining depth-first order
-    expect(result.map((n) => n.id)).toEqual(['issue1', 'subissue1', 'issue2']);
+    expect(result).toHaveLength(2);
+    // Filters to only issues, maintaining depth-first order
+    expect(result.map((n) => n.id)).toEqual(['issue1', 'issue2']);
   });
 
-  it('should return only sub-issues for issue node', () => {
+  it('should return empty array for leaf issue node', () => {
     const node = mockNodes.find((n) => n.id === 'issue1')!;
     const result = getDescendantIssues(node, mockNodes);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('subissue1');
+    expect(result).toHaveLength(0);
   });
 });

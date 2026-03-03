@@ -38,25 +38,6 @@ describe('ExpandedEpicView', () => {
       status: 'todo',
       priority: 0,
       sort_order: 0,
-      parent_issue_id: null,
-      milestone_id: null,
-      story_points: null,
-      dependencies: [],
-      project: mockProject,
-      epic: mockEpic,
-      created_at: new Date().toISOString(),
-      description: null,
-    },
-    {
-      id: 'i2',
-      number: 2,
-      title: 'Sub-issue 1',
-      epic_id: 'epic-1',
-      project_id: 'project-1',
-      status: 'todo',
-      priority: 0,
-      sort_order: 1,
-      parent_issue_id: 'i1',
       milestone_id: null,
       story_points: null,
       dependencies: [],
@@ -104,10 +85,8 @@ describe('ExpandedEpicView', () => {
       onIssueClick: vi.fn(),
     });
 
-    // Should show 2 issues total (parent + sub-issue)
-    expect(screen.getByText(/All \(2\)/)).toBeInTheDocument();
-    // Both are todo status
-    expect(screen.getByText(/Todo \(2\)/)).toBeInTheDocument();
+    expect(screen.getByText(/All \(1\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Todo \(1\)/)).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', async () => {
@@ -139,8 +118,8 @@ describe('ExpandedEpicView', () => {
     });
 
     // All tabs should be present
-    expect(screen.getByText(/All \(2\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Todo \(2\)/)).toBeInTheDocument();
+    expect(screen.getByText(/All \(1\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Todo \(1\)/)).toBeInTheDocument();
     expect(screen.getByText(/In Progress \(0\)/)).toBeInTheDocument();
     expect(screen.getByText(/In Review \(0\)/)).toBeInTheDocument();
     expect(screen.getByText(/Blocked \(0\)/)).toBeInTheDocument();

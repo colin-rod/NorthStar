@@ -38,7 +38,6 @@
   } from '$lib/utils/design-tokens';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import { computeIssueCounts, computeProgress } from '$lib/utils/issue-counts';
-  import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
   import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
   import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
@@ -89,9 +88,6 @@
   let activeSaveCount = $state(0);
   let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
   let latestSaveRequestId = $state(0);
-
-  // Sub-issues state
-  let showSubIssueForm = $state(false);
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
   // svelte-ignore state_referenced_locally
@@ -275,9 +271,6 @@
   let blockingIssues = $derived(
     issue?.blocking?.map((dep) => dep.issue).filter((i): i is Issue => i !== undefined) || [],
   );
-
-  // Get sub-issues
-  let subIssues = $derived(issue?.sub_issues || []);
 
   // Auto-save function
   async function autoSave(
@@ -468,7 +461,6 @@
           ...newIssue,
           blocked_by: [],
           blocking: [],
-          sub_issues: [],
         };
         currentIssueId = newIssue.id;
 
@@ -850,63 +842,40 @@
               <!-- Epic -->
               <div class="space-y-1">
                 <label class="text-xs text-foreground-muted uppercase tracking-wide">Epic</label>
-                {#if issue?.parent_issue_id}
-                  {@const inheritedEpic = projectEpics.find((e) => e.id === localEpicId)}
-                  {#if inheritedEpic}
-                    <div class="w-full flex flex-col gap-1 p-2 rounded-md bg-muted/50">
+                <div class="space-y-1">
+                  {#each projectEpics as epic (epic.id)}
+                    {@const epicIssues = projectIssues.filter((i) => i.epic_id === epic.id)}
+                    {@const epicCounts = computeIssueCounts(epicIssues)}
+                    {@const epicProgress = computeProgress(epicCounts)}
+                    <button
+                      type="button"
+                      onclick={() => goto(`/epics/${epic.id}`)}
+                      class="w-full flex flex-col gap-1 p-2 rounded-md text-left transition-colors {localEpicId ===
+                      epic.id
+                        ? 'bg-primary/10 ring-1 ring-primary/30'
+                        : 'bg-muted/50 hover:bg-muted'}"
+                    >
                       <div class="flex items-center gap-2">
-                        <Badge
-                          variant={getEpicStatusVariant(inheritedEpic.status)}
-                          class="text-xs shrink-0"
-                        >
-                          {inheritedEpic.status}
+                        <Badge variant={getEpicStatusVariant(epic.status)} class="text-xs shrink-0">
+                          {epic.status}
                         </Badge>
-                        <span class="text-body flex-1 truncate">{inheritedEpic.name}</span>
-                        <span class="text-metadata text-foreground-secondary">(inherited)</span>
-                      </div>
-                    </div>
-                  {/if}
-                {:else}
-                  <div class="space-y-1">
-                    {#each projectEpics as epic (epic.id)}
-                      {@const epicIssues = projectIssues.filter(
-                        (i) => i.epic_id === epic.id && !i.parent_issue_id,
-                      )}
-                      {@const epicCounts = computeIssueCounts(epicIssues)}
-                      {@const epicProgress = computeProgress(epicCounts)}
-                      <button
-                        type="button"
-                        onclick={() => goto(`/epics/${epic.id}`)}
-                        class="w-full flex flex-col gap-1 p-2 rounded-md text-left transition-colors {localEpicId ===
-                        epic.id
-                          ? 'bg-primary/10 ring-1 ring-primary/30'
-                          : 'bg-muted/50 hover:bg-muted'}"
-                      >
-                        <div class="flex items-center gap-2">
-                          <Badge
-                            variant={getEpicStatusVariant(epic.status)}
-                            class="text-xs shrink-0"
-                          >
-                            {epic.status}
-                          </Badge>
-                          <span class="text-body flex-1 truncate">{epic.name}</span>
-                          {#if epicProgress.total > 0}
-                            <span class="text-metadata text-foreground-secondary shrink-0">
-                              {epicProgress.completed}/{epicProgress.total} done
-                            </span>
-                          {/if}
-                        </div>
+                        <span class="text-body flex-1 truncate">{epic.name}</span>
                         {#if epicProgress.total > 0}
-                          <ProgressBar
-                            percentage={epicProgress.percentage}
-                            label={false}
-                            ariaLabel="{epic.name} completion"
-                          />
+                          <span class="text-metadata text-foreground-secondary shrink-0">
+                            {epicProgress.completed}/{epicProgress.total} done
+                          </span>
                         {/if}
-                      </button>
-                    {/each}
-                  </div>
-                {/if}
+                      </div>
+                      {#if epicProgress.total > 0}
+                        <ProgressBar
+                          percentage={epicProgress.percentage}
+                          label={false}
+                          ariaLabel="{epic.name} completion"
+                        />
+                      {/if}
+                    </button>
+                  {/each}
+                </div>
               </div>
             </div>
           </section>
@@ -919,55 +888,6 @@
               {blockedByIssues}
               {blockingIssues}
             />
-
-            <!-- Sub-issues Section -->
-            <section>
-              <h3 class="section-header">Sub-issues</h3>
-
-              <div class="space-y-2">
-                <!-- Sub-issues List -->
-                {#if subIssues.length > 0}
-                  {#each subIssues as subIssue (subIssue.id)}
-                    <button
-                      type="button"
-                      onclick={() => {
-                        issue = subIssue;
-                        showSubIssueForm = false;
-                      }}
-                      class="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted w-full text-left transition-colors"
-                      title="Open sub-issue"
-                    >
-                      <Badge variant={getStatusBadgeVariant(subIssue.status)} class="shrink-0">
-                        {formatStatus(subIssue.status)}
-                      </Badge>
-                      <span class="text-body flex-1 truncate">{subIssue.title}</span>
-                    </button>
-                  {/each}
-                {:else if !showSubIssueForm}
-                  <p class="text-metadata text-foreground-muted">No sub-issues</p>
-                {/if}
-
-                <!-- Inline Form for Creating Sub-issue -->
-                {#if showSubIssueForm}
-                  <InlineSubIssueForm
-                    parentIssueId={issue.id}
-                    epicId={issue.epic_id}
-                    projectId={issue.project_id}
-                    onCancel={() => (showSubIssueForm = false)}
-                    onSuccess={() => (showSubIssueForm = false)}
-                  />
-                {:else}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onclick={() => (showSubIssueForm = true)}
-                    class="w-full"
-                  >
-                    Add Sub-issue
-                  </Button>
-                {/if}
-              </div>
-            </section>
           {/if}
         </div>
       {/if}

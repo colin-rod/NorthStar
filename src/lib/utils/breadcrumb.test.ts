@@ -34,7 +34,6 @@ describe('buildBreadcrumb', () => {
     project_id: 'proj-1',
     epic_id: 'epic-1',
     number: 2,
-    parent_issue_id: null,
     milestone_id: null,
     title: 'Implement authentication API',
     status: 'doing',

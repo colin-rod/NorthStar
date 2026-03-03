@@ -50,7 +50,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, session }, url 
       .from('issues')
       .select(
         `
-        id, project_id, epic_id, parent_issue_id, number, title, description, status,
+        id, project_id, epic_id, number, title, description, status,
         priority, story_points, sort_order, milestone_id, created_at,
         dependencies!dependencies_issue_id_fkey(
           issue_id,
@@ -404,7 +404,6 @@ export const actions: Actions = {
       .from('issues')
       .select('sort_order')
       .eq('epic_id', epicId)
-      .is('parent_issue_id', null)
       .order('sort_order', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -431,62 +430,6 @@ export const actions: Actions = {
     }
 
     return { success: true, action: 'createIssue', issue: data };
-  },
-
-  createSubIssue: async ({ request, locals: { supabase, session } }) => {
-    if (!session) return fail(401, { error: 'Unauthorized' });
-
-    const formData = await request.formData();
-    const title = formData.get('title')?.toString().trim();
-    const parentIssueId = formData.get('parentIssueId')?.toString();
-    const epicId = formData.get('epicId')?.toString();
-    const projectId = formData.get('projectId')?.toString();
-
-    if (!title || title.length === 0) {
-      return fail(400, { error: 'Sub-issue title is required' });
-    }
-    if (!parentIssueId) {
-      return fail(400, { error: 'Parent issue ID is required' });
-    }
-    if (!epicId) {
-      return fail(400, { error: 'Epic ID is required' });
-    }
-    if (!projectId) {
-      return fail(400, { error: 'Project ID is required' });
-    }
-
-    // Get max sort_order for sub-issues of this parent
-    const { data: maxOrderSubIssue } = await supabase
-      .from('issues')
-      .select('sort_order')
-      .eq('parent_issue_id', parentIssueId)
-      .order('sort_order', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const nextSortOrder = (maxOrderSubIssue?.sort_order ?? -1) + 1;
-
-    // Insert sub-issue
-    const { data, error } = await supabase
-      .from('issues')
-      .insert({
-        title,
-        parent_issue_id: parentIssueId,
-        epic_id: epicId,
-        project_id: projectId,
-        status: 'todo',
-        priority: 3, // Default P3
-        sort_order: nextSortOrder,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Create sub-issue error:', error);
-      return fail(500, { error: 'Failed to create sub-issue' });
-    }
-
-    return { success: true, action: 'createSubIssue', subIssue: data };
   },
 
   updateIssue: async ({ request, locals: { supabase, session } }) => {
@@ -556,22 +499,15 @@ export const actions: Actions = {
     // Epic ID
     const epicId = formData.get('epic_id')?.toString();
     if (epicId !== undefined) {
-      // Check if this is a sub-issue (has parent_issue_id)
+      // Fetch issue to verify project ownership
       const { data: issue } = await supabase
         .from('issues')
-        .select('parent_issue_id, project_id')
+        .select('project_id')
         .eq('id', id)
         .single();
 
       if (!issue) {
         return fail(404, { error: 'Issue not found' });
-      }
-
-      // Block epic changes for sub-issues
-      if (issue.parent_issue_id) {
-        return fail(400, {
-          error: 'Cannot change epic for sub-issues - they inherit from parent',
-        });
       }
 
       // Verify epic exists and belongs to same project as issue
@@ -651,7 +587,7 @@ export const actions: Actions = {
       table = 'projects';
     } else if (nodeType === 'epic') {
       table = 'epics';
-    } else if (nodeType === 'issue' || nodeType === 'sub-issue') {
+    } else if (nodeType === 'issue') {
       table = 'issues';
     } else {
       return fail(400, { error: 'Invalid node type' });
@@ -752,7 +688,6 @@ export const actions: Actions = {
       newSortOrder: number;
       newProjectId?: string;
       newEpicId?: string;
-      newParentIssueId?: string;
     } = JSON.parse(updateJson);
 
     // Determine table and build update object
@@ -765,17 +700,11 @@ export const actions: Actions = {
       // Epic reparent (moving to different project)
       table = 'epics';
       updates.project_id = update.newProjectId;
-    } else if (update.newEpicId !== undefined && update.newParentIssueId === undefined) {
+    } else if (update.newEpicId !== undefined) {
       // Issue reparent (to different epic)
       table = 'issues';
       updates.epic_id = update.newEpicId;
       if (update.newProjectId) updates.project_id = update.newProjectId;
-    } else if (update.newParentIssueId !== undefined) {
-      // Sub-issue reparent (to different parent issue)
-      table = 'issues';
-      updates.parent_issue_id = update.newParentIssueId;
-      updates.epic_id = update.newEpicId;
-      updates.project_id = update.newProjectId;
     } else {
       return fail(400, { error: 'Invalid reparent update' });
     }

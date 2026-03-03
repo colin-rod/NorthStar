@@ -62,38 +62,7 @@
         filtered = epicIssues;
     }
 
-    // Filter out sub-issues unless parent is expanded
-    return filtered.filter((issue) => {
-      if (!issue.parent_issue_id) return true; // Top-level
-      return expandedIssueIds.has(issue.parent_issue_id); // Parent expanded
-    });
-  });
-
-  // Track which issues have sub-issues (for chevron display)
-  let issuesWithSubIssues = $derived(
-    new Set(epicIssues.filter((i) => i.parent_issue_id).map((i) => i.parent_issue_id!)),
-  );
-
-  // Compute sub-issue counts for display
-  let subIssueCounts = $derived.by(() => {
-    const counts = new Map<string, number>();
-    for (const issue of epicIssues) {
-      if (issue.parent_issue_id) {
-        counts.set(issue.parent_issue_id, (counts.get(issue.parent_issue_id) || 0) + 1);
-      }
-    }
-    return counts;
-  });
-
-  // Compute done sub-issue counts (done + canceled) for completion pill
-  let doneSubIssueCounts = $derived.by(() => {
-    const counts = new Map<string, number>();
-    for (const issue of epicIssues) {
-      if (issue.parent_issue_id && (issue.status === 'done' || issue.status === 'canceled')) {
-        counts.set(issue.parent_issue_id, (counts.get(issue.parent_issue_id) || 0) + 1);
-      }
-    }
-    return counts;
+    return filtered;
   });
 </script>
 
@@ -171,12 +140,6 @@
             <IssueRow
               {issue}
               onClick={() => onIssueClick(issue)}
-              hasSubIssues={issuesWithSubIssues.has(issue.id)}
-              subIssueCount={subIssueCounts.get(issue.id) || 0}
-              doneSubIssueCount={doneSubIssueCounts.get(issue.id) || 0}
-              isExpanded={expandedIssueIds.has(issue.id)}
-              isSubIssue={!!issue.parent_issue_id}
-              onToggleExpand={() => onToggleIssue(issue.id)}
               dragDisabled={true}
               onMoveUp={null}
               onMoveDown={null}

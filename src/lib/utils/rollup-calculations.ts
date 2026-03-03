@@ -4,15 +4,13 @@
  * Calculate Total Story Points and Progress rollups for tree grid nodes.
  *
  * Rollup Rules:
- * - Sub-issue: No rollup (displays only its own SP)
- * - Issue: Issue SP + sum(sub-issue SP)
+ * - Issue: own SP
  * - Epic: sum(issue total SP)
  * - Project: sum(epic total SP)
  *
  * Progress Rules:
  * - Progress = (Done SP / Total SP) * 100
  * - If Total SP = 0, progress = 100% if all Done, else 0%
- * - Sub-issues do not have progress
  */
 
 import { getDescendantIssues } from './tree-grid-helpers';
@@ -28,20 +26,9 @@ import type { TreeNode, Progress } from '$lib/types/tree-grid';
  * @returns Total story points or null if not applicable
  */
 export function calculateTotalPoints(node: TreeNode, allNodes: TreeNode[]): number | null {
-  // Sub-issues don't have rollup
-  if (node.type === 'sub-issue') {
-    return null;
-  }
-
-  // Issue: own SP + sum of sub-issue SP
+  // Issue: own SP
   if (node.type === 'issue') {
-    const issuePoints = (node.data as Issue).story_points || 0;
-    const subIssues = allNodes.filter((n) => n.type === 'sub-issue' && n.parentId === node.id);
-    const subIssuePoints = subIssues.reduce(
-      (sum, sub) => sum + ((sub.data as Issue).story_points || 0),
-      0,
-    );
-    return issuePoints + subIssuePoints;
+    return (node.data as Issue).story_points || 0;
   }
 
   // Epic: sum of all child issue totals
@@ -71,11 +58,6 @@ export function calculateTotalPoints(node: TreeNode, allNodes: TreeNode[]): numb
  * @returns Progress object or null if not applicable
  */
 export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progress | null {
-  // Sub-issues don't have progress
-  if (node.type === 'sub-issue') {
-    return null;
-  }
-
   // Get all descendant issues (recursive)
   const descendantIssues = getDescendantIssues(node, allNodes);
 

@@ -35,9 +35,6 @@ export const GET: RequestHandler = async ({ locals: { supabase, session } }) => 
             epic:epics(id, name),
             project:projects(id, name)
           )
-        ),
-        sub_issues:issues!parent_issue_id(
-          id, title, status, priority, sort_order
         )
       `,
       )

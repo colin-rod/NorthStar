@@ -31,7 +31,6 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     priority: 0,
     project_id: 'proj-1',
     epic_id: 'epic-1',
-    parent_issue_id: null,
     milestone_id: null,
     story_points: null,
     sort_order: 1,

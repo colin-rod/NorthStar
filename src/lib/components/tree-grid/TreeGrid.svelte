@@ -165,16 +165,6 @@
                 .map((issue) => epicIssueNodeById.get(issue.id))
                 .filter((n): n is TreeNode => n !== undefined);
               result.push(...groupIssueNodes);
-
-              // Also include sub-issues if their parent issue is expanded
-              for (const issueNode of groupIssueNodes) {
-                if (expandedIds.has(issueNode.id)) {
-                  const subIssues = visibleNodes.filter(
-                    (n) => n.parentId === issueNode.id && n.type === 'sub-issue',
-                  );
-                  result.push(...subIssues);
-                }
-              }
             }
           }
 
@@ -258,8 +248,8 @@
 
     // Find the parent node
     const parentNode = allNodes.find((n) => n.id === currentNode.parentId);
-    if (!parentNode || parentNode.type === 'sub-issue') {
-      return null; // Can't add children to sub-issues
+    if (!parentNode) {
+      return null;
     }
 
     // If there's no next node, this is the last node - show add row for its parent
@@ -493,7 +483,7 @@
               nextNode && nextNode.type !== 'group-header' ? (nextNode as TreeNode) : undefined}
             {@const parentNode = shouldShowAddRowAfter(node, nextTreeNode, expandedIds, allNodes)}
             {#if parentNode}
-              {@const childLevel = (parentNode.level + 1) as 1 | 2 | 3}
+              {@const childLevel = (parentNode.level + 1) as 1 | 2}
               <AddRow
                 {parentNode}
                 level={childLevel}

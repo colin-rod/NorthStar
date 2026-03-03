@@ -11,7 +11,7 @@
 
   interface Props {
     parentNode: TreeNode;
-    level: 1 | 2 | 3; // Epic, Issue, or Sub-issue
+    level: 1 | 2; // Epic or Issue
     indentation: string;
     onCreate: (data: { title: string }) => void;
   }
@@ -31,7 +31,6 @@
   const placeholders = {
     1: '+ Add epic',
     2: '+ Add issue',
-    3: '+ Add sub-issue',
   };
 
   function startAdding() {

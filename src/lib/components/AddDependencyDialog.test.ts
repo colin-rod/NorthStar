@@ -33,7 +33,6 @@ describe('AddDependencyDialog', () => {
     sort_order: 0,
     created_at: '2024-01-01',
     description: null,
-    parent_issue_id: null,
     milestone_id: null,
   };
 
@@ -162,7 +161,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
     sort_order: 0,
     created_at: '2024-01-01',
     description: null,
-    parent_issue_id: null,
     milestone_id: null,
     project: mockProject,
     epic: mockEpic,

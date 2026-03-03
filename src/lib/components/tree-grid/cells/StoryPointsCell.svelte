@@ -5,7 +5,7 @@
    * Display mode: Number or blank
    * Edit mode: Dropdown select (1, 2, 3, 5, 8, 13, 21)
    *
-   * Only visible/editable for issues and sub-issues (not projects/epics)
+   * Only visible/editable for issues (not projects/epics)
    */
 
   import type { TreeNode } from '$lib/types/tree-grid';
@@ -19,8 +19,8 @@
 
   let { node, editMode, onEdit }: Props = $props();
 
-  // Only applicable for issues and sub-issues
-  const isApplicable = $derived(node.type === 'issue' || node.type === 'sub-issue');
+  // Only applicable for issues
+  const isApplicable = $derived(node.type === 'issue');
 
   // Get story points from node data
   const storyPoints = $derived.by(() => {

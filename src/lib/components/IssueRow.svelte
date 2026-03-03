@@ -28,7 +28,6 @@
   import { isBlocked } from '$lib/utils/issue-helpers';
   import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
-  import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
@@ -40,12 +39,6 @@
     issue: Issue;
     onClick?: () => void;
     dragDisabled?: boolean;
-    hasSubIssues?: boolean;
-    subIssueCount?: number;
-    doneSubIssueCount?: number;
-    isExpanded?: boolean;
-    isSubIssue?: boolean;
-    onToggleExpand?: (() => void) | null;
     onMoveUp?: (() => void) | null;
     onMoveDown?: (() => void) | null;
     showReorderHint?: boolean;
@@ -55,12 +48,6 @@
     issue,
     onClick = () => {},
     dragDisabled = $bindable(true),
-    hasSubIssues = false,
-    subIssueCount = 0,
-    doneSubIssueCount = 0,
-    isExpanded = false,
-    isSubIssue = false,
-    onToggleExpand = null,
     onMoveUp = null,
     onMoveDown = null,
     showReorderHint = false,
@@ -122,29 +109,9 @@
   {/if}
 
   <!-- Main Content Area (non-interactive container) -->
-  <div class="flex-1 flex items-start gap-3 min-w-0 {isSubIssue ? 'ml-12' : 'ml-8'}">
-    <!-- Expand/Collapse Chevron (sibling button for parents with sub-issues) -->
-    {#if hasSubIssues}
-      <button
-        type="button"
-        onclick={(e) => {
-          e.stopPropagation();
-          onToggleExpand?.();
-        }}
-        class="flex items-center gap-1 shrink-0 pt-1 cursor-pointer"
-        aria-label={isExpanded ? 'Collapse sub-issues' : 'Expand sub-issues'}
-      >
-        {#if isExpanded}
-          <ChevronDown class="h-4 w-4 text-muted-foreground" />
-        {:else}
-          <ChevronRight class="h-4 w-4 text-muted-foreground" />
-        {/if}
-        <Badge variant="outline" class="text-xs">{doneSubIssueCount}/{subIssueCount}</Badge>
-      </button>
-    {:else}
-      <!-- Spacer for alignment when no chevron -->
-      <div class="w-4 shrink-0"></div>
-    {/if}
+  <div class="flex-1 flex items-start gap-3 min-w-0 ml-8">
+    <!-- Spacer for alignment -->
+    <div class="w-4 shrink-0"></div>
 
     <!-- Clickable Content Area (sibling button) -->
     <button type="button" onclick={onClick} class="flex-1 text-left flex items-start gap-3 min-w-0">
