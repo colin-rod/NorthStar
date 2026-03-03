@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Issue } from '$lib/types';
   import { Badge } from '$lib/components/ui/badge';
-  import { Button } from '$lib/components/ui/button';
   import AddDependencyDialog from '$lib/components/AddDependencyDialog.svelte';
   import X from '@lucide/svelte/icons/x';
   import Lock from '@lucide/svelte/icons/lock';
@@ -31,9 +30,6 @@
   let satisfiedDeps = $derived(
     blockedByIssues.filter((dep) => dep.status === 'done' || dep.status === 'canceled'),
   );
-
-  // Local state
-  let dialogOpen = $state(false);
 
   // Remove dependency handler
   async function removeDependency(dependsOnIssueId: string) {
@@ -151,18 +147,7 @@
       </div>
     {/if}
 
-    <!-- Add Dependency Button -->
-    <Button variant="outline" size="sm" onclick={() => (dialogOpen = true)} class="w-full">
-      Add Dependency
-    </Button>
+    <!-- Add Dependency -->
+    <AddDependencyDialog {issue} {projectIssues} {blockedByIssues} {blockingIssues} />
   </div>
 </section>
-
-<!-- Add Dependency Dialog -->
-<AddDependencyDialog
-  bind:open={dialogOpen}
-  {issue}
-  {projectIssues}
-  {blockedByIssues}
-  {blockingIssues}
-/>
