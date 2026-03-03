@@ -53,7 +53,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     const issue = createIssue('1', 'Test Issue', 'todo');
     const blockedByIssues = [
       createIssue('dep-1', 'Dependency 1', 'todo'),
-      createIssue('dep-2', 'Dependency 2', 'doing'),
+      createIssue('dep-2', 'Dependency 2', 'in_progress'),
     ];
 
     render(DependencyManagementSection, {
@@ -124,7 +124,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     const issue = createIssue('1', 'Test Issue', 'todo');
     const blockedByIssues = [
       createIssue('dep-1', 'Blocking Dep 1', 'todo'),
-      createIssue('dep-2', 'Blocking Dep 2', 'doing'),
+      createIssue('dep-2', 'Blocking Dep 2', 'in_progress'),
       createIssue('dep-3', 'Satisfied Dep 1', 'done'),
       createIssue('dep-4', 'Satisfied Dep 2', 'canceled'),
     ];
@@ -204,7 +204,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     const issue = createIssue('1', 'Test Issue', 'todo');
     const blockedByIssues = [
       createIssue('dep-1', 'Todo Dep', 'todo'),
-      createIssue('dep-2', 'Doing Dep', 'doing'),
+      createIssue('dep-2', 'In Progress Dep', 'in_progress'),
       createIssue('dep-3', 'Done Dep', 'done'),
     ];
 
@@ -219,7 +219,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
 
     // Check that all dependencies are rendered with their status badges
     expect(screen.getByText('Todo Dep')).toBeInTheDocument();
-    expect(screen.getByText('Doing Dep')).toBeInTheDocument();
+    expect(screen.getByText('In Progress Dep')).toBeInTheDocument();
     expect(screen.getByText('Done Dep')).toBeInTheDocument();
   });
 

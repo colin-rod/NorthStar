@@ -35,8 +35,11 @@
   // Status badge variant mapping
   const getStatusVariant = (status: string) => {
     if (status === 'active') return 'default';
-    if (status === 'done') return 'status-done';
-    return 'status-canceled';
+    if (status === 'backlog') return 'default';
+    if (status === 'on_hold') return 'status-in-review';
+    if (status === 'completed') return 'status-done';
+    if (status === 'canceled') return 'status-canceled';
+    return 'default';
   };
 
   let headerProgress = $derived(computeProgress(counts));
@@ -83,8 +86,8 @@
             <span class="text-foreground-secondary">Ready</span>
           </div>
           <div class="flex items-center gap-2">
-            <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
-            <span class="text-foreground-secondary">Doing</span>
+            <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
+            <span class="text-foreground-secondary">In Progress</span>
           </div>
           <div class="flex items-center gap-2">
             <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
@@ -162,8 +165,8 @@
             <span class="text-foreground-secondary">Ready</span>
           </div>
           <div class="flex items-center gap-2">
-            <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
-            <span class="text-foreground-secondary">Doing</span>
+            <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
+            <span class="text-foreground-secondary">In Progress</span>
           </div>
           <div class="flex items-center gap-2">
             <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>

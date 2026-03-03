@@ -66,7 +66,7 @@ describe('IssueRow - Blocked State Display', () => {
             id: 'dep-2',
             number: 2,
             title: 'Dependency 2',
-            status: 'doing',
+            status: 'in_progress',
             priority: 0,
             project_id: 'proj-1',
             epic_id: 'epic-1',
@@ -382,7 +382,14 @@ describe('IssueRow - Additional Scenarios', () => {
   });
 
   it('should render with different status colors', () => {
-    const statuses: Array<Issue['status']> = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+    const statuses: Array<Issue['status']> = [
+      'backlog',
+      'todo',
+      'in_progress',
+      'in_review',
+      'done',
+      'canceled',
+    ];
 
     statuses.forEach((status) => {
       const statusIssue = { ...baseIssue, status };

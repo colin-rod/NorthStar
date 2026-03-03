@@ -76,8 +76,9 @@
   ];
 
   const issueStatuses = [
+    { value: 'backlog', label: 'Backlog' },
     { value: 'todo', label: 'Todo' },
-    { value: 'doing', label: 'In Progress' },
+    { value: 'in_progress', label: 'In Progress' },
     { value: 'in_review', label: 'In Review' },
     { value: 'done', label: 'Done' },
     { value: 'canceled', label: 'Canceled' },

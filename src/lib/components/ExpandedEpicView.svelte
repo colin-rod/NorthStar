@@ -27,7 +27,7 @@
 
   // Compute filtered views (same logic as epic detail page)
   let todoIssues = $derived(epicIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
-  let doingIssues = $derived(epicIssues.filter((i) => i.status === 'doing'));
+  let doingIssues = $derived(epicIssues.filter((i) => i.status === 'in_progress'));
   let inReviewIssues = $derived(epicIssues.filter((i) => i.status === 'in_review'));
   let blockedIssues = $derived(epicIssues.filter((i) => isBlocked(i)));
   let doneIssues = $derived(epicIssues.filter((i) => i.status === 'done'));
@@ -43,7 +43,7 @@
       case 'todo':
         filtered = todoIssues;
         break;
-      case 'doing':
+      case 'in_progress':
         filtered = doingIssues;
         break;
       case 'in_review':
@@ -89,7 +89,7 @@
       <TabsTrigger value="todo" onclick={() => (activeTab = 'todo')}
         >Todo ({todoIssues.length})</TabsTrigger
       >
-      <TabsTrigger value="doing" onclick={() => (activeTab = 'doing')}
+      <TabsTrigger value="in_progress" onclick={() => (activeTab = 'in_progress')}
         >In Progress ({doingIssues.length})</TabsTrigger
       >
       <TabsTrigger value="in_review" onclick={() => (activeTab = 'in_review')}
@@ -125,7 +125,7 @@
         {:else}
           <EmptyState
             icon={Inbox}
-            title="No {activeTab === 'doing'
+            title="No {activeTab === 'in_progress'
               ? 'in progress'
               : activeTab === 'in_review'
                 ? 'in review'

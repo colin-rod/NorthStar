@@ -744,8 +744,9 @@
                   disabled={loading}
                   class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  <option value="backlog">Backlog</option>
                   <option value="todo">Todo</option>
-                  <option value="doing">In Progress</option>
+                  <option value="in_progress">In Progress</option>
                   <option value="in_review">In Review</option>
                   <option value="done">Done</option>
                   <option value="canceled">Canceled</option>

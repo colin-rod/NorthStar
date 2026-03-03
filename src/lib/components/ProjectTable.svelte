@@ -154,7 +154,7 @@
 
           <!-- Doing Count Column -->
           <td class="py-4 px-4" onclick={() => onOpenProjectSheet(project)}>
-            <Badge variant="status-doing" class="text-xs">{project.counts.doing}</Badge>
+            <Badge variant="status-doing" class="text-xs">{project.counts.in_progress}</Badge>
           </td>
 
           <!-- Progress Bar Column -->

@@ -49,7 +49,7 @@ describe('Projects Page Sorting - Integration', () => {
               milestone_id: null,
               title: 'Zebra Issue', // Z - last alphabetically
               description: null,
-              status: 'doing', // Middle status
+              status: 'in_progress', // Middle status
               priority: 2, // P2 - middle priority
               story_points: 5,
               sort_order: 0,
@@ -77,7 +77,7 @@ describe('Projects Page Sorting - Integration', () => {
           number: 2,
           name: 'Alpha Epic', // A - first alphabetically
           description: null,
-          status: 'done',
+          status: 'completed',
           priority: 0,
           is_default: false,
           sort_order: 1,
@@ -107,7 +107,7 @@ describe('Projects Page Sorting - Integration', () => {
       number: 2,
       name: 'Alpha Project', // A - first alphabetically
       description: null,
-      status: 'done',
+      status: 'completed',
       created_at: '2024-01-02T00:00:00Z',
       archived_at: null,
       epics: [
@@ -339,18 +339,18 @@ describe('Projects Page Sorting - Integration', () => {
     it('should sort projects by status (asc: active > done > canceled)', () => {
       const sorted = sortTree(testProjects, 'status', 'asc');
 
-      // active projects first, then done, then canceled
+      // active projects first, then completed, then canceled
       expect(sorted[0].status).toBe('active'); // proj-1 or proj-4
       expect(sorted[1].status).toBe('active');
-      expect(sorted[2].status).toBe('done'); // proj-2
+      expect(sorted[2].status).toBe('completed'); // proj-2
       expect(sorted[3].status).toBe('canceled'); // proj-3
     });
 
-    it('should sort projects by status (desc: canceled > done > active)', () => {
+    it('should sort projects by status (desc: canceled > completed > active)', () => {
       const sorted = sortTree(testProjects, 'status', 'desc');
 
       expect(sorted[0].status).toBe('canceled'); // proj-3
-      expect(sorted[1].status).toBe('done'); // proj-2
+      expect(sorted[1].status).toBe('completed'); // proj-2
       expect(sorted[2].status).toBe('active');
       expect(sorted[3].status).toBe('active');
     });
@@ -358,28 +358,28 @@ describe('Projects Page Sorting - Integration', () => {
     it('should sort epics by status (asc)', () => {
       const sorted = sortTree(testProjects, 'status', 'asc');
 
-      // proj-1: epic-1 (active), epic-2 (done)
+      // proj-1: epic-1 (active), epic-2 (completed)
       const proj1Epics = sorted.find((p) => p.id === 'proj-1')!.epics!;
       expect(proj1Epics[0].status).toBe('active');
-      expect(proj1Epics[1].status).toBe('done');
+      expect(proj1Epics[1].status).toBe('completed');
     });
 
     it('should sort epics by status (desc)', () => {
       const sorted = sortTree(testProjects, 'status', 'desc');
 
       const proj1Epics = sorted.find((p) => p.id === 'proj-1')!.epics!;
-      expect(proj1Epics[0].status).toBe('done');
+      expect(proj1Epics[0].status).toBe('completed');
       expect(proj1Epics[1].status).toBe('active');
     });
 
-    it('should sort issues by status (asc: todo > doing > in_review > done > canceled)', () => {
+    it('should sort issues by status (asc: todo > in_progress > in_review > done > canceled)', () => {
       const sorted = sortTree(testProjects, 'status', 'asc');
 
-      // epic-1 issues: todo, doing
+      // epic-1 issues: todo, in_progress
       const proj1 = sorted.find((p) => p.id === 'proj-1')!;
       const epic1Issues = proj1.epics![0].issues!;
       expect(epic1Issues[0].status).toBe('todo');
-      expect(epic1Issues[1].status).toBe('doing');
+      expect(epic1Issues[1].status).toBe('in_progress');
     });
 
     it('should sort issues by status (desc)', () => {
@@ -387,7 +387,7 @@ describe('Projects Page Sorting - Integration', () => {
 
       const proj1 = sorted.find((p) => p.id === 'proj-1')!;
       const epic1 = proj1.epics!.find((e) => e.id === 'epic-1')!;
-      expect(epic1.issues![0].status).toBe('doing');
+      expect(epic1.issues![0].status).toBe('in_progress');
       expect(epic1.issues![1].status).toBe('todo');
     });
   });

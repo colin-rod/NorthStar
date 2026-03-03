@@ -198,7 +198,7 @@ export const actions: Actions = {
     const status = formData.get('status');
     if (status !== null) {
       const s = status.toString();
-      if (!['active', 'done', 'canceled'].includes(s)) {
+      if (!['backlog', 'planned', 'active', 'on_hold', 'completed', 'canceled'].includes(s)) {
         return fail(400, { error: 'Invalid status value' });
       }
       updates.status = s;
@@ -266,7 +266,7 @@ export const actions: Actions = {
     if (!projectId) {
       return fail(400, { error: 'Project ID is required' });
     }
-    if (!['active', 'done', 'canceled'].includes(status)) {
+    if (!['backlog', 'active', 'on_hold', 'completed', 'canceled'].includes(status)) {
       return fail(400, { error: 'Invalid status' });
     }
 
@@ -338,7 +338,7 @@ export const actions: Actions = {
       updates.name = name;
     }
     if (status !== undefined) {
-      if (!['active', 'done', 'canceled'].includes(status)) {
+      if (!['backlog', 'active', 'on_hold', 'completed', 'canceled'].includes(status)) {
         return fail(400, { error: 'Invalid status' });
       }
       updates.status = status;
@@ -461,7 +461,7 @@ export const actions: Actions = {
     // Status
     const status = formData.get('status')?.toString();
     if (status !== undefined) {
-      const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+      const validStatuses = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
       if (!validStatuses.includes(status)) {
         return fail(400, { error: 'Invalid status value' });
       }

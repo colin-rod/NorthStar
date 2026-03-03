@@ -87,8 +87,9 @@ export function isTerminal(issue: Issue): boolean {
  */
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
+    backlog: 'secondary',
     todo: 'secondary',
-    doing: 'default',
+    in_progress: 'default',
     in_review: 'outline',
     done: 'success',
     canceled: 'destructive',
@@ -123,11 +124,50 @@ export const ALLOWED_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21] as const;
  */
 export function getAllowedStatusTransitions(currentStatus: string): string[] {
   const transitions: Record<string, string[]> = {
-    todo: ['doing', 'canceled'],
-    doing: ['in_review', 'todo', 'canceled'],
-    in_review: ['done', 'doing', 'canceled'],
+    backlog: ['todo', 'canceled'],
+    todo: ['in_progress', 'backlog', 'canceled'],
+    in_progress: ['in_review', 'todo', 'canceled'],
+    in_review: ['done', 'in_progress', 'canceled'],
     done: [], // Terminal state
-    canceled: ['todo'], // Can reopen
+    canceled: ['backlog'], // Can reopen
   };
   return transitions[currentStatus] || [];
+}
+
+/**
+ * Get status group for filtering and rollups
+ */
+export function getStatusGroup(
+  entity: 'project' | 'epic' | 'issue',
+  status: string,
+): 'backlog' | 'planned' | 'active' | 'paused' | 'completed' | 'canceled' {
+  const map: Record<
+    string,
+    Record<string, 'backlog' | 'planned' | 'active' | 'paused' | 'completed' | 'canceled'>
+  > = {
+    project: {
+      backlog: 'backlog',
+      planned: 'planned',
+      active: 'active',
+      on_hold: 'paused',
+      completed: 'completed',
+      canceled: 'canceled',
+    },
+    epic: {
+      backlog: 'backlog',
+      active: 'active',
+      on_hold: 'paused',
+      completed: 'completed',
+      canceled: 'canceled',
+    },
+    issue: {
+      backlog: 'backlog',
+      todo: 'planned',
+      in_progress: 'active',
+      in_review: 'active',
+      done: 'completed',
+      canceled: 'canceled',
+    },
+  };
+  return map[entity]?.[status] ?? 'backlog';
 }

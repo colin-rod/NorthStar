@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Epic, Attachment, Milestone, Issue, IssueStatus } from '$lib/types';
+  import type { Epic, Attachment, Milestone, Issue, IssueStatus, EpicStatus } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import { computeProgress } from '$lib/utils/issue-counts';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
@@ -53,7 +53,7 @@
   let effectiveEpic = $derived(internalEpic ?? epic);
 
   let localName = $state('');
-  let localStatus = $state<'active' | 'done' | 'canceled'>('active');
+  let localStatus = $state<EpicStatus>('active');
   let localPriority = $state<number | null>(null);
   let localDescription = $state<string | null>(null);
   let localMilestoneId = $state<string | null>(null);
@@ -208,13 +208,14 @@
   function getIssueStatusVariant(status: IssueStatus) {
     if (status === 'done') return 'status-done';
     if (status === 'canceled') return 'status-canceled';
-    if (status === 'doing') return 'status-doing';
+    if (status === 'in_progress') return 'status-doing';
     if (status === 'in_review') return 'status-in-review';
     return 'default';
   }
 
   function issueStatusLabel(status: IssueStatus) {
-    if (status === 'doing') return 'In Progress';
+    if (status === 'backlog') return 'Backlog';
+    if (status === 'in_progress') return 'In Progress';
     if (status === 'in_review') return 'In Review';
     if (status === 'todo') return 'Todo';
     if (status === 'done') return 'Done';
@@ -234,7 +235,7 @@
   }
 
   function handleStatusChange(event: Event) {
-    const value = (event.target as HTMLSelectElement).value as 'active' | 'done' | 'canceled';
+    const value = (event.target as HTMLSelectElement).value as EpicStatus;
     localStatus = value;
     autoSave('status', value);
   }

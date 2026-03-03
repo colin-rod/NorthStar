@@ -63,14 +63,23 @@ export function parseMilestones(param: string | null): {
 /**
  * Parse status filter from URL param
  * @param param - "todo,doing,done" or null
- * @returns ['todo', 'doing', 'done'] or []
+ * @returns ['todo', 'in_progress', 'done'] or []
  */
 export function parseStatuses(param: string | null): string[] {
   if (!param || param.trim().length === 0) {
     return [];
   }
 
-  const validStatuses = ['ready', 'blocked', 'todo', 'doing', 'in_review', 'done', 'canceled'];
+  const validStatuses = [
+    'ready',
+    'blocked',
+    'backlog',
+    'todo',
+    'in_progress',
+    'in_review',
+    'done',
+    'canceled',
+  ];
 
   return param
     .split(',')

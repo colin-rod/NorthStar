@@ -31,7 +31,7 @@
   let expandedIssueIds = $state<Set<string>>(new Set());
 
   let doneEpics = $derived(
-    (data.epics || []).filter((e) => e.status === 'done' || e.status === 'canceled').length,
+    (data.epics || []).filter((e) => e.status === 'completed' || e.status === 'canceled').length,
   );
 
   function toggleEpic(epicId: string) {

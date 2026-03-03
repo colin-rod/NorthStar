@@ -53,7 +53,7 @@
   let allIssues = $derived(data.issues || []);
   let readyIssues = $derived(allIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
   let totalTodoCount = $derived(allIssues.filter((i) => i.status === 'todo').length);
-  let doingIssues = $derived(allIssues.filter((i) => i.status === 'doing'));
+  let doingIssues = $derived(allIssues.filter((i) => i.status === 'in_progress'));
   let inReviewIssues = $derived(allIssues.filter((i) => i.status === 'in_review'));
   let blockedIssues = $derived(allIssues.filter((i) => isBlocked(i)));
   let doneIssues = $derived(allIssues.filter((i) => i.status === 'done'));
@@ -64,7 +64,7 @@
     switch (filter) {
       case 'todo':
         return readyIssues;
-      case 'doing':
+      case 'in_progress':
         return doingIssues;
       case 'in_review':
         return inReviewIssues;
@@ -257,7 +257,7 @@
             ? ` of ${totalTodoCount}`
             : ''})</TabsTrigger
         >
-        <TabsTrigger value="doing" onclick={() => setFilter('doing')}
+        <TabsTrigger value="in_progress" onclick={() => setFilter('in_progress')}
           >In Progress ({doingIssues.length})</TabsTrigger
         >
         <TabsTrigger value="in_review" onclick={() => setFilter('in_review')}
@@ -302,7 +302,7 @@
           {:else}
             <EmptyState
               icon={Inbox}
-              title="No {filter === 'doing'
+              title="No {filter === 'in_progress'
                 ? 'in progress'
                 : filter === 'in_review'
                   ? 'in review'

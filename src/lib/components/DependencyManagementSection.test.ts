@@ -19,7 +19,7 @@ describe('DependencyManagementSection', () => {
     }
 
     expect(formatStatus('todo')).toBe('Todo');
-    expect(formatStatus('doing')).toBe('Doing');
+    expect(formatStatus('in_progress')).toBe('In Progress');
     expect(formatStatus('in_review')).toBe('In Review');
     expect(formatStatus('done')).toBe('Done');
     expect(formatStatus('canceled')).toBe('Canceled');
@@ -28,8 +28,9 @@ describe('DependencyManagementSection', () => {
   it('should get correct status badge variant', () => {
     function getStatusVariant(status: string) {
       const variantMap: Record<string, string> = {
+        backlog: 'status-todo',
         todo: 'status-todo',
-        doing: 'status-doing',
+        in_progress: 'status-doing',
         in_review: 'status-in-review',
         done: 'status-done',
         canceled: 'status-canceled',
@@ -38,7 +39,7 @@ describe('DependencyManagementSection', () => {
     }
 
     expect(getStatusVariant('todo')).toBe('status-todo');
-    expect(getStatusVariant('doing')).toBe('status-doing');
+    expect(getStatusVariant('in_progress')).toBe('status-doing');
     expect(getStatusVariant('in_review')).toBe('status-in-review');
     expect(getStatusVariant('done')).toBe('status-done');
     expect(getStatusVariant('canceled')).toBe('status-canceled');

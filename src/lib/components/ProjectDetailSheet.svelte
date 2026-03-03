@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Project, Epic, Attachment } from '$lib/types';
+  import type { Project, Epic, Attachment, ProjectStatus } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { computeIssueCounts, computeProgress } from '$lib/utils/issue-counts';
@@ -54,7 +54,7 @@
 
   let localName = $state('');
   let localDescription = $state<string | null>(null);
-  let localStatus = $state<'active' | 'done' | 'canceled'>('active');
+  let localStatus = $state<ProjectStatus>('active');
   let attachments = $state<Attachment[]>([]);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
@@ -211,7 +211,7 @@
   }
 
   function handleStatusChange(event: Event) {
-    const value = (event.target as HTMLSelectElement).value as 'active' | 'done' | 'canceled';
+    const value = (event.target as HTMLSelectElement).value as ProjectStatus;
     localStatus = value;
     autoSave('status', value);
   }

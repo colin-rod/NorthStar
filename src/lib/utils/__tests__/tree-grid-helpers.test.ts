@@ -29,7 +29,8 @@ function createMockNode(
     counts: {
       ready: 0,
       blocked: 0,
-      doing: 0,
+      in_progress: 0,
+      backlog: 0,
       inReview: 0,
       done: 0,
       canceled: 0,

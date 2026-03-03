@@ -24,7 +24,9 @@
 
   let urgent = $derived(issues.filter((i) => (i.priority === 0 || i.priority === 1) && isReady(i)));
   let ready = $derived(issues.filter((i) => (i.priority === 2 || i.priority === 3) && isReady(i)));
-  let inProgress = $derived(issues.filter((i) => i.status === 'doing' || i.status === 'in_review'));
+  let inProgress = $derived(
+    issues.filter((i) => i.status === 'in_progress' || i.status === 'in_review'),
+  );
   let blocked = $derived(issues.filter((i) => isBlocked(i) && i.status === 'todo'));
 </script>
 

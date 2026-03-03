@@ -43,7 +43,7 @@ const mockIssues: Issue[] = [
     milestone_id: null,
     title: 'Issue 2',
     description: null,
-    status: 'doing',
+    status: 'in_progress',
     priority: 1,
     story_points: null,
     sort_order: 1,
@@ -77,7 +77,7 @@ describe('StatusFilter', () => {
 
   it('should show count when multiple statuses selected', () => {
     render(StatusFilter, {
-      props: { selectedStatuses: ['todo', 'doing'], issues: mockIssues },
+      props: { selectedStatuses: ['todo', 'in_progress'], issues: mockIssues },
     });
 
     expect(screen.getByText('Status (2)')).toBeInTheDocument();

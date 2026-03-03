@@ -119,7 +119,7 @@ describe('AddDependencyDialog', () => {
     }
 
     expect(formatStatus('todo')).toBe('Todo');
-    expect(formatStatus('doing')).toBe('Doing');
+    expect(formatStatus('in_progress')).toBe('In Progress');
     expect(formatStatus('in_review')).toBe('In Review');
     expect(formatStatus('done')).toBe('Done');
   });
@@ -178,7 +178,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       ...mockIssue,
       id: 'issue-3',
       title: 'Available Issue 2',
-      status: 'doing',
+      status: 'in_progress',
       priority: 1,
     },
   ];
@@ -298,8 +298,9 @@ describe('AddDependencyDialog - Component Rendering', () => {
         string,
         'status-todo' | 'status-doing' | 'status-in-review' | 'status-done' | 'status-canceled'
       > = {
+        backlog: 'status-todo',
         todo: 'status-todo',
-        doing: 'status-doing',
+        in_progress: 'status-doing',
         in_review: 'status-in-review',
         done: 'status-done',
         canceled: 'status-canceled',
@@ -308,7 +309,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     }
 
     expect(getStatusVariant('todo')).toBe('status-todo');
-    expect(getStatusVariant('doing')).toBe('status-doing');
+    expect(getStatusVariant('in_progress')).toBe('status-doing');
     expect(getStatusVariant('in_review')).toBe('status-in-review');
     expect(getStatusVariant('done')).toBe('status-done');
     expect(getStatusVariant('canceled')).toBe('status-canceled');

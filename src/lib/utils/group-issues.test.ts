@@ -25,7 +25,7 @@ describe('groupIssues', () => {
       id: '2',
       title: 'Issue 2',
       priority: 0,
-      status: 'doing',
+      status: 'in_progress',
       story_points: 2,
       milestone_id: 'm1',
       project_id: 'proj-1',

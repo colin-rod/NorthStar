@@ -15,8 +15,8 @@
     <span class="text-foreground-secondary">Ready</span>
   </div>
   <div class="flex items-center gap-2">
-    <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
-    <span class="text-foreground-secondary">Doing</span>
+    <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
+    <span class="text-foreground-secondary">In Progress</span>
   </div>
   <div class="flex items-center gap-2">
     <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>

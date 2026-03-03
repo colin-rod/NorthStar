@@ -75,7 +75,7 @@ describe('computeProjectMetrics', () => {
       {
         id: '2',
         title: 'Doing issue',
-        status: 'doing',
+        status: 'in_progress',
         story_points: 5,
       } as Issue,
       {
@@ -180,7 +180,7 @@ describe('computeProjectMetrics', () => {
       {
         id: '3',
         title: 'Doing with points',
-        status: 'doing',
+        status: 'in_progress',
         story_points: 5,
       } as Issue,
       {
@@ -217,7 +217,7 @@ describe('computeProjectMetrics', () => {
       {
         id: '2',
         title: 'Doing without points',
-        status: 'doing',
+        status: 'in_progress',
         story_points: null,
       } as Issue,
       {

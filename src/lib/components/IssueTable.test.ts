@@ -23,7 +23,7 @@ describe('IssueTable', () => {
 
     expect(formatStatus('todo')).toBe('Todo');
     expect(formatStatus('in_review')).toBe('In Review');
-    expect(formatStatus('doing')).toBe('Doing');
+    expect(formatStatus('in_progress')).toBe('In Progress');
   });
 
   it('should determine sort comparison correctly', () => {
@@ -47,7 +47,7 @@ describe('IssueTable', () => {
         id: '2',
         number: 2,
         title: 'A Task',
-        status: 'doing',
+        status: 'in_progress',
         priority: 0,
         story_points: 5,
         sort_order: 1,

@@ -11,8 +11,9 @@
  * Maps issue status to corresponding status color classes
  */
 export const statusColors = {
+  backlog: 'status-todo',
   todo: 'status-todo',
-  doing: 'status-doing',
+  in_progress: 'status-doing',
   in_review: 'status-in-review',
   done: 'status-done',
   blocked: 'status-blocked',
@@ -48,8 +49,9 @@ export function getStatusBadgeVariant(
   | 'status-blocked'
   | 'status-canceled' {
   const variants = {
+    backlog: 'status-todo',
     todo: 'status-todo',
-    doing: 'status-doing',
+    in_progress: 'status-doing',
     in_review: 'status-in-review',
     done: 'status-done',
     blocked: 'status-blocked',
@@ -83,8 +85,10 @@ export function getPriorityLabel(priority: number): string {
  * Epic Status
  */
 export const epicStatusVariants = {
+  backlog: 'default',
   active: 'default',
-  done: 'status-done',
+  on_hold: 'status-in-review',
+  completed: 'status-done',
   canceled: 'status-canceled',
 } as const;
 
@@ -105,7 +109,7 @@ export function formatStatus(status: string): string {
  */
 export function getEpicStatusVariant(
   status: string,
-): 'default' | 'status-done' | 'status-canceled' {
+): 'default' | 'status-in-review' | 'status-done' | 'status-canceled' {
   return epicStatusVariants[status as EpicStatus] || 'default';
 }
 

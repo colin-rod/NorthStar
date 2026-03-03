@@ -18,9 +18,23 @@ export interface TreeFilterParams {
   sortDir: SortDirection;
 }
 
-const VALID_PROJECT_STATUSES: ProjectStatus[] = ['active', 'done', 'canceled'];
-const VALID_EPIC_STATUSES: EpicStatus[] = ['active', 'done', 'canceled'];
-const VALID_ISSUE_STATUSES: IssueStatus[] = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+const VALID_PROJECT_STATUSES: ProjectStatus[] = [
+  'backlog',
+  'planned',
+  'active',
+  'on_hold',
+  'completed',
+  'canceled',
+];
+const VALID_EPIC_STATUSES: EpicStatus[] = ['backlog', 'active', 'on_hold', 'completed', 'canceled'];
+const VALID_ISSUE_STATUSES: IssueStatus[] = [
+  'backlog',
+  'todo',
+  'in_progress',
+  'in_review',
+  'done',
+  'canceled',
+];
 const VALID_PRIORITIES = [0, 1, 2, 3];
 const VALID_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
 const VALID_GROUP_BY = ['none', 'priority', 'status', 'milestone', 'story_points'];

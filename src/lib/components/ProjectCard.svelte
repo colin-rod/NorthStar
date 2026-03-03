@@ -44,7 +44,8 @@
   const defaultCounts: IssueCounts = {
     ready: 0,
     blocked: 0,
-    doing: 0,
+    in_progress: 0,
+    backlog: 0,
     inReview: 0,
     done: 0,
     canceled: 0,
@@ -126,8 +127,8 @@
           <span class="text-foreground-secondary">Ready</span>
         </div>
         <div class="flex items-center gap-2">
-          <Badge variant="status-doing" class="text-xs">{effectiveCounts.doing}</Badge>
-          <span class="text-foreground-secondary">Doing</span>
+          <Badge variant="status-doing" class="text-xs">{effectiveCounts.in_progress}</Badge>
+          <span class="text-foreground-secondary">In Progress</span>
         </div>
         <div class="flex items-center gap-2">
           <Badge variant="status-blocked" class="text-xs">{effectiveCounts.blocked}</Badge>

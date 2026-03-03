@@ -66,7 +66,8 @@ function getGroupKeyAndLabel(issue: Issue, groupBy: string): { key: string; labe
 function formatStatus(status: string): string {
   const map: Record<string, string> = {
     todo: 'Todo',
-    doing: 'In Progress',
+    backlog: 'Backlog',
+    in_progress: 'In Progress',
     in_review: 'In Review',
     done: 'Done',
     canceled: 'Canceled',
@@ -80,8 +81,8 @@ function compareGroupKeys(a: string, b: string, groupBy: string): number {
     return a.localeCompare(b);
   }
   if (groupBy === 'status') {
-    // todo, doing, in_review, done, canceled
-    const statusOrder = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+    // backlog, todo, in_progress, in_review, done, canceled
+    const statusOrder = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
     return statusOrder.indexOf(a) - statusOrder.indexOf(b);
   }
   if (groupBy === 'story_points') {

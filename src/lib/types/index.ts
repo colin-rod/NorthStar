@@ -34,7 +34,8 @@ export interface Project {
   epics?: Epic[];
 }
 
-export type ProjectStatus = 'active' | 'done' | 'canceled';
+export type ProjectStatus = 'backlog' | 'planned' | 'active' | 'on_hold' | 'completed' | 'canceled';
+export type StatusGroup = 'backlog' | 'planned' | 'active' | 'paused' | 'completed' | 'canceled';
 
 /**
  * Epic
@@ -59,7 +60,7 @@ export interface Epic {
   milestone?: Milestone;
 }
 
-export type EpicStatus = 'active' | 'done' | 'canceled';
+export type EpicStatus = 'backlog' | 'active' | 'on_hold' | 'completed' | 'canceled';
 
 /**
  * Milestone
@@ -104,7 +105,7 @@ export interface Issue {
   blocking?: Dependency[]; // Dependencies where this issue blocks others (with issue populated)
 }
 
-export type IssueStatus = 'todo' | 'doing' | 'in_review' | 'done' | 'canceled';
+export type IssueStatus = 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done' | 'canceled';
 
 /**
  * Story Points

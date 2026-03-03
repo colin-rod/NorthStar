@@ -58,7 +58,15 @@ function makeIssue(overrides: Partial<Issue> = {}): Issue {
   };
 }
 
-const emptyCounts = { ready: 0, blocked: 0, doing: 0, inReview: 0, done: 0, canceled: 0 };
+const emptyCounts = {
+  ready: 0,
+  backlog: 0,
+  blocked: 0,
+  in_progress: 0,
+  inReview: 0,
+  done: 0,
+  canceled: 0,
+};
 const emptyMetrics = { totalIssues: 0, activeStoryPoints: 0, totalStoryPoints: 0 };
 
 function makeProjectNode(overrides: Partial<TreeNode> = {}): TreeNode {

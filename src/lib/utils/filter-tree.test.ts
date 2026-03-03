@@ -45,8 +45,8 @@ describe('filterTree', () => {
               id: 'issue-2',
               project_id: 'proj-1',
               epic_id: 'epic-1',
-              title: 'P1 Doing Issue',
-              status: 'doing',
+              title: 'P1 In Progress Issue',
+              status: 'in_progress',
               priority: 1,
               number: 2,
               milestone_id: null,
@@ -62,7 +62,7 @@ describe('filterTree', () => {
     {
       id: 'proj-2',
       name: 'Done Project',
-      status: 'done',
+      status: 'completed',
       user_id: 'user-1',
       number: 2,
       description: null,
@@ -104,7 +104,7 @@ describe('filterTree', () => {
   it('should filter epics within projects', () => {
     const filters: TreeFilters = {
       projectStatus: [],
-      epicStatus: ['done'],
+      epicStatus: ['completed'],
       issuePriority: [],
       issueStatus: [],
       issueStoryPoints: [],

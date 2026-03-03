@@ -82,7 +82,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
               milestone_id: null,
               title: 'P1 Doing Issue with 3 points',
               description: null,
-              status: 'doing',
+              status: 'in_progress',
               priority: 1,
               story_points: 3,
               sort_order: 1,
@@ -110,7 +110,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
           number: 2,
           name: 'Done Epic',
           description: null,
-          status: 'done',
+          status: 'completed',
           priority: 1,
           is_default: false,
           sort_order: 1,
@@ -140,7 +140,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
       number: 2,
       name: 'Done Project',
       description: null,
-      status: 'done',
+      status: 'completed',
       created_at: '2024-01-02T00:00:00Z',
       archived_at: null,
       epics: [
@@ -198,14 +198,14 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
 
     it('should correctly parse all filter types from URL', () => {
       const params = new URLSearchParams(
-        'project_status=active,done&epic_status=active&priority=0,1&status=todo,doing&story_points=3,5,none',
+        'project_status=active,completed&epic_status=active&priority=0,1&status=todo,in_progress&story_points=3,5,none',
       );
       const result = parseTreeFilterParams(params);
 
-      expect(result.projectStatus).toEqual(['active', 'done']);
+      expect(result.projectStatus).toEqual(['active', 'completed']);
       expect(result.epicStatus).toEqual(['active']);
       expect(result.issuePriority).toEqual([0, 1]);
-      expect(result.issueStatus).toEqual(['todo', 'doing']);
+      expect(result.issueStatus).toEqual(['todo', 'in_progress']);
       expect(result.issueStoryPoints).toEqual([3, 5, null]);
     });
 
@@ -242,10 +242,10 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
   describe('URL Building', () => {
     it('should build correct URL with all filter types', () => {
       const filters: TreeFilterParams = {
-        projectStatus: ['active', 'done'],
+        projectStatus: ['active', 'completed'],
         epicStatus: ['active'],
         issuePriority: [0, 1],
-        issueStatus: ['todo', 'doing'],
+        issueStatus: ['todo', 'in_progress'],
         issueStoryPoints: [3, 5, null],
         groupBy: 'priority',
         sortBy: 'status',
@@ -255,7 +255,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
       const url = buildTreeFilterUrl(filters, '/projects');
 
       expect(url).toBe(
-        '/projects?project_status=active,done&epic_status=active&priority=0,1&status=todo,doing&story_points=3,5,none&group_by=priority&sort_by=status&sort_dir=desc',
+        '/projects?project_status=active,completed&epic_status=active&priority=0,1&status=todo,in_progress&story_points=3,5,none&group_by=priority&sort_by=status&sort_dir=desc',
       );
     });
 
@@ -366,7 +366,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
         projectStatus: [],
         epicStatus: [],
         issuePriority: [],
-        issueStatus: ['todo', 'doing'],
+        issueStatus: ['todo', 'in_progress'],
         issueStoryPoints: [],
       };
 
@@ -374,7 +374,9 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
 
       const activeEpic = result[0].epics![0];
       expect(activeEpic.issues).toHaveLength(2);
-      expect(activeEpic.issues!.every((i) => ['todo', 'doing'].includes(i.status))).toBe(true);
+      expect(activeEpic.issues!.every((i) => ['todo', 'in_progress'].includes(i.status))).toBe(
+        true,
+      );
     });
 
     it('should filter issues by story points including null', () => {
@@ -423,7 +425,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
         projectStatus: ['active'],
         epicStatus: ['active'],
         issuePriority: [0],
-        issueStatus: ['done'], // No done issues in active epics
+        issueStatus: ['done'], // No done issues in active epics (done is valid issue status)
         issueStoryPoints: [],
       };
 
@@ -578,7 +580,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
 
     it('should handle epics with no issues', () => {
       const filters: TreeFilters = {
-        projectStatus: ['done'],
+        projectStatus: ['completed'],
         epicStatus: ['canceled'],
         issuePriority: [],
         issueStatus: [],
@@ -611,7 +613,7 @@ describe('Projects Page Filtering - Phase 1 Integration', () => {
     });
 
     it('should handle all project statuses', () => {
-      const statuses: ('active' | 'done' | 'canceled')[] = ['active', 'done', 'canceled'];
+      const statuses: ('active' | 'completed' | 'canceled')[] = ['active', 'completed', 'canceled'];
 
       statuses.forEach((status) => {
         const filters = {

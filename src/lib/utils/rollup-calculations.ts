@@ -9,8 +9,9 @@
  * - Project: sum(epic total SP)
  *
  * Progress Rules:
- * - Progress = (Done SP / Total SP) * 100
- * - If Total SP = 0, progress = 100% if all Done, else 0%
+ * - Progress = (Done SP / Non-Canceled SP) * 100
+ * - Canceled issues are excluded from both numerator and denominator
+ * - If Non-Canceled SP = 0, progress = 100% if all non-canceled done, else 0%
  */
 
 import { getDescendantIssues } from './tree-grid-helpers';
@@ -51,7 +52,8 @@ export function calculateTotalPoints(node: TreeNode, allNodes: TreeNode[]): numb
  *
  * Progress is calculated as:
  * - (Completed SP / Total SP) * 100
- * - Completed SP = sum of all Done/Canceled issue SP
+ * - Completed SP = sum of all Done issue SP (canceled excluded)
+ * - Total SP = sum of all non-canceled issue SP
  *
  * @param node - Tree node to calculate for
  * @param allNodes - All tree nodes (needed to find descendants)
@@ -66,17 +68,19 @@ export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progres
     return { completed: 0, total: 0, percentage: 0 };
   }
 
-  // Calculate total and completed story points
-  const totalPoints = descendantIssues.reduce(
+  // Exclude canceled issues from totals (not in denominator OR numerator)
+  const nonCanceledIssues = descendantIssues.filter(
+    (issue) => (issue.data as Issue).status !== 'canceled',
+  );
+
+  // Calculate total and completed story points (canceled excluded)
+  const totalPoints = nonCanceledIssues.reduce(
     (sum, issue) => sum + ((issue.data as Issue).story_points || 0),
     0,
   );
 
-  const completedPoints = descendantIssues
-    .filter((issue) => {
-      const status = (issue.data as Issue).status;
-      return status === 'done' || status === 'canceled';
-    })
+  const completedPoints = nonCanceledIssues
+    .filter((issue) => (issue.data as Issue).status === 'done')
     .reduce((sum, issue) => sum + ((issue.data as Issue).story_points || 0), 0);
 
   // Calculate percentage
@@ -84,11 +88,10 @@ export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progres
   if (totalPoints > 0) {
     percentage = Math.round((completedPoints / totalPoints) * 100);
   } else {
-    // Fallback: If all issues are done/canceled, show 100%, else 0%
-    const allDone = descendantIssues.every((issue) => {
-      const status = (issue.data as Issue).status;
-      return status === 'done' || status === 'canceled';
-    });
+    // Fallback: If all non-canceled issues are done, show 100%, else 0%
+    const allDone =
+      nonCanceledIssues.length > 0 &&
+      nonCanceledIssues.every((issue) => (issue.data as Issue).status === 'done');
     percentage = allDone ? 100 : 0;
   }
 

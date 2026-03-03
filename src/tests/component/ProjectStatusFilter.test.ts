@@ -31,7 +31,7 @@ describe('ProjectStatusFilter', () => {
   it('should show count when statuses selected', () => {
     render(ProjectStatusFilter, {
       props: {
-        selectedStatuses: ['active', 'done'],
+        selectedStatuses: ['active', 'completed'],
       },
     });
 
@@ -49,8 +49,11 @@ describe('ProjectStatusFilter', () => {
     const trigger = container.querySelector('button');
     await trigger?.click();
 
+    expect(screen.getByText('Backlog')).toBeInTheDocument();
+    expect(screen.getByText('Planned')).toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
-    expect(screen.getByText('Done')).toBeInTheDocument();
+    expect(screen.getByText('On Hold')).toBeInTheDocument();
+    expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.getByText('Canceled')).toBeInTheDocument();
   });
 });

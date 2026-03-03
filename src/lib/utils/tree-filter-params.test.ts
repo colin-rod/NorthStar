@@ -25,10 +25,10 @@ describe('parseTreeFilterParams', () => {
   });
 
   it('should parse project status filter', () => {
-    const params = new URLSearchParams('project_status=active,done');
+    const params = new URLSearchParams('project_status=active,completed');
     const result = parseTreeFilterParams(params);
 
-    expect(result.projectStatus).toEqual(['active', 'done']);
+    expect(result.projectStatus).toEqual(['active', 'completed']);
   });
 
   it('should parse epic status filter', () => {
@@ -39,11 +39,11 @@ describe('parseTreeFilterParams', () => {
   });
 
   it('should parse issue filters', () => {
-    const params = new URLSearchParams('priority=0,1&status=todo,doing&story_points=1,2,3');
+    const params = new URLSearchParams('priority=0,1&status=todo,in_progress&story_points=1,2,3');
     const result = parseTreeFilterParams(params);
 
     expect(result.issuePriority).toEqual([0, 1]);
-    expect(result.issueStatus).toEqual(['todo', 'doing']);
+    expect(result.issueStatus).toEqual(['todo', 'in_progress']);
     expect(result.issueStoryPoints).toEqual([1, 2, 3]);
   });
 
@@ -84,7 +84,7 @@ describe('buildTreeFilterUrl', () => {
   it('should build URL with filters', () => {
     const filters: TreeFilterParams = {
       projectStatus: ['active'],
-      epicStatus: ['active', 'done'],
+      epicStatus: ['active', 'completed'],
       issuePriority: [0, 1],
       issueStatus: ['todo'],
       issueStoryPoints: [1, 2, null],
@@ -96,7 +96,7 @@ describe('buildTreeFilterUrl', () => {
     const url = buildTreeFilterUrl(filters, '/projects');
 
     expect(url).toBe(
-      '/projects?project_status=active&epic_status=active,done&priority=0,1&status=todo&story_points=1,2,none&group_by=priority&sort_by=status&sort_dir=desc',
+      '/projects?project_status=active&epic_status=active,completed&priority=0,1&status=todo&story_points=1,2,none&group_by=priority&sort_by=status&sort_dir=desc',
     );
   });
 
