@@ -26,6 +26,7 @@
   let satisfiedDeps = $derived(getSatisfiedDependencies(issue));
   let totalDeps = $derived(blockingDeps.length + satisfiedDeps.length);
   let hasBlockers = $derived(blockingDeps.length > 0);
+  let open = $state(false);
 
   function handleDepClick(dep: Issue, event: MouseEvent) {
     event.stopPropagation();
@@ -34,30 +35,32 @@
 </script>
 
 {#if totalDeps > 0}
-  <Popover>
-    <PopoverTrigger>
-      {#if hasBlockers}
-        <button
-          type="button"
-          data-testid="dependency-chip"
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-bg-blocked text-status-blocked-strong border border-status-blocked/20 hover:bg-bg-blocked/70 transition-colors cursor-pointer"
-          onclick={(e) => e.stopPropagation()}
-        >
-          <Lock class="h-3 w-3" />
-          {blockingDeps.length} blocked
-        </button>
-      {:else}
-        <button
-          type="button"
-          data-testid="dependency-chip"
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border-divider hover:bg-surface-subtle transition-colors cursor-pointer"
-          onclick={(e) => e.stopPropagation()}
-        >
-          <CircleCheck class="h-3 w-3" />
-          {satisfiedDeps.length} dep{satisfiedDeps.length !== 1 ? 's' : ''}
-        </button>
-      {/if}
-    </PopoverTrigger>
+  <Popover bind:open>
+    <span onmouseenter={() => (open = true)} onmouseleave={() => (open = false)}>
+      <PopoverTrigger>
+        {#if hasBlockers}
+          <button
+            type="button"
+            data-testid="dependency-chip"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-bg-blocked text-status-blocked-strong border border-status-blocked/20 hover:bg-bg-blocked/70 transition-colors cursor-pointer"
+            onclick={(e) => e.stopPropagation()}
+          >
+            <Lock class="h-3 w-3" />
+            {blockingDeps.length} blocked
+          </button>
+        {:else}
+          <button
+            type="button"
+            data-testid="dependency-chip"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border-divider hover:bg-surface-subtle transition-colors cursor-pointer"
+            onclick={(e) => e.stopPropagation()}
+          >
+            <CircleCheck class="h-3 w-3" />
+            {satisfiedDeps.length} dep{satisfiedDeps.length !== 1 ? 's' : ''}
+          </button>
+        {/if}
+      </PopoverTrigger>
+    </span>
 
     <PopoverContent class="w-[calc(100vw-2rem)] max-w-64 p-0" align="start" sideOffset={8}>
       <div class="p-3 space-y-2" data-testid="dependency-popover">

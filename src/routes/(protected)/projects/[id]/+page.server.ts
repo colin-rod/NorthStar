@@ -33,7 +33,23 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         *,
         dependencies!dependencies_issue_id_fkey(
           depends_on_issue_id,
-          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*)
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status)
+        ),
+        blocked_by:dependencies!dependencies_issue_id_fkey(
+          depends_on_issue_id,
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(
+            id, title, status, priority, epic_id, project_id,
+            epic:epics(id, name),
+            project:projects(id, name)
+          )
+        ),
+        blocking:dependencies!dependencies_depends_on_issue_id_fkey(
+          issue_id,
+          issue:issues!dependencies_issue_id_fkey(
+            id, title, status, priority, epic_id, project_id,
+            epic:epics(id, name),
+            project:projects(id, name)
+          )
         )
       )
     `,

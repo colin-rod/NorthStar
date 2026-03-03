@@ -322,12 +322,6 @@
       createLoading = false;
     }
   }
-
-  const getEpicStatusVariant = (status: string) => {
-    if (status === 'active') return 'default';
-    if (status === 'done') return 'status-done';
-    return 'status-canceled';
-  };
 </script>
 
 <Sheet bind:open>
@@ -472,7 +466,7 @@
           {#if metrics}
             <section>
               <h3 class="section-header">Stats</h3>
-              <div class="grid grid-cols-3 gap-3 text-metadata">
+              <div class="grid grid-cols-4 gap-3 text-metadata">
                 <div class="flex flex-col gap-1">
                   <span class="text-section-header">{metrics.totalIssues}</span>
                   <span class="text-foreground-secondary">Issues</span>
@@ -505,55 +499,6 @@
                     ariaLabel="Project completion progress"
                   />
                 </div>
-              {/if}
-            </section>
-          {/if}
-
-          <!-- Epics -->
-          {#if epics.length > 0 || onAddEpic}
-            <section>
-              <h3 class="section-header">Epics</h3>
-              <div class="space-y-2">
-                {#each epics as epic (epic.id)}
-                  {@const epicCounts = computeIssueCounts(epic.issues ?? [])}
-                  {@const epicProgress = computeProgress(epicCounts)}
-                  <button
-                    type="button"
-                    onclick={() => onEpicClick?.(epic)}
-                    class="w-full flex flex-col gap-1 p-2 rounded-md bg-muted/50 text-left {onEpicClick
-                      ? 'hover:bg-muted cursor-pointer'
-                      : 'cursor-default'}"
-                  >
-                    <div class="flex items-center gap-2">
-                      <Badge variant={getEpicStatusVariant(epic.status)} class="text-xs shrink-0">
-                        {epic.status}
-                      </Badge>
-                      <span class="text-body flex-1 truncate">{epic.name}</span>
-                      {#if epicProgress.total > 0}
-                        <span class="text-metadata text-foreground-secondary shrink-0">
-                          {epicProgress.completed}/{epicProgress.total} done
-                        </span>
-                      {/if}
-                    </div>
-                    {#if epicProgress.total > 0}
-                      <ProgressBar
-                        percentage={epicProgress.percentage}
-                        label={false}
-                        ariaLabel="{epic.name} completion"
-                      />
-                    {/if}
-                  </button>
-                {/each}
-              </div>
-              {#if onAddEpic}
-                <button
-                  type="button"
-                  onclick={onAddEpic}
-                  class="mt-2 w-full flex items-center gap-1 px-2 py-1.5 rounded-md text-sm text-foreground-muted hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  <span class="text-base leading-none">+</span>
-                  <span>Add epic</span>
-                </button>
               {/if}
             </section>
           {/if}
