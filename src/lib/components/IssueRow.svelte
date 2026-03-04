@@ -27,6 +27,7 @@
   import DependencyChip from '$lib/components/DependencyChip.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
   import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
+  import { getProjectColor } from '$lib/utils/project-colors';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
@@ -57,6 +58,7 @@
   let blocked = $derived(isBlocked(issue));
 
   let statusLabel = $derived(formatStatus(issue.status));
+  let projectColor = $derived(getProjectColor(issue.project?.color));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -145,8 +147,9 @@
         </h3>
 
         <!-- Metadata: 13px, secondary color -->
-        <p class="text-metadata mt-1 truncate">
-          {issue.project?.name} / {issue.epic?.name}
+        <p class="text-metadata mt-1 truncate flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-sm shrink-0 {projectColor.bg}"></span>
+          <span>{issue.project?.name} / {issue.epic?.name}</span>
         </p>
 
         <!-- Inline dependency chip with popover -->

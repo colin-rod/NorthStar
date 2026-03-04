@@ -1,5 +1,8 @@
 <script lang="ts">
   import type { Project, Epic, Attachment, ProjectStatus } from '$lib/types';
+  import ProjectIconPicker from '$lib/components/ProjectIconPicker.svelte';
+  import type { ProjectColor } from '$lib/utils/project-colors';
+  import type { ProjectIconKey } from '$lib/utils/project-icons';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { computeIssueCounts, computeProgress } from '$lib/utils/issue-counts';
@@ -216,6 +219,14 @@
     autoSave('status', value);
   }
 
+  function handleColorChange(color: ProjectColor) {
+    autoSave('color', color);
+  }
+
+  function handleIconChange(icon: ProjectIconKey) {
+    autoSave('icon', icon);
+  }
+
   function handleDescriptionChange(html: string) {
     localDescription = html;
   }
@@ -403,6 +414,19 @@
               Save failed. Please retry.
             {/if}
           </div>
+
+          <!-- Appearance -->
+          <section>
+            <div class="flex items-center gap-3">
+              <label class="text-xs text-foreground-muted w-20 shrink-0">Appearance</label>
+              <ProjectIconPicker
+                color={effectiveProject?.color ?? null}
+                icon={effectiveProject?.icon ?? null}
+                onColorChange={handleColorChange}
+                onIconChange={handleIconChange}
+              />
+            </div>
+          </section>
 
           <!-- Name -->
           <section>

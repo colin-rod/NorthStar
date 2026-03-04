@@ -26,6 +26,8 @@ export interface Project {
   number: number;
   name: string;
   description: string | null;
+  color?: string | null;
+  icon?: string | null;
   created_at: string;
   archived_at: string | null;
   status: ProjectStatus;

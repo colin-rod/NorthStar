@@ -204,6 +204,34 @@ export const actions: Actions = {
       updates.status = s;
     }
 
+    // Color
+    const color = formData.get('color');
+    if (color !== null) {
+      const validColors = [
+        'gray',
+        'red',
+        'orange',
+        'amber',
+        'green',
+        'teal',
+        'blue',
+        'violet',
+        'pink',
+        'rose',
+      ];
+      const c = color.toString();
+      if (!validColors.includes(c)) {
+        return fail(400, { error: 'Invalid color value' });
+      }
+      updates.color = c;
+    }
+
+    // Icon
+    const icon = formData.get('icon');
+    if (icon !== null) {
+      updates.icon = icon.toString();
+    }
+
     if (Object.keys(updates).length === 0) {
       return { success: true, action: 'update' };
     }

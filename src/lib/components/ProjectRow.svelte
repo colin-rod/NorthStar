@@ -21,6 +21,8 @@
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import { getProjectColor } from '$lib/utils/project-colors';
+  import { getProjectIcon } from '$lib/utils/project-icons';
 
   interface Props {
     project: Project;
@@ -35,6 +37,8 @@
 
   // Compute progress percentage
   let progress = $derived(computeProgress(counts));
+  let projectColor = $derived(getProjectColor(project.color));
+  let ProjectIcon = $derived(getProjectIcon(project.icon));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -59,6 +63,13 @@
         <ChevronRight class="h-5 w-5 text-muted-foreground" />
       {/if}
     </button>
+
+    <!-- Project Color + Icon Badge -->
+    <div
+      class="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-1 {projectColor.bg}"
+    >
+      <ProjectIcon size={13} class="text-white" />
+    </div>
 
     <!-- Clickable Content Area -->
     <button onclick={onNavigate} class="flex-1 text-left min-w-0">

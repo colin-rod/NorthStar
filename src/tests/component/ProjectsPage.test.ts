@@ -76,6 +76,8 @@ const baseProject = {
   user_id: 'user-1',
   created_at: new Date().toISOString(),
   archived_at: null,
+  color: null,
+  icon: null,
   status: 'active',
   description: null,
   epics: [
