@@ -56,7 +56,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, session }, url 
         dependencies!dependencies_issue_id_fkey(
           issue_id,
           depends_on_issue_id,
-          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status)
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status, number, title)
         )
       `,
       )

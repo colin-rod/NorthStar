@@ -51,7 +51,6 @@
 
   // Component-local state
   let selectedIds = $state<Set<string>>(new Set());
-  let editMode = $state(false);
 
   // Project detail sheet state (handles both create and edit)
   let projectDetailSheetOpen = $state(false);
@@ -74,6 +73,9 @@
   let contextMenuNode = $state<TreeNode | null>(null);
   let contextMenuX = $state(0);
   let contextMenuY = $state(0);
+
+  // Inline rename state
+  let editingNodeId = $state<string | null>(null);
 
   // Feedback state
   let feedbackMessage = $state('');
@@ -160,10 +162,6 @@
       newSelected.add(id);
     }
     selectedIds = newSelected;
-  }
-
-  function handleEditModeChange(enabled: boolean) {
-    editMode = enabled;
   }
 
   async function handleCellEdit(nodeId: string, field: string, value: any) {
@@ -399,21 +397,7 @@
   }
 
   function handleContextRename(node: TreeNode) {
-    if (node.type === 'project') {
-      projectDetailSheetMode = 'edit';
-      selectedProjectForDetail = node.data as Project;
-      // Would need to fetch counts/metrics/epics, but for rename we can use null
-      selectedProjectCounts = null;
-      selectedProjectMetrics = null;
-      selectedProjectEpics = [];
-      projectDetailSheetOpen = true;
-    } else if (node.type === 'epic') {
-      epicDetailSheetMode = 'edit';
-      selectedEpicForDetail = node.data as Epic;
-      selectedEpicCounts = null;
-      selectedEpicIssues = (node.data as Epic).issues ?? [];
-      epicDetailSheetOpen = true;
-    }
+    editingNodeId = node.id;
   }
 
   function handleContextAddChild(node: TreeNode) {
@@ -576,11 +560,9 @@
       projects={data.projects}
       {expandedIds}
       {selectedIds}
-      {editMode}
       groupBy={data.filterParams.groupBy}
       onToggleExpand={toggleExpand}
       onToggleSelect={toggleSelect}
-      onEditModeChange={handleEditModeChange}
       onCellEdit={handleCellEdit}
       onCreateChild={handleCreateChild}
       onBulkAction={handleBulkAction}
@@ -589,6 +571,8 @@
       onProjectClick={handleProjectDoubleClick}
       onEpicClick={handleEpicDoubleClick}
       onContextMenu={handleContextMenu}
+      {editingNodeId}
+      onStopEditNode={() => (editingNodeId = null)}
     />
   {/if}
 </div>
@@ -612,7 +596,9 @@
   mode={epicDetailSheetMode}
   epic={selectedEpicForDetail}
   projectId={epicCreateProjectId ?? undefined}
-  projectName={data.projects.find((p) => p.id === epicCreateProjectId)?.name}
+  projectName={data.projects.find(
+    (p) => p.id === (epicCreateProjectId ?? selectedEpicForDetail?.project_id),
+  )?.name}
   counts={selectedEpicCounts}
   issues={selectedEpicIssues}
   userId={data.session?.user?.id ?? ''}

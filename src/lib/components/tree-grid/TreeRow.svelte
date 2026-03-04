@@ -25,7 +25,6 @@
     isExpanded: boolean;
     expandedIds: Set<string>;
     isSelected: boolean;
-    editMode: boolean;
     dragDropState?: DragDropState;
     onToggleExpand: (id: string) => void;
     onToggleSelect: (id: string) => void;
@@ -40,6 +39,8 @@
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
     onContextMenu?: (node: TreeNode, event: MouseEvent) => void;
     showReorderHint?: boolean;
+    editingNodeId?: string | null;
+    onStopEdit?: () => void;
   }
 
   let {
@@ -48,7 +49,6 @@
     isExpanded,
     expandedIds,
     isSelected,
-    editMode,
     dragDropState,
     onToggleExpand,
     onToggleSelect,
@@ -58,6 +58,8 @@
     onEpicClick,
     onContextMenu,
     showReorderHint = false,
+    editingNodeId = null,
+    onStopEdit,
   }: Props = $props();
 
   // Level-based background shading (per spec)
@@ -149,7 +151,7 @@
 >
   <!-- Drag Handle -->
   <td class="py-4 px-4 hidden md:table-cell">
-    <DragHandleCell {editMode} {showReorderHint} />
+    <DragHandleCell />
   </td>
 
   <!-- Selection Checkbox -->
@@ -165,15 +167,16 @@
       {isExpanded}
       indentation={calculateIndentation(node.level)}
       {fontWeight}
-      {editMode}
+      isEditing={editingNodeId === node.id}
       onToggleExpand={() => onToggleExpand(node.id)}
       onEdit={(value) => onCellEdit(node.id, 'title', value)}
+      onStopEdit={() => onStopEdit?.()}
     />
   </td>
 
   <!-- Status -->
   <td class="py-4 px-4">
-    <StatusCell {node} {editMode} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
+    <StatusCell {node} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
   </td>
 
   <!-- Total Story Points (Rollup) -->

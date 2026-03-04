@@ -210,6 +210,36 @@ export type Database = {
           },
         ];
       };
+      links: {
+        Row: {
+          created_at: string;
+          entity_id: string;
+          entity_type: string;
+          id: string;
+          label: string;
+          url: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          entity_id: string;
+          entity_type: string;
+          id?: string;
+          label: string;
+          url: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          entity_id?: string;
+          entity_type?: string;
+          id?: string;
+          label?: string;
+          url?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       milestones: {
         Row: {
           created_at: string;
@@ -237,8 +267,10 @@ export type Database = {
       projects: {
         Row: {
           archived_at: string | null;
+          color: string | null;
           created_at: string;
           description: string | null;
+          icon: string | null;
           id: string;
           name: string;
           number: number;
@@ -247,8 +279,10 @@ export type Database = {
         };
         Insert: {
           archived_at?: string | null;
+          color?: string | null;
           created_at?: string;
           description?: string | null;
+          icon?: string | null;
           id?: string;
           name: string;
           number?: number;
@@ -257,8 +291,10 @@ export type Database = {
         };
         Update: {
           archived_at?: string | null;
+          color?: string | null;
           created_at?: string;
           description?: string | null;
+          icon?: string | null;
           id?: string;
           name?: string;
           number?: number;

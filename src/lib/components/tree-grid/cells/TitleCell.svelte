@@ -5,8 +5,7 @@
    * Displays:
    * - Indentation based on hierarchy level
    * - Chevron icon (expand/collapse) if node has children
-   * - Optional drag handle (in edit mode)
-   * - Title text (editable in edit mode)
+   * - Title text (read-only; editing via context menu or detail sheet)
    */
 
   import type { TreeNode } from '$lib/types/tree-grid';
@@ -27,9 +26,10 @@
     isExpanded: boolean;
     indentation: string;
     fontWeight: string;
-    editMode: boolean;
+    isEditing?: boolean;
     onToggleExpand: () => void;
     onEdit: (value: string) => void;
+    onStopEdit: () => void;
   }
 
   let {
@@ -38,10 +38,33 @@
     isExpanded,
     indentation,
     fontWeight,
-    editMode,
+    isEditing = false,
     onToggleExpand,
     onEdit,
+    onStopEdit,
   }: Props = $props();
+
+  // Auto-focus action for the edit input
+  function focusAndSelect(el: HTMLInputElement) {
+    el.focus();
+    el.select();
+  }
+
+  function handleEditKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      const value = (e.currentTarget as HTMLInputElement).value.trim();
+      if (value) onEdit(value);
+      onStopEdit();
+    } else if (e.key === 'Escape') {
+      onStopEdit();
+    }
+  }
+
+  function handleEditBlur(e: FocusEvent) {
+    const value = (e.currentTarget as HTMLInputElement).value.trim();
+    if (value) onEdit(value);
+    onStopEdit();
+  }
 
   // Get title based on node type
   const title = $derived.by(() => {
@@ -100,49 +123,6 @@
 
   // Compute if this node is the last child
   const nodeIsLastChild = $derived(isLastChild(node, allNodes));
-
-  let isEditing = $state(false);
-  let editValue = $state('');
-  let editInputEl = $state<HTMLInputElement | null>(null);
-
-  $effect(() => {
-    if (isEditing && editInputEl) {
-      editInputEl.focus();
-    }
-  });
-
-  // Sync editValue when title changes (if not editing)
-  $effect(() => {
-    if (!isEditing) {
-      editValue = title;
-    }
-  });
-
-  function startEditing() {
-    if (!editMode) return;
-    isEditing = true;
-    editValue = title;
-  }
-
-  function saveEdit() {
-    if (editValue.trim() && editValue !== title) {
-      onEdit(editValue.trim());
-    }
-    isEditing = false;
-  }
-
-  function cancelEdit() {
-    editValue = title;
-    isEditing = false;
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter') {
-      saveEdit();
-    } else if (e.key === 'Escape') {
-      cancelEdit();
-    }
-  }
 </script>
 
 <div class="relative flex items-center gap-2" style="padding-left: {indentation}">
@@ -182,82 +162,44 @@
     </div>
   {/if}
 
-  <!-- Title -->
+  <!-- Title (read-only or inline edit) -->
   {#if isEditing}
     <input
-      type="text"
-      bind:value={editValue}
-      bind:this={editInputEl}
-      onkeydown={handleKeydown}
-      onblur={saveEdit}
-      class="flex-1 px-2 py-1 text-sm border border-accent rounded focus:outline-none focus:ring-1 focus:ring-accent {fontWeight}"
+      use:focusAndSelect
+      class="text-issue-title {fontWeight} flex-1 bg-transparent border-b border-primary outline-none min-w-0"
+      value={title}
+      onkeydown={handleEditKeydown}
+      onblur={handleEditBlur}
     />
-  {:else if editMode}
-    <button
-      type="button"
-      class="text-issue-title {fontWeight} truncate flex-1 cursor-text text-left bg-transparent border-0 p-0 hover:bg-transparent"
-      onclick={startEditing}
-      onkeydown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') startEditing();
-      }}
-    >
-      <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
-      <span class="mx-1 text-muted-foreground">·</span>
-      {title}
-    </button>
-    {#if isEpicNode && (epicPriority !== null || epicMilestone)}
-      <span class="flex items-center gap-1 shrink-0 flex-wrap">
-        {#if epicPriority !== null}
-          <PriorityBadge priority={epicPriority} />
-        {/if}
-        {#if epicMilestone}
-          <Badge variant="outline" class="text-xs max-w-25 truncate">{epicMilestone.name}</Badge>
-        {/if}
-      </span>
-    {/if}
-    {#if isIssueNode}
-      <span class="flex items-center gap-1 shrink-0 flex-wrap">
-        {#if issuePriority !== null}
-          <PriorityBadge priority={issuePriority} />
-        {/if}
-        {#if issueSp !== null}
-          <Badge variant="secondary" class="text-xs tabular-nums">{issueSp} pts</Badge>
-        {/if}
-        {#if issueMilestone}
-          <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
-        {/if}
-      </span>
-      <DependencyChip issue={node.data as Issue} />
-    {/if}
   {:else}
     <span class="text-issue-title {fontWeight} truncate flex-1">
       <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
       <span class="mx-1 text-muted-foreground">·</span>
       {title}
     </span>
-    {#if isEpicNode && (epicPriority !== null || epicMilestone)}
-      <span class="flex items-center gap-1 shrink-0 flex-wrap">
-        {#if epicPriority !== null}
-          <PriorityBadge priority={epicPriority} />
-        {/if}
-        {#if epicMilestone}
-          <Badge variant="outline" class="text-xs max-w-25 truncate">{epicMilestone.name}</Badge>
-        {/if}
-      </span>
-    {/if}
-    {#if isIssueNode}
-      <span class="flex items-center gap-1 shrink-0 flex-wrap">
-        {#if issuePriority !== null}
-          <PriorityBadge priority={issuePriority} />
-        {/if}
-        {#if issueSp !== null}
-          <Badge variant="secondary" class="text-xs tabular-nums">{issueSp} pts</Badge>
-        {/if}
-        {#if issueMilestone}
-          <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
-        {/if}
-      </span>
-      <DependencyChip issue={node.data as Issue} />
-    {/if}
+  {/if}
+  {#if isEpicNode && (epicPriority !== null || epicMilestone)}
+    <span class="flex items-center gap-1 shrink-0 flex-wrap">
+      {#if epicPriority !== null}
+        <PriorityBadge priority={epicPriority} />
+      {/if}
+      {#if epicMilestone}
+        <Badge variant="outline" class="text-xs max-w-25 truncate">{epicMilestone.name}</Badge>
+      {/if}
+    </span>
+  {/if}
+  {#if isIssueNode}
+    <span class="flex items-center gap-1 shrink-0 flex-wrap">
+      {#if issuePriority !== null}
+        <PriorityBadge priority={issuePriority} />
+      {/if}
+      {#if issueSp !== null}
+        <Badge variant="secondary" class="text-xs tabular-nums">{issueSp} pts</Badge>
+      {/if}
+      {#if issueMilestone}
+        <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
+      {/if}
+    </span>
+    <DependencyChip issue={node.data as Issue} />
   {/if}
 </div>

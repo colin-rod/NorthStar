@@ -13,12 +13,11 @@
 
   interface Props {
     node: TreeNode;
-    editMode: boolean;
     compact?: boolean; // For mobile view
     onEdit: (value: string) => void;
   }
 
-  let { node, editMode, compact = false, onEdit }: Props = $props();
+  let { node, compact = false, onEdit }: Props = $props();
 
   // Get status from node data
   const status = $derived.by(() => {
@@ -66,21 +65,8 @@
   const currentOption = $derived(statusOptions.find((o) => o.value === status));
 </script>
 
-{#if editMode && !compact}
-  <!-- Edit Mode: Dropdown -->
-  <select
-    value={status}
-    onchange={(e) => onEdit(e.currentTarget.value)}
-    class="h-8 px-2 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent bg-surface"
-  >
-    {#each statusOptions as option}
-      <option value={option.value}>{option.label}</option>
-    {/each}
-  </select>
-{:else}
-  <!-- Display Mode: Dot + Label -->
-  <div class="flex items-center gap-2">
-    <div class="w-2 h-2 md:w-3 md:h-3 rounded-full {currentOption?.color || 'bg-gray-400'}"></div>
-    <span class="text-foreground {compact ? 'text-xs' : ''}">{currentOption?.label || status}</span>
-  </div>
-{/if}
+<!-- Display Mode: Dot + Label -->
+<div class="flex items-center gap-2">
+  <div class="w-2 h-2 md:w-3 md:h-3 rounded-full {currentOption?.color || 'bg-gray-400'}"></div>
+  <span class="text-foreground {compact ? 'text-xs' : ''}">{currentOption?.label || status}</span>
+</div>

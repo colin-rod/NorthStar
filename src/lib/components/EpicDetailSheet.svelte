@@ -445,8 +445,8 @@
                 Epic
               {/if}
             </SheetTitle>
-            {#if internalMode === 'create' && projectName}
-              <p class="text-sm text-foreground-muted">{projectName}</p>
+            {#if projectName}
+              <p class="text-xs text-muted-foreground mt-0.5">{projectName}</p>
             {/if}
           </div>
           {#if isDesktop()}

@@ -268,6 +268,19 @@
     }, 1500);
   }
 
+  // Breadcrumb for edit mode header: "ProjectName / E-N EpicName"
+  let issueBreadcrumb = $derived.by(() => {
+    const currentIssue = issue;
+    if (internalMode !== 'edit' || !currentIssue) return null;
+    const project = projects.find((p) => p.id === currentIssue.project_id);
+    const epic = epics.find((e) => e.id === currentIssue.epic_id);
+    if (!project && !epic) return null;
+    const parts = [];
+    if (project) parts.push(project.name);
+    if (epic) parts.push(`E-${epic.number} ${epic.name}`);
+    return parts.join(' / ');
+  });
+
   // Filter epics to only show those from the relevant project
   let projectEpics = $derived(
     internalMode === 'create'
@@ -325,9 +338,8 @@
           saveState = 'saved';
           queueSaveStateIdleReset();
         }
-        // No need to reload all data for single field update
-        // The UI already shows the updated value via local state
         options.onSuccess?.();
+        await invalidateAll();
         toast.success('Changes saved successfully', {
           duration: 2000,
           ...successToastA11y,
@@ -649,6 +661,9 @@
 
       <!-- Header -->
       <SheetHeader class="mb-6">
+        {#if issueBreadcrumb}
+          <p class="text-xs text-muted-foreground mb-1 truncate">{issueBreadcrumb}</p>
+        {/if}
         <div class="flex items-start justify-between gap-2">
           <SheetTitle class="font-accent text-page-title flex-1 min-w-0 flex items-baseline gap-0">
             {#if internalMode === 'create'}

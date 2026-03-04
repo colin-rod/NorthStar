@@ -13,11 +13,10 @@
 
   interface Props {
     node: TreeNode;
-    editMode: boolean;
     onEdit: (value: string | null) => void;
   }
 
-  let { node, editMode, onEdit }: Props = $props();
+  let { node, onEdit }: Props = $props();
 
   // Projects don't have milestones
   const isApplicable = $derived(node.type !== 'project');
@@ -42,18 +41,6 @@
 {#if !isApplicable}
   <!-- Project: Show em dash -->
   <span class="text-muted-foreground">—</span>
-{:else if editMode}
-  <!-- Edit Mode: Dropdown -->
-  <select
-    value={milestoneId || ''}
-    onchange={(e) => onEdit(e.currentTarget.value || null)}
-    class="h-8 px-2 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent bg-surface"
-  >
-    <option value="">None</option>
-    {#each availableMilestones as ms}
-      <option value={ms.id}>{ms.name}</option>
-    {/each}
-  </select>
 {:else}
   <!-- Display Mode: Milestone name or em dash -->
   <span class="text-foreground {milestone ? '' : 'text-muted-foreground'}">

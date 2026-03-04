@@ -39,11 +39,9 @@
     })[];
     expandedIds: Set<string>;
     selectedIds: Set<string>;
-    editMode: boolean;
     groupBy?: string;
     onToggleExpand: (id: string) => void;
     onToggleSelect: (id: string) => void;
-    onEditModeChange: (enabled: boolean) => void;
     onCellEdit: (nodeId: string, field: string, value: any) => void;
     onCreateChild: (parentId: string, parentType: string, data: { title: string }) => void;
     onBulkAction?: (action: string) => void;
@@ -57,17 +55,17 @@
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
     onContextMenu?: (node: import('$lib/types/tree-grid').TreeNode, event: MouseEvent) => void;
+    editingNodeId?: string | null;
+    onStopEditNode?: () => void;
   }
 
   let {
     projects,
     expandedIds,
     selectedIds,
-    editMode,
     groupBy = 'none',
     onToggleExpand,
     onToggleSelect,
-    onEditModeChange,
     onCellEdit,
     onCreateChild,
     onBulkAction,
@@ -76,6 +74,8 @@
     onProjectClick,
     onEpicClick,
     onContextMenu,
+    editingNodeId = null,
+    onStopEditNode,
   }: Props = $props();
 
   // Flatten tree into nodes and calculate rollups
@@ -204,8 +204,8 @@
     validDropTargetIds: new Set(),
   });
 
-  // Disable drag when edit mode is OFF
-  let dragDisabled = $derived(!editMode);
+  // Drag is always disabled (edit mode removed)
+  const dragDisabled = true;
 
   // Mark nodes with drag metadata
   let nodesWithDragState = $derived.by(() => {
@@ -401,13 +401,7 @@
 
 <div class="space-y-4">
   <!-- Toolbar -->
-  <TreeToolbar
-    {editMode}
-    {breadcrumb}
-    selectedCount={selectedIds.size}
-    {onEditModeChange}
-    onBulkAction={handleBulkAction}
-  />
+  <TreeToolbar {breadcrumb} selectedCount={selectedIds.size} onBulkAction={handleBulkAction} />
 
   <!-- Tree Grid Table -->
   <div class="border border-border-divider rounded-lg overflow-hidden bg-surface">
@@ -463,7 +457,6 @@
               isExpanded={expandedIds.has(node.id)}
               {expandedIds}
               isSelected={selectedIds.has(node.id)}
-              {editMode}
               {dragDropState}
               {onToggleExpand}
               {onToggleSelect}
@@ -472,8 +465,8 @@
               {onProjectClick}
               {onEpicClick}
               {onContextMenu}
-              showReorderHint={nodesWithDragState.filter((n) => n.type !== 'group-header')[0]
-                ?.id === node.id}
+              {editingNodeId}
+              onStopEdit={onStopEditNode}
             />
 
             <!-- Check if we should show AddRow after this node -->

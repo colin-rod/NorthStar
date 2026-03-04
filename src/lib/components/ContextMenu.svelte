@@ -3,15 +3,15 @@
    * ContextMenu — App-level right-click context menu for TreeGrid rows.
    *
    * Renders context-sensitive actions based on node type:
-   * - project: Rename, Status, Add Epic, Archive, Delete
-   * - epic: Rename, Status, Priority, Milestone, Add Issue, Delete
-   * - issue: Status, Priority, Story Points, Add Sub-issue, Delete
-   * - sub-issue: Status, Priority, Story Points, Delete
+   * - project: Status, | Add Epic | Rename, Archive, Delete
+   * - epic: Status, Priority, Milestone, | Add Issue | Rename, Delete
+   * - issue: Status, Priority, Story Points, Milestone, | Rename, Delete
    */
 
   import * as CM from '$lib/components/ui/context-menu';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Button } from '$lib/components/ui/button';
+  import Check from '@lucide/svelte/icons/check';
   import type { TreeNode } from '$lib/types/tree-grid';
 
   import type { Milestone } from '$lib/types';
@@ -79,14 +79,17 @@
   ];
 
   const epicStatuses = [
+    { value: 'backlog', label: 'Backlog' },
     { value: 'active', label: 'Active' },
-    { value: 'done', label: 'Done' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'completed', label: 'Completed' },
     { value: 'canceled', label: 'Canceled' },
   ];
 
   const issueStatuses = [
+    { value: 'backlog', label: 'Backlog' },
     { value: 'todo', label: 'Todo' },
-    { value: 'doing', label: 'In Progress' },
+    { value: 'in_progress', label: 'In Progress' },
     { value: 'in_review', label: 'In Review' },
     { value: 'done', label: 'Done' },
     { value: 'canceled', label: 'Canceled' },
@@ -100,6 +103,12 @@
   ];
 
   const storyPoints = [1, 2, 3, 5, 8, 13, 21];
+
+  // Current values for active highlighting
+  const currentStatus = $derived((node?.data as any)?.status ?? null);
+  const currentPriority = $derived((node?.data as any)?.priority ?? null);
+  const currentStoryPoints = $derived((node?.data as any)?.story_points ?? null);
+  const currentMilestoneId = $derived((node?.data as any)?.milestone_id ?? null);
 
   function handleDelete() {
     deleteDialogOpen = false;
@@ -126,18 +135,9 @@
     <CM.ContextMenuContent>
       <!-- ===== PROJECT ===== -->
       {#if isProject}
-        <CM.ContextMenuItem
-          onclick={() => {
-            onRename?.(node!);
-            onClose();
-          }}
-        >
-          Rename
-        </CM.ContextMenuItem>
-
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Status</CM.ContextMenuSubTrigger>
-          <CM.ContextMenuSubContent>
+          <CM.ContextMenuSubContent align="start">
             {#each projectStatuses as s}
               <CM.ContextMenuItem
                 onclick={() => {
@@ -145,11 +145,20 @@
                   onClose();
                 }}
               >
-                {s.label}
+                <span class="flex items-center gap-2">
+                  {#if currentStatus === s.value}
+                    <Check class="h-3 w-3 shrink-0" />
+                  {:else}
+                    <span class="w-3 shrink-0"></span>
+                  {/if}
+                  {s.label}
+                </span>
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
         </CM.ContextMenuSub>
+
+        <CM.ContextMenuSeparator />
 
         <CM.ContextMenuItem
           onclick={() => {
@@ -161,6 +170,15 @@
         </CM.ContextMenuItem>
 
         <CM.ContextMenuSeparator />
+
+        <CM.ContextMenuItem
+          onclick={() => {
+            onRename?.(node!);
+            onClose();
+          }}
+        >
+          Rename
+        </CM.ContextMenuItem>
 
         <CM.ContextMenuItem
           onclick={() => {
@@ -184,18 +202,9 @@
 
       <!-- ===== EPIC ===== -->
       {#if isEpic}
-        <CM.ContextMenuItem
-          onclick={() => {
-            onRename?.(node!);
-            onClose();
-          }}
-        >
-          Rename
-        </CM.ContextMenuItem>
-
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Status</CM.ContextMenuSubTrigger>
-          <CM.ContextMenuSubContent>
+          <CM.ContextMenuSubContent align="start">
             {#each epicStatuses as s}
               <CM.ContextMenuItem
                 onclick={() => {
@@ -203,7 +212,14 @@
                   onClose();
                 }}
               >
-                {s.label}
+                <span class="flex items-center gap-2">
+                  {#if currentStatus === s.value}
+                    <Check class="h-3 w-3 shrink-0" />
+                  {:else}
+                    <span class="w-3 shrink-0"></span>
+                  {/if}
+                  {s.label}
+                </span>
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
@@ -211,7 +227,7 @@
 
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Priority</CM.ContextMenuSubTrigger>
-          <CM.ContextMenuSubContent>
+          <CM.ContextMenuSubContent align="start">
             {#each priorities as p}
               <CM.ContextMenuItem
                 onclick={() => {
@@ -219,7 +235,14 @@
                   onClose();
                 }}
               >
-                {p.label}
+                <span class="flex items-center gap-2">
+                  {#if currentPriority === p.value}
+                    <Check class="h-3 w-3 shrink-0" />
+                  {:else}
+                    <span class="w-3 shrink-0"></span>
+                  {/if}
+                  {p.label}
+                </span>
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
@@ -227,14 +250,21 @@
 
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Milestone</CM.ContextMenuSubTrigger>
-          <CM.ContextMenuSubContent>
+          <CM.ContextMenuSubContent align="start">
             <CM.ContextMenuItem
               onclick={() => {
                 onMilestoneChange?.(node!, null);
                 onClose();
               }}
             >
-              No Milestone
+              <span class="flex items-center gap-2">
+                {#if currentMilestoneId === null}
+                  <Check class="h-3 w-3 shrink-0" />
+                {:else}
+                  <span class="w-3 shrink-0"></span>
+                {/if}
+                No Milestone
+              </span>
             </CM.ContextMenuItem>
             {#each milestones as m}
               <CM.ContextMenuItem
@@ -243,11 +273,20 @@
                   onClose();
                 }}
               >
-                {m.name}
+                <span class="flex items-center gap-2">
+                  {#if currentMilestoneId === m.id}
+                    <Check class="h-3 w-3 shrink-0" />
+                  {:else}
+                    <span class="w-3 shrink-0"></span>
+                  {/if}
+                  {m.name}
+                </span>
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
         </CM.ContextMenuSub>
+
+        <CM.ContextMenuSeparator />
 
         <CM.ContextMenuItem
           onclick={() => {
@@ -261,6 +300,15 @@
         <CM.ContextMenuSeparator />
 
         <CM.ContextMenuItem
+          onclick={() => {
+            onRename?.(node!);
+            onClose();
+          }}
+        >
+          Rename
+        </CM.ContextMenuItem>
+
+        <CM.ContextMenuItem
           class="text-destructive focus:text-destructive"
           onclick={() => {
             nodeToDelete = node;
@@ -271,11 +319,11 @@
         </CM.ContextMenuItem>
       {/if}
 
-      <!-- ===== ISSUE ===== -->
+      <!-- ===== ISSUE / SUB-ISSUE ===== -->
       {#if isIssue}
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Status</CM.ContextMenuSubTrigger>
-          <CM.ContextMenuSubContent>
+          <CM.ContextMenuSubContent align="start">
             {#each issueStatuses as s}
               <CM.ContextMenuItem
                 onclick={() => {
@@ -283,7 +331,14 @@
                   onClose();
                 }}
               >
-                {s.label}
+                <span class="flex items-center gap-2">
+                  {#if currentStatus === s.value}
+                    <Check class="h-3 w-3 shrink-0" />
+                  {:else}
+                    <span class="w-3 shrink-0"></span>
+                  {/if}
+                  {s.label}
+                </span>
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
@@ -291,7 +346,7 @@
 
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Priority</CM.ContextMenuSubTrigger>
-          <CM.ContextMenuSubContent>
+          <CM.ContextMenuSubContent align="start">
             {#each priorities as p}
               <CM.ContextMenuItem
                 onclick={() => {
@@ -299,7 +354,14 @@
                   onClose();
                 }}
               >
-                {p.label}
+                <span class="flex items-center gap-2">
+                  {#if currentPriority === p.value}
+                    <Check class="h-3 w-3 shrink-0" />
+                  {:else}
+                    <span class="w-3 shrink-0"></span>
+                  {/if}
+                  {p.label}
+                </span>
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
@@ -307,7 +369,7 @@
 
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Story Points</CM.ContextMenuSubTrigger>
-          <CM.ContextMenuSubContent>
+          <CM.ContextMenuSubContent align="start">
             {#each storyPoints as sp}
               <CM.ContextMenuItem
                 onclick={() => {
@@ -315,7 +377,14 @@
                   onClose();
                 }}
               >
-                {sp}
+                <span class="flex items-center gap-2">
+                  {#if currentStoryPoints === sp}
+                    <Check class="h-3 w-3 shrink-0" />
+                  {:else}
+                    <span class="w-3 shrink-0"></span>
+                  {/if}
+                  {sp}
+                </span>
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
@@ -323,14 +392,21 @@
 
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Milestone</CM.ContextMenuSubTrigger>
-          <CM.ContextMenuSubContent>
+          <CM.ContextMenuSubContent align="start">
             <CM.ContextMenuItem
               onclick={() => {
                 onMilestoneChange?.(node!, null);
                 onClose();
               }}
             >
-              No Milestone
+              <span class="flex items-center gap-2">
+                {#if currentMilestoneId === null}
+                  <Check class="h-3 w-3 shrink-0" />
+                {:else}
+                  <span class="w-3 shrink-0"></span>
+                {/if}
+                No Milestone
+              </span>
             </CM.ContextMenuItem>
             {#each milestones as m}
               <CM.ContextMenuItem
@@ -339,13 +415,29 @@
                   onClose();
                 }}
               >
-                {m.name}
+                <span class="flex items-center gap-2">
+                  {#if currentMilestoneId === m.id}
+                    <Check class="h-3 w-3 shrink-0" />
+                  {:else}
+                    <span class="w-3 shrink-0"></span>
+                  {/if}
+                  {m.name}
+                </span>
               </CM.ContextMenuItem>
             {/each}
           </CM.ContextMenuSubContent>
         </CM.ContextMenuSub>
 
         <CM.ContextMenuSeparator />
+
+        <CM.ContextMenuItem
+          onclick={() => {
+            onRename?.(node!);
+            onClose();
+          }}
+        >
+          Rename
+        </CM.ContextMenuItem>
 
         <CM.ContextMenuItem
           class="text-destructive focus:text-destructive"
