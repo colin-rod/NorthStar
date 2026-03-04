@@ -79,17 +79,14 @@
   ];
 
   const epicStatuses = [
-    { value: 'backlog', label: 'Backlog' },
     { value: 'active', label: 'Active' },
-    { value: 'on_hold', label: 'On Hold' },
-    { value: 'completed', label: 'Completed' },
+    { value: 'done', label: 'Done' },
     { value: 'canceled', label: 'Canceled' },
   ];
 
   const issueStatuses = [
-    { value: 'backlog', label: 'Backlog' },
     { value: 'todo', label: 'Todo' },
-    { value: 'in_progress', label: 'In Progress' },
+    { value: 'doing', label: 'In Progress' },
     { value: 'in_review', label: 'In Review' },
     { value: 'done', label: 'Done' },
     { value: 'canceled', label: 'Canceled' },

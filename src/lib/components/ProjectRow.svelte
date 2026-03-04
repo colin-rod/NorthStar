@@ -68,7 +68,9 @@
     <div
       class="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-1 {projectColor.bg}"
     >
-      <ProjectIcon size={13} class="text-white" />
+      {#key project.icon}
+        <ProjectIcon size={13} class="text-white" />
+      {/key}
     </div>
 
     <!-- Clickable Content Area -->

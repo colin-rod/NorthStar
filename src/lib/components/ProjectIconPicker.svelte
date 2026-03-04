@@ -37,7 +37,9 @@
       class="{avatarSize} rounded-md flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity shrink-0 {activeColor.bg}"
       title="Change project color and icon"
     >
-      <ActiveIcon size={iconSize} class="text-white" />
+      {#key icon}
+        <ActiveIcon size={iconSize} class="text-white" />
+      {/key}
     </button>
   </PopoverTrigger>
   <PopoverContent class="w-64 p-3" align="start">

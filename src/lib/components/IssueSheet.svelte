@@ -19,7 +19,15 @@
    * - Collapsible sub-issues list
    */
 
-  import type { Issue, Epic, Milestone, IssueStatus, StoryPoints, Attachment } from '$lib/types';
+  import type {
+    Issue,
+    Epic,
+    Milestone,
+    IssueStatus,
+    StoryPoints,
+    Attachment,
+    Link,
+  } from '$lib/types';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
@@ -43,6 +51,7 @@
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import LinkList from '$lib/components/LinkList.svelte';
   import { supabase } from '$lib/supabase';
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
   import { normalizeDescription } from '$lib/utils/text-helpers';
@@ -106,6 +115,9 @@
   // Attachments state
   let attachments = $state<Attachment[]>([]);
 
+  // Links state
+  let links = $state<Link[]>([]);
+
   // Ref for sheet content (keyboard-aware height)
   let sheetContentRef = $state<HTMLElement | null>(null);
 
@@ -162,7 +174,7 @@
       descriptionSaveInFlight = false;
       descriptionInFlightNormalized = null;
 
-      // Load attachments for this issue
+      // Load attachments and links for this issue
       if (internalMode === 'edit') {
         supabase
           .from('attachments')
@@ -172,6 +184,15 @@
           .order('created_at', { ascending: true })
           .then(({ data }) => {
             attachments = data ?? [];
+          });
+        supabase
+          .from('links')
+          .select('*')
+          .eq('entity_type', 'issue')
+          .eq('entity_id', issue.id)
+          .order('created_at', { ascending: true })
+          .then(({ data }) => {
+            links = data ?? [];
           });
       }
     }
@@ -417,6 +438,29 @@
     formData.append('id', attachment.id);
     await fetch('?/deleteAttachment', { method: 'POST', body: formData });
     attachments = attachments.filter((a) => a.id !== attachment.id);
+  }
+
+  // Link add
+  async function handleLinkAdd(url: string, label: string) {
+    if (!issue) return;
+    const formData = new FormData();
+    formData.append('entity_type', 'issue');
+    formData.append('entity_id', issue.id);
+    formData.append('url', url);
+    formData.append('label', label);
+    const res = await fetch('?/createLink', { method: 'POST', body: formData });
+    const result = deserialize(await res.text());
+    if (result.type === 'success') {
+      links = [...links, (result.data as any).link];
+    }
+  }
+
+  // Link delete
+  async function handleLinkDelete(link: Link) {
+    const formData = new FormData();
+    formData.append('id', link.id);
+    await fetch('?/deleteLink', { method: 'POST', body: formData });
+    links = links.filter((l) => l.id !== link.id);
   }
 
   // Create issue form submission
@@ -832,6 +876,17 @@
               {attachments}
               onUpload={handleAttachmentUpload}
               onDelete={handleAttachmentDelete}
+              disabled={loading}
+            />
+          </section>
+
+          <!-- Links Section -->
+          <section>
+            <h3 class="section-header">Links</h3>
+            <LinkList
+              {links}
+              onAdd={handleLinkAdd}
+              onDelete={handleLinkDelete}
               disabled={loading}
             />
           </section>

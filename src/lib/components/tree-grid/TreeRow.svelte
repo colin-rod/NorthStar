@@ -15,8 +15,7 @@
   import DragHandleCell from './cells/DragHandleCell.svelte';
   import TitleCell from './cells/TitleCell.svelte';
   import StatusCell from './cells/StatusCell.svelte';
-  import MilestoneCell from './cells/MilestoneCell.svelte';
-  import StoryPointsCell from './cells/StoryPointsCell.svelte';
+
   import TotalPointsCell from './cells/TotalPointsCell.svelte';
   import ProgressCell from './cells/ProgressCell.svelte';
 
@@ -175,24 +174,6 @@
   <!-- Status -->
   <td class="py-4 px-4">
     <StatusCell {node} {editMode} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
-  </td>
-
-  <!-- Milestone -->
-  <td class="py-4 px-4 hidden md:table-cell">
-    <MilestoneCell
-      {node}
-      {editMode}
-      onEdit={(value) => onCellEdit(node.id, 'milestone_id', value)}
-    />
-  </td>
-
-  <!-- Story Points -->
-  <td class="py-4 px-4 hidden md:table-cell">
-    <StoryPointsCell
-      {node}
-      {editMode}
-      onEdit={(value) => onCellEdit(node.id, 'story_points', value)}
-    />
   </td>
 
   <!-- Total Story Points (Rollup) -->

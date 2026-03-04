@@ -349,6 +349,52 @@ export const actions: Actions = {
     return { success: true };
   },
 
+  createLink: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const entityType = d.get('entity_type')?.toString();
+    const entityId = d.get('entity_id')?.toString();
+    const url = d.get('url')?.toString();
+    const label = d.get('label')?.toString();
+
+    if (!entityType || !entityId || !url || !label) {
+      return fail(400, { error: 'Missing required link fields' });
+    }
+
+    const { data, error } = await supabase
+      .from('links')
+      .insert({
+        user_id: session.user.id,
+        entity_type: entityType,
+        entity_id: entityId,
+        url,
+        label,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to save link:', error);
+      return fail(500, { error: 'Failed to save link' });
+    }
+
+    return { success: true, link: data };
+  },
+
+  deleteLink: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const id = d.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Link ID is required' });
+
+    await supabase.from('links').delete().eq('id', id).eq('user_id', session.user.id);
+
+    return { success: true };
+  },
+
   /**
    * Create a new milestone
    */

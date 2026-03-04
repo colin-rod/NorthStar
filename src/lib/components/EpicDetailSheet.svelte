@@ -1,5 +1,13 @@
 <script lang="ts">
-  import type { Epic, Attachment, Milestone, Issue, IssueStatus, EpicStatus } from '$lib/types';
+  import type {
+    Epic,
+    Attachment,
+    Link,
+    Milestone,
+    Issue,
+    IssueStatus,
+    EpicStatus,
+  } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import { computeProgress } from '$lib/utils/issue-counts';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
@@ -12,6 +20,7 @@
   import { deserialize } from '$app/forms';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import LinkList from '$lib/components/LinkList.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import IssueCountsBadges from '$lib/components/IssueCountsBadges.svelte';
   import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
@@ -58,6 +67,7 @@
   let localDescription = $state<string | null>(null);
   let localMilestoneId = $state<string | null>(null);
   let attachments = $state<Attachment[]>([]);
+  let links = $state<Link[]>([]);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
   let lastPersistedDescriptionNormalized = $state('');
@@ -92,7 +102,7 @@
       lastPersistedDescriptionNormalized = normalizeDescription(effectiveEpic.description);
       saveState = 'idle';
 
-      // Load attachments for this epic
+      // Load attachments and links for this epic
       supabase
         .from('attachments')
         .select('*')
@@ -101,6 +111,15 @@
         .order('created_at', { ascending: true })
         .then(({ data }) => {
           attachments = data ?? [];
+        });
+      supabase
+        .from('links')
+        .select('*')
+        .eq('entity_type', 'epic')
+        .eq('entity_id', effectiveEpic.id)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          links = data ?? [];
         });
     }
   });
@@ -308,6 +327,27 @@
     attachments = attachments.filter((a) => a.id !== attachment.id);
   }
 
+  async function handleLinkAdd(url: string, label: string) {
+    if (!effectiveEpic) return;
+    const formData = new FormData();
+    formData.append('entity_type', 'epic');
+    formData.append('entity_id', effectiveEpic.id);
+    formData.append('url', url);
+    formData.append('label', label);
+    const res = await fetch('?/createLink', { method: 'POST', body: formData });
+    const result = deserialize(await res.text());
+    if (result.type === 'success') {
+      links = [...links, (result.data as any).link];
+    }
+  }
+
+  async function handleLinkDelete(link: Link) {
+    const formData = new FormData();
+    formData.append('id', link.id);
+    await fetch('?/deleteLink', { method: 'POST', body: formData });
+    links = links.filter((l) => l.id !== link.id);
+  }
+
   // Create epic form submission
   async function handleCreateSubmit(event: Event) {
     event.preventDefault();
@@ -458,8 +498,10 @@
                   disabled={createLoading}
                   class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  <option value="backlog">Backlog</option>
                   <option value="active">Active</option>
-                  <option value="done">Done</option>
+                  <option value="on_hold">On Hold</option>
+                  <option value="completed">Completed</option>
                   <option value="canceled">Canceled</option>
                 </select>
               </div>
@@ -562,8 +604,10 @@
                   onchange={handleStatusChange}
                   class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  <option value="backlog">Backlog</option>
                   <option value="active">Active</option>
-                  <option value="done">Done</option>
+                  <option value="on_hold">On Hold</option>
+                  <option value="completed">Completed</option>
                   <option value="canceled">Canceled</option>
                 </select>
               </div>
@@ -622,6 +666,14 @@
               onUpload={handleAttachmentUpload}
               onDelete={handleAttachmentDelete}
             />
+          </section>
+
+          <!-- Links -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Links
+            </h3>
+            <LinkList {links} onAdd={handleLinkAdd} onDelete={handleLinkDelete} />
           </section>
 
           <!-- Progress -->

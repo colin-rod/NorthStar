@@ -15,7 +15,11 @@
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import TreeLine from './TreeLine.svelte';
   import DependencyChip from '$lib/components/DependencyChip.svelte';
+  import PriorityBadge from '$lib/components/PriorityBadge.svelte';
+  import Badge from '$lib/components/ui/badge/badge.svelte';
   import { isLastChild } from '$lib/utils/tree-grid-helpers';
+  import { getProjectColor } from '$lib/utils/project-colors';
+  import { getProjectIcon } from '$lib/utils/project-icons';
 
   interface Props {
     node: TreeNode;
@@ -74,6 +78,25 @@
 
   // Check if node is an issue type for dependency chip
   const isIssueNode = $derived(node.type === 'issue');
+  const isEpicNode = $derived(node.type === 'epic');
+
+  // Issue pills
+  const issueData = $derived(isIssueNode ? (node.data as Issue) : null);
+  const issuePriority = $derived(issueData?.priority ?? null);
+  const issueSp = $derived(issueData?.story_points ?? null);
+  const issueMilestone = $derived(issueData?.milestone ?? null);
+
+  // Epic pills
+  const epicData = $derived(isEpicNode ? (node.data as Epic) : null);
+  const epicPriority = $derived(epicData?.priority ?? null);
+  const epicMilestone = $derived(epicData?.milestone ?? null);
+
+  // Project icon/color badge
+  const isProjectNode = $derived(node.type === 'project');
+  const projectColor = $derived(
+    isProjectNode ? getProjectColor((node.data as Project).color) : null,
+  );
+  const ProjectIcon = $derived(isProjectNode ? getProjectIcon((node.data as Project).icon) : null);
 
   // Compute if this node is the last child
   const nodeIsLastChild = $derived(isLastChild(node, allNodes));
@@ -150,6 +173,15 @@
     <div class="w-7 flex-shrink-0"></div>
   {/if}
 
+  <!-- Project color+icon badge -->
+  {#if isProjectNode && projectColor && ProjectIcon}
+    <div class="h-6 w-6 rounded-md flex items-center justify-center shrink-0 {projectColor.bg}">
+      {#key (node.data as Project).icon}
+        <ProjectIcon size={13} class="text-white" />
+      {/key}
+    </div>
+  {/if}
+
   <!-- Title -->
   {#if isEditing}
     <input
@@ -173,7 +205,28 @@
       <span class="mx-1 text-muted-foreground">·</span>
       {title}
     </button>
+    {#if isEpicNode && (epicPriority !== null || epicMilestone)}
+      <span class="flex items-center gap-1 shrink-0 flex-wrap">
+        {#if epicPriority !== null}
+          <PriorityBadge priority={epicPriority} />
+        {/if}
+        {#if epicMilestone}
+          <Badge variant="outline" class="text-xs max-w-25 truncate">{epicMilestone.name}</Badge>
+        {/if}
+      </span>
+    {/if}
     {#if isIssueNode}
+      <span class="flex items-center gap-1 shrink-0 flex-wrap">
+        {#if issuePriority !== null}
+          <PriorityBadge priority={issuePriority} />
+        {/if}
+        {#if issueSp !== null}
+          <Badge variant="secondary" class="text-xs tabular-nums">{issueSp} pts</Badge>
+        {/if}
+        {#if issueMilestone}
+          <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
+        {/if}
+      </span>
       <DependencyChip issue={node.data as Issue} />
     {/if}
   {:else}
@@ -182,7 +235,28 @@
       <span class="mx-1 text-muted-foreground">·</span>
       {title}
     </span>
+    {#if isEpicNode && (epicPriority !== null || epicMilestone)}
+      <span class="flex items-center gap-1 shrink-0 flex-wrap">
+        {#if epicPriority !== null}
+          <PriorityBadge priority={epicPriority} />
+        {/if}
+        {#if epicMilestone}
+          <Badge variant="outline" class="text-xs max-w-25 truncate">{epicMilestone.name}</Badge>
+        {/if}
+      </span>
+    {/if}
     {#if isIssueNode}
+      <span class="flex items-center gap-1 shrink-0 flex-wrap">
+        {#if issuePriority !== null}
+          <PriorityBadge priority={issuePriority} />
+        {/if}
+        {#if issueSp !== null}
+          <Badge variant="secondary" class="text-xs tabular-nums">{issueSp} pts</Badge>
+        {/if}
+        {#if issueMilestone}
+          <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
+        {/if}
+      </span>
       <DependencyChip issue={node.data as Issue} />
     {/if}
   {/if}

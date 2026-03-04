@@ -1,11 +1,12 @@
 <script lang="ts">
-  import type { Project, Epic, Attachment, ProjectStatus } from '$lib/types';
+  import type { Project, Epic, Attachment, Link, ProjectStatus } from '$lib/types';
   import ProjectIconPicker from '$lib/components/ProjectIconPicker.svelte';
   import type { ProjectColor } from '$lib/utils/project-colors';
   import type { ProjectIconKey } from '$lib/utils/project-icons';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { computeIssueCounts, computeProgress } from '$lib/utils/issue-counts';
+  import { getEpicStatusVariant, formatStatus } from '$lib/utils/design-tokens';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
@@ -16,6 +17,7 @@
   import { deserialize } from '$app/forms';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import LinkList from '$lib/components/LinkList.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import IssueCountsBadges from '$lib/components/IssueCountsBadges.svelte';
   import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
@@ -59,6 +61,7 @@
   let localDescription = $state<string | null>(null);
   let localStatus = $state<ProjectStatus>('active');
   let attachments = $state<Attachment[]>([]);
+  let links = $state<Link[]>([]);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
   let lastPersistedDescriptionNormalized = $state('');
@@ -91,7 +94,7 @@
       lastPersistedDescriptionNormalized = normalizeDescription(effectiveProject.description);
       saveState = 'idle';
 
-      // Load attachments for this project
+      // Load attachments and links for this project
       supabase
         .from('attachments')
         .select('*')
@@ -100,6 +103,15 @@
         .order('created_at', { ascending: true })
         .then(({ data }) => {
           attachments = data ?? [];
+        });
+      supabase
+        .from('links')
+        .select('*')
+        .eq('entity_type', 'project')
+        .eq('entity_id', effectiveProject.id)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          links = data ?? [];
         });
     }
   });
@@ -284,6 +296,27 @@
     attachments = attachments.filter((a) => a.id !== attachment.id);
   }
 
+  async function handleLinkAdd(url: string, label: string) {
+    if (!effectiveProject) return;
+    const formData = new FormData();
+    formData.append('entity_type', 'project');
+    formData.append('entity_id', effectiveProject.id);
+    formData.append('url', url);
+    formData.append('label', label);
+    const res = await fetch('?/createLink', { method: 'POST', body: formData });
+    const result = deserialize(await res.text());
+    if (result.type === 'success') {
+      links = [...links, (result.data as any).link];
+    }
+  }
+
+  async function handleLinkDelete(link: Link) {
+    const formData = new FormData();
+    formData.append('id', link.id);
+    await fetch('?/deleteLink', { method: 'POST', body: formData });
+    links = links.filter((l) => l.id !== link.id);
+  }
+
   // Create project form submission
   async function handleCreateSubmit(event: Event) {
     event.preventDefault();
@@ -415,31 +448,28 @@
             {/if}
           </div>
 
-          <!-- Appearance -->
+          <!-- Name + Icon -->
           <section>
             <div class="flex items-center gap-3">
-              <label class="text-xs text-foreground-muted w-20 shrink-0">Appearance</label>
               <ProjectIconPicker
                 color={effectiveProject?.color ?? null}
                 icon={effectiveProject?.icon ?? null}
                 onColorChange={handleColorChange}
                 onIconChange={handleIconChange}
               />
+              <div class="flex flex-col gap-1 flex-1 min-w-0">
+                <label class="text-xs uppercase font-medium text-foreground-muted tracking-wide"
+                  >Name</label
+                >
+                <Input
+                  value={localName}
+                  oninput={handleNameInput}
+                  onblur={handleNameBlur}
+                  placeholder="Project name"
+                  class="text-body"
+                />
+              </div>
             </div>
-          </section>
-
-          <!-- Name -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Name
-            </h3>
-            <Input
-              value={localName}
-              oninput={handleNameInput}
-              onblur={handleNameBlur}
-              placeholder="Project name"
-              class="text-body"
-            />
           </section>
 
           <!-- Status -->
@@ -454,8 +484,11 @@
                 onchange={handleStatusChange}
                 class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
+                <option value="backlog">Backlog</option>
+                <option value="planned">Planned</option>
                 <option value="active">Active</option>
-                <option value="done">Done</option>
+                <option value="on_hold">On Hold</option>
+                <option value="completed">Completed</option>
                 <option value="canceled">Canceled</option>
               </select>
             </div>
@@ -486,6 +519,14 @@
             />
           </section>
 
+          <!-- Links -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Links
+            </h3>
+            <LinkList {links} onAdd={handleLinkAdd} onDelete={handleLinkDelete} />
+          </section>
+
           <!-- Stats -->
           {#if metrics}
             <section>
@@ -507,6 +548,28 @@
                   <span class="text-section-header">{metrics.totalStoryPoints}</span>
                   <span class="text-foreground-secondary">Total pts</span>
                 </div>
+              </div>
+            </section>
+          {/if}
+
+          <!-- Epics -->
+          {#if epics.length > 0}
+            <section>
+              <h3 class="section-header">Epics</h3>
+              <div class="space-y-1">
+                {#each epics as epic}
+                  <button
+                    onclick={() => onEpicClick?.(epic)}
+                    class="w-full flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted transition-colors text-left"
+                  >
+                    <span class="truncate {epic.is_default ? 'text-foreground-secondary' : ''}"
+                      >{epic.name}</span
+                    >
+                    <Badge variant={getEpicStatusVariant(epic.status)} class="shrink-0 text-xs">
+                      {formatStatus(epic.status)}
+                    </Badge>
+                  </button>
+                {/each}
               </div>
             </section>
           {/if}

@@ -246,3 +246,13 @@ export interface Attachment {
   storage_path: string;
   created_at: string;
 }
+
+export interface Link {
+  id: string;
+  user_id: string;
+  entity_type: 'project' | 'epic' | 'issue';
+  entity_id: string;
+  url: string;
+  label: string;
+  created_at: string;
+}
