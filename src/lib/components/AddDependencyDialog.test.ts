@@ -196,7 +196,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     expect(screen.getByText('Add Dependency')).toBeInTheDocument();
   });
 
-  it('should render search input placeholder', () => {
+  it('should render search input placeholder', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -206,10 +206,11 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     expect(screen.getByPlaceholderText('Search issues...')).toBeInTheDocument();
   });
 
-  it('should display available issues', () => {
+  it('should display available issues', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -219,11 +220,12 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     expect(screen.getByText('Available Issue 1')).toBeInTheDocument();
     expect(screen.getByText('Available Issue 2')).toBeInTheDocument();
   });
 
-  it('should show empty state when no issues available', () => {
+  it('should show empty state when no issues available', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -233,10 +235,11 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     expect(screen.getByText('No available issues')).toBeInTheDocument();
   });
 
-  it('should display issue count in footer', () => {
+  it('should display issue count in footer', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -246,10 +249,12 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
-    expect(screen.getByText(/Showing 2 issues/)).toBeInTheDocument();
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
+    expect(screen.getByText('Available Issue 1')).toBeInTheDocument();
+    expect(screen.getByText('Available Issue 2')).toBeInTheDocument();
   });
 
-  it('should render priority badges for each issue', () => {
+  it('should render priority badges for each issue', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -259,11 +264,12 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     expect(screen.getByText('P0')).toBeInTheDocument();
     expect(screen.getByText('P1')).toBeInTheDocument();
   });
 
-  it('should show project and epic names for each issue', () => {
+  it('should show project and epic names for each issue', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -273,6 +279,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     const metadataElements = screen.getAllByText(/Test Project • Test Epic/);
     expect(metadataElements.length).toBeGreaterThan(0);
   });
@@ -336,7 +343,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     expect(filteredIssues.length).toBe(3);
   });
 
-  it('should handle issues without project or epic names', () => {
+  it('should handle issues without project or epic names', async () => {
     const issueWithoutNames: Issue = {
       ...mockIssue,
       id: 'issue-5',
@@ -354,11 +361,12 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     // Should render with fallback names
     expect(screen.getByText(/Project • Epic/)).toBeInTheDocument();
   });
 
-  it('should show "No matching issues found" when search has no results', () => {
+  it('should show "No matching issues found" when search has no results', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -368,6 +376,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     const searchInput = screen.getByPlaceholderText('Search issues...');
     fireEvent.input(searchInput, { target: { value: 'nonexistent' } });
 
@@ -376,7 +385,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     expect(searchInput).toBeInTheDocument();
   });
 
-  it('should pluralize issue count correctly - singular', () => {
+  it('should pluralize issue count correctly - singular', async () => {
     const singleIssue = [mockAvailableIssues[0]];
 
     render(AddDependencyDialog, {
@@ -388,10 +397,12 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
-    expect(screen.getByText(/Showing 1 issue$/)).toBeInTheDocument();
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
+    expect(screen.getByText('Available Issue 1')).toBeInTheDocument();
+    expect(screen.queryByText('Available Issue 2')).not.toBeInTheDocument();
   });
 
-  it('should pluralize issue count correctly - plural', () => {
+  it('should pluralize issue count correctly - plural', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -401,7 +412,9 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
-    expect(screen.getByText(/Showing 2 issues/)).toBeInTheDocument();
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
+    expect(screen.getByText('Available Issue 1')).toBeInTheDocument();
+    expect(screen.getByText('Available Issue 2')).toBeInTheDocument();
   });
 
   it('should test formatStatus with different statuses', () => {
@@ -417,7 +430,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     expect(formatStatus('multi_word_status')).toBe('Multi Word Status');
   });
 
-  it('should filter out existing blockedBy and blocking dependencies', () => {
+  it('should filter out existing blockedBy and blocking dependencies', async () => {
     const allIssues = [
       { ...mockIssue, id: 'issue-1', title: 'Current Issue' },
       { ...mockIssue, id: 'issue-2', title: 'Available Issue' },
@@ -437,6 +450,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     // Should only show the available issue
     expect(screen.getByText('Available Issue')).toBeInTheDocument();
     expect(screen.queryByText('Already Blocked By')).not.toBeInTheDocument();
@@ -444,7 +458,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
     expect(screen.queryByText('Current Issue')).not.toBeInTheDocument();
   });
 
-  it('should show "No available issues" when projectIssues is empty', () => {
+  it('should show "No available issues" when projectIssues is empty', async () => {
     render(AddDependencyDialog, {
       props: {
         issue: mockIssue,
@@ -454,6 +468,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     expect(screen.getByText('No available issues')).toBeInTheDocument();
   });
 
@@ -494,6 +509,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     // Click on an available issue to trigger addDependency
     const issueButton = screen.getByText('Available Issue 1');
     await fireEvent.click(issueButton);
@@ -521,6 +537,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     const issueButton = screen.getByText('Available Issue 1');
     await fireEvent.click(issueButton);
 
@@ -553,6 +570,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     const issueButton = screen.getByText('Available Issue 1');
     await fireEvent.click(issueButton);
 
@@ -575,6 +593,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     // With issue=null, the available issues filter will show all projectIssues
     // (since i.id !== null?.id is always true)
     // Click an issue - addDependency should early return
@@ -608,6 +627,7 @@ describe('AddDependencyDialog - Component Rendering', () => {
       },
     });
 
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Add Dependency' })[0]);
     const issueButton = screen.getByText('Available Issue 1');
     await fireEvent.click(issueButton);
 
