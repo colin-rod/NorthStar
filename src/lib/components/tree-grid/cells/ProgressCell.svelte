@@ -21,7 +21,7 @@
   const progress = $derived(node.progress);
 </script>
 
-{#if progress && progress.total > 0}
+{#if progress}
   <div class="flex items-center gap-2">
     <!-- Progress Bar -->
     <div class="flex-1 h-1 bg-muted rounded-full overflow-hidden">
@@ -36,9 +36,6 @@
       {progress.percentage}%
     </span>
   </div>
-{:else if progress}
-  <!-- No total points but we have progress object -->
-  <span class="text-muted-foreground text-metadata">0%</span>
 {:else}
   <!-- Sub-issue or no progress -->
   <span></span>

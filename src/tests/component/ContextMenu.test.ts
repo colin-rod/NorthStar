@@ -20,6 +20,8 @@ function makeProject(overrides: Partial<Project> = {}): Project {
     description: null,
     created_at: new Date().toISOString(),
     archived_at: null,
+    color: null,
+    icon: null,
     status: 'active',
     ...overrides,
   };
@@ -46,7 +48,6 @@ function makeIssue(overrides: Partial<Issue> = {}): Issue {
     project_id: 'proj-1',
     epic_id: 'epic-1',
     number: 1,
-    parent_issue_id: null,
     milestone_id: null,
     title: 'Test Issue',
     description: null,
@@ -59,7 +60,15 @@ function makeIssue(overrides: Partial<Issue> = {}): Issue {
   };
 }
 
-const emptyCounts = { ready: 0, blocked: 0, doing: 0, inReview: 0, done: 0, canceled: 0 };
+const emptyCounts = {
+  ready: 0,
+  backlog: 0,
+  blocked: 0,
+  in_progress: 0,
+  inReview: 0,
+  done: 0,
+  canceled: 0,
+};
 const emptyMetrics = { totalIssues: 0, activeStoryPoints: 0, totalStoryPoints: 0 };
 
 function makeProjectNode(overrides: Partial<TreeNode> = {}): TreeNode {
@@ -102,22 +111,6 @@ function makeIssueNode(overrides: Partial<TreeNode> = {}): TreeNode {
     parentId: 'epic-1',
     hasChildren: false,
     data: makeIssue(),
-    counts: emptyCounts,
-    metrics: emptyMetrics,
-    totalPoints: null,
-    progress: null,
-    ...overrides,
-  };
-}
-
-function makeSubIssueNode(overrides: Partial<TreeNode> = {}): TreeNode {
-  return {
-    id: 'sub-1',
-    type: 'sub-issue',
-    level: 3,
-    parentId: 'issue-1',
-    hasChildren: false,
-    data: makeIssue({ id: 'sub-1', parent_issue_id: 'issue-1' }),
     counts: emptyCounts,
     metrics: emptyMetrics,
     totalPoints: null,
@@ -276,11 +269,6 @@ describe('ContextMenu — issue node', () => {
     expect(screen.getByText('Story Points')).toBeTruthy();
   });
 
-  it('shows Add Sub-issue for issue', () => {
-    renderMenu(makeIssueNode());
-    expect(screen.getByText('Add Sub-issue')).toBeTruthy();
-  });
-
   it('shows Delete for issue', () => {
     renderMenu(makeIssueNode());
     expect(screen.getByText('Delete')).toBeTruthy();
@@ -293,50 +281,6 @@ describe('ContextMenu — issue node', () => {
 
   it('does NOT show Archive for issue', () => {
     renderMenu(makeIssueNode());
-    expect(screen.queryByText('Archive')).toBeNull();
-  });
-
-  it('calls onAddChild when Add Sub-issue is clicked', async () => {
-    const onAddChild = vi.fn();
-    renderMenu(makeIssueNode(), { onAddChild });
-    await fireEvent.click(screen.getByText('Add Sub-issue'));
-    expect(onAddChild).toHaveBeenCalledOnce();
-  });
-});
-
-describe('ContextMenu — sub-issue node', () => {
-  it('shows Status submenu trigger for sub-issue', () => {
-    renderMenu(makeSubIssueNode());
-    expect(screen.getByText('Status')).toBeTruthy();
-  });
-
-  it('shows Priority submenu trigger for sub-issue', () => {
-    renderMenu(makeSubIssueNode());
-    expect(screen.getByText('Priority')).toBeTruthy();
-  });
-
-  it('shows Story Points submenu trigger for sub-issue', () => {
-    renderMenu(makeSubIssueNode());
-    expect(screen.getByText('Story Points')).toBeTruthy();
-  });
-
-  it('shows Delete for sub-issue', () => {
-    renderMenu(makeSubIssueNode());
-    expect(screen.getByText('Delete')).toBeTruthy();
-  });
-
-  it('does NOT show Add Sub-issue for sub-issue', () => {
-    renderMenu(makeSubIssueNode());
-    expect(screen.queryByText('Add Sub-issue')).toBeNull();
-  });
-
-  it('does NOT show Rename for sub-issue', () => {
-    renderMenu(makeSubIssueNode());
-    expect(screen.queryByText('Rename')).toBeNull();
-  });
-
-  it('does NOT show Archive for sub-issue', () => {
-    renderMenu(makeSubIssueNode());
     expect(screen.queryByText('Archive')).toBeNull();
   });
 });

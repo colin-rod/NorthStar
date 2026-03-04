@@ -21,8 +21,9 @@ describe('EpicCard', () => {
 
   const mockCounts: IssueCounts = {
     ready: 3,
+    backlog: 0,
     blocked: 1,
-    doing: 2,
+    in_progress: 2,
     inReview: 1,
     done: 5,
     canceled: 0,
@@ -125,7 +126,7 @@ describe('EpicCard', () => {
       // Check for count labels instead of just numbers to avoid ambiguity
       expect(screen.getByText('Ready')).toBeTruthy();
       expect(screen.getByText('Blocked')).toBeTruthy();
-      expect(screen.getByText('Doing')).toBeTruthy();
+      expect(screen.getByText('In Progress')).toBeTruthy();
       expect(screen.getByText('In Review')).toBeTruthy();
       expect(screen.getByText('Done')).toBeTruthy();
       expect(screen.getByText('Canceled')).toBeTruthy();
@@ -164,20 +165,20 @@ describe('EpicCard', () => {
   });
 
   describe('Status variants', () => {
-    it('should show done status variant', () => {
-      const doneEpic: Epic = {
+    it('should show completed status variant', () => {
+      const completedEpic: Epic = {
         ...mockEpic,
-        status: 'done',
+        status: 'completed',
       };
 
       render(EpicCard, {
         props: {
-          epic: doneEpic,
+          epic: completedEpic,
           counts: mockCounts,
         },
       });
 
-      expect(screen.getByText('done')).toBeTruthy();
+      expect(screen.getByText('completed')).toBeTruthy();
     });
 
     it('should show canceled status variant', () => {
@@ -236,8 +237,9 @@ describe('EpicCard', () => {
       const onToggle = () => {};
       const emptyCounts: IssueCounts = {
         ready: 0,
+        backlog: 0,
         blocked: 0,
-        doing: 0,
+        in_progress: 0,
         inReview: 0,
         done: 0,
         canceled: 0,
@@ -258,8 +260,9 @@ describe('EpicCard', () => {
     it('should not show progress bar when there are no issues (navigation mode)', () => {
       const emptyCounts: IssueCounts = {
         ready: 0,
+        backlog: 0,
         blocked: 0,
-        doing: 0,
+        in_progress: 0,
         inReview: 0,
         done: 0,
         canceled: 0,

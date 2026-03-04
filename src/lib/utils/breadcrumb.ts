@@ -6,7 +6,7 @@
 
 import type { Project, Epic, Issue } from '$lib/types';
 import type { TreeNode } from '$lib/types/tree-grid';
-import { isProject, isEpic, isIssue, isSubIssue } from '$lib/types/tree-grid';
+import { isProject, isEpic, isIssue } from '$lib/types/tree-grid';
 
 /**
  * Builds a breadcrumb string from the expanded node
@@ -61,7 +61,7 @@ function formatNodeForBreadcrumb(node: TreeNode): string {
     const epic = node.data as Epic;
     prefix = `E-${epic.number}`;
     name = epic.name;
-  } else if (isIssue(node) || isSubIssue(node)) {
+  } else if (isIssue(node)) {
     const issue = node.data as Issue;
     prefix = `I-${issue.number}`;
     name = issue.title;

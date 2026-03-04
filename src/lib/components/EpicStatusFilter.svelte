@@ -16,8 +16,10 @@
   let open = $state(false);
 
   const statusOptions: { value: EpicStatus; label: string }[] = [
+    { value: 'backlog', label: 'Backlog' },
     { value: 'active', label: 'Active' },
-    { value: 'done', label: 'Done' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'completed', label: 'Completed' },
     { value: 'canceled', label: 'Canceled' },
   ];
 

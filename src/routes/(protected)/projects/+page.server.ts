@@ -2,7 +2,7 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
-import type { Project } from '$lib/types';
+import type { Project, Issue } from '$lib/types';
 import { filterTree } from '$lib/utils/filter-tree';
 import { computeIssueCounts } from '$lib/utils/issue-counts';
 import { computeProjectMetrics } from '$lib/utils/project-helpers';
@@ -32,58 +32,75 @@ export const load: PageServerLoad = async ({ locals: { supabase, session }, url 
     };
   }
 
-  // For each project, load epics with issues and dependencies
-  const projectsWithData = await Promise.all(
-    (projects || []).map(async (project) => {
-      // Load epics with nested issues and milestone
-      const { data: epics } = await supabase
-        .from('epics')
-        .select(
-          `
-          *,
-          milestone:milestones(*),
-          issues(
-            *,
-            dependencies!dependencies_issue_id_fkey(
-              depends_on_issue_id,
-              depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*)
-            )
-          )
-        `,
+  // Batch load all epics and issues in 2 queries instead of N+1
+  const projectIds = (projects || []).map((p) => p.id);
+
+  const [{ data: allEpics }, { data: allIssues }] = await Promise.all([
+    supabase
+      .from('epics')
+      .select(
+        `
+        id, project_id, number, name, description, status, priority, sort_order, is_default,
+        milestone:milestones(id, name, due_date)
+      `,
+      )
+      .in('project_id', projectIds)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('issues')
+      .select(
+        `
+        id, project_id, epic_id, number, title, description, status,
+        priority, story_points, sort_order, milestone_id, created_at,
+        dependencies!dependencies_issue_id_fkey(
+          issue_id,
+          depends_on_issue_id,
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status)
         )
-        .eq('project_id', project.id)
-        .order('sort_order', { ascending: true });
+      `,
+      )
+      .in('project_id', projectIds)
+      .order('sort_order', { ascending: true }),
+  ]);
 
-      // Compute counts for each epic
-      const epicsWithCounts = (epics || []).map((epic) => ({
-        ...epic,
-        counts: computeIssueCounts(epic.issues || []),
-      }));
+  // Group epics and issues by their parent IDs
+  function groupByKey<T>(arr: T[], key: keyof T): Record<string, T[]> {
+    return (arr || []).reduce(
+      (acc, item) => {
+        const k = String(item[key]);
+        (acc[k] ??= []).push(item);
+        return acc;
+      },
+      {} as Record<string, T[]>,
+    );
+  }
 
-      // Flatten all issues for project
-      const allIssues = epicsWithCounts.flatMap((epic) =>
-        (epic.issues || []).map((issue: Record<string, unknown>) => ({
-          ...issue,
-          epic: { id: epic.id, name: epic.name, status: epic.status },
-          project: { id: project.id, name: project.name },
-        })),
-      );
+  const epicsByProjectId = groupByKey(allEpics || [], 'project_id');
+  const issuesByEpicId = groupByKey(allIssues || [], 'epic_id');
 
-      // Compute project-level counts
-      const projectCounts = computeIssueCounts(allIssues);
+  const projectsWithData = (projects || []).map((project) => {
+    const epics = (epicsByProjectId[project.id] || []).map((epic) => ({
+      ...epic,
+      issues: issuesByEpicId[epic.id] || [],
+      counts: computeIssueCounts((issuesByEpicId[epic.id] || []) as unknown as Issue[]),
+    }));
 
-      // Compute project metrics (story points and issue count)
-      const projectMetrics = computeProjectMetrics(allIssues);
+    const allProjectIssues = epics.flatMap((epic) =>
+      (issuesByEpicId[epic.id] || []).map((issue) => ({
+        ...issue,
+        epic: { id: epic.id, name: epic.name, status: epic.status },
+        project: { id: project.id, name: project.name },
+      })),
+    );
 
-      return {
-        ...project,
-        epics: epicsWithCounts,
-        issues: allIssues,
-        counts: projectCounts,
-        metrics: projectMetrics,
-      };
-    }),
-  );
+    return {
+      ...project,
+      epics,
+      issues: allProjectIssues,
+      counts: computeIssueCounts(allProjectIssues as unknown as Issue[]),
+      metrics: computeProjectMetrics(allProjectIssues as unknown as Issue[]),
+    };
+  });
 
   // Apply server-side filters
   const filteredProjects = filterTree(projectsWithData as Project[], {
@@ -181,10 +198,38 @@ export const actions: Actions = {
     const status = formData.get('status');
     if (status !== null) {
       const s = status.toString();
-      if (!['active', 'done', 'canceled'].includes(s)) {
+      if (!['backlog', 'planned', 'active', 'on_hold', 'completed', 'canceled'].includes(s)) {
         return fail(400, { error: 'Invalid status value' });
       }
       updates.status = s;
+    }
+
+    // Color
+    const color = formData.get('color');
+    if (color !== null) {
+      const validColors = [
+        'gray',
+        'red',
+        'orange',
+        'amber',
+        'green',
+        'teal',
+        'blue',
+        'violet',
+        'pink',
+        'rose',
+      ];
+      const c = color.toString();
+      if (!validColors.includes(c)) {
+        return fail(400, { error: 'Invalid color value' });
+      }
+      updates.color = c;
+    }
+
+    // Icon
+    const icon = formData.get('icon');
+    if (icon !== null) {
+      updates.icon = icon.toString();
     }
 
     if (Object.keys(updates).length === 0) {
@@ -249,7 +294,7 @@ export const actions: Actions = {
     if (!projectId) {
       return fail(400, { error: 'Project ID is required' });
     }
-    if (!['active', 'done', 'canceled'].includes(status)) {
+    if (!['backlog', 'active', 'on_hold', 'completed', 'canceled'].includes(status)) {
       return fail(400, { error: 'Invalid status' });
     }
 
@@ -321,7 +366,7 @@ export const actions: Actions = {
       updates.name = name;
     }
     if (status !== undefined) {
-      if (!['active', 'done', 'canceled'].includes(status)) {
+      if (!['backlog', 'active', 'on_hold', 'completed', 'canceled'].includes(status)) {
         return fail(400, { error: 'Invalid status' });
       }
       updates.status = status;
@@ -387,7 +432,6 @@ export const actions: Actions = {
       .from('issues')
       .select('sort_order')
       .eq('epic_id', epicId)
-      .is('parent_issue_id', null)
       .order('sort_order', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -414,62 +458,6 @@ export const actions: Actions = {
     }
 
     return { success: true, action: 'createIssue', issue: data };
-  },
-
-  createSubIssue: async ({ request, locals: { supabase, session } }) => {
-    if (!session) return fail(401, { error: 'Unauthorized' });
-
-    const formData = await request.formData();
-    const title = formData.get('title')?.toString().trim();
-    const parentIssueId = formData.get('parentIssueId')?.toString();
-    const epicId = formData.get('epicId')?.toString();
-    const projectId = formData.get('projectId')?.toString();
-
-    if (!title || title.length === 0) {
-      return fail(400, { error: 'Sub-issue title is required' });
-    }
-    if (!parentIssueId) {
-      return fail(400, { error: 'Parent issue ID is required' });
-    }
-    if (!epicId) {
-      return fail(400, { error: 'Epic ID is required' });
-    }
-    if (!projectId) {
-      return fail(400, { error: 'Project ID is required' });
-    }
-
-    // Get max sort_order for sub-issues of this parent
-    const { data: maxOrderSubIssue } = await supabase
-      .from('issues')
-      .select('sort_order')
-      .eq('parent_issue_id', parentIssueId)
-      .order('sort_order', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const nextSortOrder = (maxOrderSubIssue?.sort_order ?? -1) + 1;
-
-    // Insert sub-issue
-    const { data, error } = await supabase
-      .from('issues')
-      .insert({
-        title,
-        parent_issue_id: parentIssueId,
-        epic_id: epicId,
-        project_id: projectId,
-        status: 'todo',
-        priority: 3, // Default P3
-        sort_order: nextSortOrder,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Create sub-issue error:', error);
-      return fail(500, { error: 'Failed to create sub-issue' });
-    }
-
-    return { success: true, action: 'createSubIssue', subIssue: data };
   },
 
   updateIssue: async ({ request, locals: { supabase, session } }) => {
@@ -501,7 +489,7 @@ export const actions: Actions = {
     // Status
     const status = formData.get('status')?.toString();
     if (status !== undefined) {
-      const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+      const validStatuses = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
       if (!validStatuses.includes(status)) {
         return fail(400, { error: 'Invalid status value' });
       }
@@ -539,22 +527,15 @@ export const actions: Actions = {
     // Epic ID
     const epicId = formData.get('epic_id')?.toString();
     if (epicId !== undefined) {
-      // Check if this is a sub-issue (has parent_issue_id)
+      // Fetch issue to verify project ownership
       const { data: issue } = await supabase
         .from('issues')
-        .select('parent_issue_id, project_id')
+        .select('project_id')
         .eq('id', id)
         .single();
 
       if (!issue) {
         return fail(404, { error: 'Issue not found' });
-      }
-
-      // Block epic changes for sub-issues
-      if (issue.parent_issue_id) {
-        return fail(400, {
-          error: 'Cannot change epic for sub-issues - they inherit from parent',
-        });
       }
 
       // Verify epic exists and belongs to same project as issue
@@ -634,7 +615,7 @@ export const actions: Actions = {
       table = 'projects';
     } else if (nodeType === 'epic') {
       table = 'epics';
-    } else if (nodeType === 'issue' || nodeType === 'sub-issue') {
+    } else if (nodeType === 'issue') {
       table = 'issues';
     } else {
       return fail(400, { error: 'Invalid node type' });
@@ -735,7 +716,6 @@ export const actions: Actions = {
       newSortOrder: number;
       newProjectId?: string;
       newEpicId?: string;
-      newParentIssueId?: string;
     } = JSON.parse(updateJson);
 
     // Determine table and build update object
@@ -748,17 +728,11 @@ export const actions: Actions = {
       // Epic reparent (moving to different project)
       table = 'epics';
       updates.project_id = update.newProjectId;
-    } else if (update.newEpicId !== undefined && update.newParentIssueId === undefined) {
+    } else if (update.newEpicId !== undefined) {
       // Issue reparent (to different epic)
       table = 'issues';
       updates.epic_id = update.newEpicId;
       if (update.newProjectId) updates.project_id = update.newProjectId;
-    } else if (update.newParentIssueId !== undefined) {
-      // Sub-issue reparent (to different parent issue)
-      table = 'issues';
-      updates.parent_issue_id = update.newParentIssueId;
-      updates.epic_id = update.newEpicId;
-      updates.project_id = update.newProjectId;
     } else {
       return fail(400, { error: 'Invalid reparent update' });
     }

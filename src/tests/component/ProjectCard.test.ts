@@ -12,6 +12,8 @@ const baseProject: Project = {
   description: null,
   created_at: new Date().toISOString(),
   archived_at: null,
+  color: null,
+  icon: null,
   status: 'active',
 };
 

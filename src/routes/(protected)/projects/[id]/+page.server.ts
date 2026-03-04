@@ -33,7 +33,23 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         *,
         dependencies!dependencies_issue_id_fkey(
           depends_on_issue_id,
-          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*)
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status)
+        ),
+        blocked_by:dependencies!dependencies_issue_id_fkey(
+          depends_on_issue_id,
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(
+            id, title, status, priority, epic_id, project_id,
+            epic:epics(id, name),
+            project:projects(id, name)
+          )
+        ),
+        blocking:dependencies!dependencies_depends_on_issue_id_fkey(
+          issue_id,
+          issue:issues!dependencies_issue_id_fkey(
+            id, title, status, priority, epic_id, project_id,
+            epic:epics(id, name),
+            project:projects(id, name)
+          )
         )
       )
     `,
@@ -111,7 +127,7 @@ export const actions: Actions = {
     // Status
     const status = formData.get('status')?.toString();
     if (status !== undefined) {
-      const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+      const validStatuses = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
       if (!validStatuses.includes(status)) {
         return fail(400, { error: 'Invalid status value' });
       }
@@ -149,22 +165,15 @@ export const actions: Actions = {
     // Epic ID
     const epicId = formData.get('epic_id')?.toString();
     if (epicId !== undefined && epicId !== '') {
-      // Check if this is a sub-issue (has parent_issue_id)
+      // Fetch issue to verify project ownership
       const { data: issue } = await supabase
         .from('issues')
-        .select('parent_issue_id, project_id')
+        .select('project_id')
         .eq('id', id)
         .single();
 
       if (!issue) {
         return fail(404, { error: 'Issue not found' });
-      }
-
-      // Block epic changes for sub-issues
-      if (issue.parent_issue_id) {
-        return fail(400, {
-          error: 'Cannot change epic for sub-issues - they inherit from parent',
-        });
       }
 
       // Verify epic exists and belongs to same project as issue

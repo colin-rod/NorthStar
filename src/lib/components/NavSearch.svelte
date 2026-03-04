@@ -98,7 +98,7 @@
         bind:value={query}
         type="search"
         placeholder="Search issues, projects, epics..."
-        class="w-48 sm:w-64 bg-transparent border-b border-border-divider focus:border-primary outline-none text-body text-foreground placeholder:text-foreground-muted pb-0.5 transition-all"
+        class="w-36 sm:w-48 md:w-64 bg-transparent border-b border-border-divider focus:border-primary outline-none text-body text-foreground placeholder:text-foreground-muted pb-0.5 transition-all"
         aria-label="Search issues"
         autocomplete="off"
       />

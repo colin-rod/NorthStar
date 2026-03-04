@@ -8,9 +8,23 @@
 import type { Project, Epic, Issue, SortByColumn, SortDirection } from '$lib/types';
 
 // Status sort order constants
-const PROJECT_STATUS_ORDER = { active: 0, done: 1, canceled: 2 } as const;
-const EPIC_STATUS_ORDER = { active: 0, done: 1, canceled: 2 } as const;
-const ISSUE_STATUS_ORDER = { todo: 0, doing: 1, in_review: 2, done: 3, canceled: 4 } as const;
+const PROJECT_STATUS_ORDER = {
+  backlog: 0,
+  planned: 1,
+  active: 2,
+  on_hold: 3,
+  completed: 4,
+  canceled: 5,
+} as const;
+const EPIC_STATUS_ORDER = { backlog: 0, active: 1, on_hold: 2, completed: 3, canceled: 4 } as const;
+const ISSUE_STATUS_ORDER = {
+  backlog: 0,
+  todo: 1,
+  in_progress: 2,
+  in_review: 3,
+  done: 4,
+  canceled: 5,
+} as const;
 
 /**
  * Sort projects tree by the specified mode and direction
@@ -210,7 +224,7 @@ function getHighestPriorityFromEpic(epic: Epic): number | null {
 
 /**
  * Compare project status
- * Order: active > done > canceled
+ * Order: backlog > planned > active > on_hold > completed > canceled
  */
 function compareProjectStatus(a: Project, b: Project): number {
   return PROJECT_STATUS_ORDER[a.status] - PROJECT_STATUS_ORDER[b.status];
@@ -218,7 +232,7 @@ function compareProjectStatus(a: Project, b: Project): number {
 
 /**
  * Compare epic status
- * Order: active > done > canceled
+ * Order: backlog > active > on_hold > completed > canceled
  */
 function compareEpicStatus(a: Epic, b: Epic): number {
   return EPIC_STATUS_ORDER[a.status] - EPIC_STATUS_ORDER[b.status];
@@ -226,7 +240,7 @@ function compareEpicStatus(a: Epic, b: Epic): number {
 
 /**
  * Compare issue status
- * Order: todo > doing > in_review > done > canceled
+ * Order: backlog > todo > in_progress > in_review > done > canceled
  */
 function compareIssueStatus(a: Issue, b: Issue): number {
   return ISSUE_STATUS_ORDER[a.status] - ISSUE_STATUS_ORDER[b.status];

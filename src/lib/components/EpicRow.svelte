@@ -17,6 +17,7 @@
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import { computeProgress } from '$lib/utils/issue-counts';
   import Badge from '$lib/components/ui/badge/badge.svelte';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
 
@@ -91,7 +92,7 @@
             <span class="text-metadata text-foreground-secondary">Ready</span>
           </div>
           <div class="flex items-center gap-1.5">
-            <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
+            <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
             <span class="text-metadata text-foreground-secondary">Doing</span>
           </div>
           <div class="flex items-center gap-1.5">
@@ -106,16 +107,8 @@
 
         <!-- Progress Bar -->
         {#if progress.total > 0}
-          <div class="mt-3 flex items-center gap-2">
-            <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-              <div
-                class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                style="width: {progress.percentage}%"
-              ></div>
-            </div>
-            <span class="text-metadata text-foreground-secondary shrink-0">
-              {progress.percentage}%
-            </span>
+          <div class="mt-3">
+            <ProgressBar percentage={progress.percentage} ariaLabel="{epic.name} completion" />
           </div>
         {/if}
       </div>

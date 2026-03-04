@@ -56,8 +56,10 @@ describe('EpicStatusFilter', () => {
     const trigger = screen.getByText('Epic Status');
     await fireEvent.click(trigger);
 
+    expect(screen.getByText('Backlog')).toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
-    expect(screen.getByText('Done')).toBeInTheDocument();
+    expect(screen.getByText('On Hold')).toBeInTheDocument();
+    expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.getByText('Canceled')).toBeInTheDocument();
   });
 

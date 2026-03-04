@@ -14,7 +14,7 @@ import type { TreeNode } from '$lib/types/tree-grid';
  * - Cannot drag project (top-level only, no parent)
  * - Cannot drop on self
  * - Cannot drop on own descendant (would create cycle)
- * - Must respect hierarchy: Epic→Project, Issue→Epic, Sub-issue→Issue
+ * - Must respect hierarchy: Epic→Project, Issue→Epic
  */
 export function canReparent(
   sourceNode: TreeNode,
@@ -33,7 +33,6 @@ export function canReparent(
   // Rule 4: Hierarchy constraints
   if (sourceNode.type === 'epic' && targetNode.type === 'project') return true;
   if (sourceNode.type === 'issue' && targetNode.type === 'epic') return true;
-  if (sourceNode.type === 'sub-issue' && targetNode.type === 'issue') return true;
 
   return false;
 }

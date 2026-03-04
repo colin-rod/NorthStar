@@ -28,15 +28,27 @@
     return (node.data as Epic | Issue).status;
   });
 
-  const projectEpicStatusOptions = [
+  const projectStatusOptions = [
+    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
+    { value: 'planned', label: 'Planned', color: 'bg-status-todo' },
     { value: 'active', label: 'Active', color: 'bg-status-doing' },
-    { value: 'done', label: 'Done', color: 'bg-status-done' },
+    { value: 'on_hold', label: 'On Hold', color: 'bg-status-in-review' },
+    { value: 'completed', label: 'Completed', color: 'bg-status-done' },
+    { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
+  ];
+
+  const epicStatusOptions = [
+    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
+    { value: 'active', label: 'Active', color: 'bg-status-doing' },
+    { value: 'on_hold', label: 'On Hold', color: 'bg-status-in-review' },
+    { value: 'completed', label: 'Completed', color: 'bg-status-done' },
     { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
   ];
 
   const issueStatusOptions = [
+    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
     { value: 'todo', label: 'Todo', color: 'bg-status-todo' },
-    { value: 'doing', label: 'In Progress', color: 'bg-status-doing' },
+    { value: 'in_progress', label: 'In Progress', color: 'bg-status-doing' },
     { value: 'in_review', label: 'In Review', color: 'bg-status-in-review' },
     { value: 'done', label: 'Done', color: 'bg-status-done' },
     { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
@@ -44,7 +56,11 @@
   ];
 
   const statusOptions = $derived(
-    node.type === 'project' || node.type === 'epic' ? projectEpicStatusOptions : issueStatusOptions,
+    node.type === 'project'
+      ? projectStatusOptions
+      : node.type === 'epic'
+        ? epicStatusOptions
+        : issueStatusOptions,
   );
 
   const currentOption = $derived(statusOptions.find((o) => o.value === status));

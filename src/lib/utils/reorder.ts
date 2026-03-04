@@ -125,7 +125,6 @@ export interface ReparentUpdate {
   newSortOrder: number;
   newProjectId?: string;
   newEpicId?: string;
-  newParentIssueId?: string;
 }
 
 /**
@@ -133,7 +132,7 @@ export interface ReparentUpdate {
  *
  * Determines:
  * - New sort_order (appended to end of new parent's children)
- * - New project_id, epic_id, or parent_issue_id based on node type
+ * - New project_id or epic_id based on node type
  *
  * @param sourceNode - Node being moved
  * @param newParentNode - New parent node
@@ -173,15 +172,6 @@ export function calculateReparentUpdates(
     if (newEpic.project_id) {
       update.newProjectId = newEpic.project_id;
     }
-  }
-
-  // Sub-issues: Update parent_issue_id (inherit epic/project from new parent issue)
-  if (sourceNode.type === 'sub-issue') {
-    update.newParentIssueId = newParentNode.id;
-
-    const newParentIssue = newParentNode.data as Issue;
-    update.newEpicId = newParentIssue.epic_id;
-    update.newProjectId = newParentIssue.project_id;
   }
 
   return update;

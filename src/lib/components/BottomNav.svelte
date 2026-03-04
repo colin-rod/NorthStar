@@ -31,7 +31,7 @@
       aria-label="Home"
       aria-current={isHome ? 'page' : undefined}
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
         isHome ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
@@ -44,7 +44,7 @@
       aria-label="Projects"
       aria-current={isProjects ? 'page' : undefined}
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
         isProjects ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
@@ -56,7 +56,7 @@
       onclick={() => navSearchOpen.set(true)}
       aria-label="Search"
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
         $navSearchOpen ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >

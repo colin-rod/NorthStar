@@ -18,8 +18,11 @@
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { computeProgress } from '$lib/utils/issue-counts';
   import Badge from '$lib/components/ui/badge/badge.svelte';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import { getProjectColor } from '$lib/utils/project-colors';
+  import { getProjectIcon } from '$lib/utils/project-icons';
 
   interface Props {
     project: Project;
@@ -34,6 +37,8 @@
 
   // Compute progress percentage
   let progress = $derived(computeProgress(counts));
+  let projectColor = $derived(getProjectColor(project.color));
+  let ProjectIcon = $derived(getProjectIcon(project.icon));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -58,6 +63,13 @@
         <ChevronRight class="h-5 w-5 text-muted-foreground" />
       {/if}
     </button>
+
+    <!-- Project Color + Icon Badge -->
+    <div
+      class="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-1 {projectColor.bg}"
+    >
+      <ProjectIcon size={13} class="text-white" />
+    </div>
 
     <!-- Clickable Content Area -->
     <button onclick={onNavigate} class="flex-1 text-left min-w-0">
@@ -84,7 +96,7 @@
           <span class="text-metadata text-foreground-secondary">Ready</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
+          <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
           <span class="text-metadata text-foreground-secondary">Doing</span>
         </div>
         <div class="flex items-center gap-1.5">
@@ -95,16 +107,8 @@
 
       <!-- Progress Bar -->
       {#if progress.total > 0}
-        <div class="mt-3 flex items-center gap-2">
-          <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-            <div
-              class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-              style="width: {progress.percentage}%"
-            ></div>
-          </div>
-          <span class="text-metadata text-foreground-secondary shrink-0">
-            {progress.percentage}%
-          </span>
+        <div class="mt-3">
+          <ProgressBar percentage={progress.percentage} ariaLabel="{project.name} completion" />
         </div>
       {/if}
     </button>

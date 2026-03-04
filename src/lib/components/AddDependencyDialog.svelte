@@ -1,23 +1,23 @@
 <script lang="ts">
   import type { Issue } from '$lib/types';
-  import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
+  import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
+  import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { invalidateAll } from '$app/navigation';
   import { supabase } from '$lib/supabase';
+  import { getStatusBadgeVariant } from '$lib/utils/design-tokens';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import SearchX from '@lucide/svelte/icons/search-x';
   import Link from '@lucide/svelte/icons/link';
 
   // Props
   let {
-    open = $bindable(false),
     issue = $bindable<Issue | null>(null),
     projectIssues = [],
     blockedByIssues = [],
     blockingIssues = [],
   }: {
-    open: boolean;
     issue: Issue | null;
     projectIssues: Issue[];
     blockedByIssues: Issue[];
@@ -25,8 +25,10 @@
   } = $props();
 
   // Local state
+  let open = $state(false);
   let searchTerm = $state('');
   let loading = $state(false);
+  let adding = $state(false);
   let error = $state<string | null>(null);
 
   // Filter available issues (exclude self and existing dependencies)
@@ -53,41 +55,19 @@
     }
   });
 
-  // Helper to get status badge variant
-  function getStatusVariant(
-    status: string,
-  ):
-    | 'status-todo'
-    | 'status-doing'
-    | 'status-in-review'
-    | 'status-done'
-    | 'status-canceled'
-    | undefined {
-    const variantMap: Record<
-      string,
-      'status-todo' | 'status-doing' | 'status-in-review' | 'status-done' | 'status-canceled'
-    > = {
-      todo: 'status-todo',
-      doing: 'status-doing',
-      in_review: 'status-in-review',
-      done: 'status-done',
-      canceled: 'status-canceled',
-    };
-    return variantMap[status];
-  }
-
-  // Format status for display
-  function formatStatus(status: string): string {
-    return status
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
+  // Reset state when popover closes
+  $effect(() => {
+    if (!open) {
+      searchTerm = '';
+      error = null;
+    }
+  });
 
   // Add dependency handler
   async function addDependency(dependsOnIssueId: string) {
-    if (!issue) return;
+    if (!issue || adding) return;
 
+    adding = true;
     loading = true;
     error = null;
 
@@ -117,42 +97,41 @@
       // 4. Success: refresh and close
       await invalidateAll();
       open = false;
-      searchTerm = '';
     } catch (err) {
       error = 'Failed to add dependency';
       console.error('Add dependency error:', err);
     } finally {
       loading = false;
+      adding = false;
     }
   }
 </script>
 
-<Sheet bind:open>
-  <SheetContent side="bottom" class="max-h-[85vh] overflow-hidden flex flex-col">
-    <SheetHeader class="mb-4">
-      <SheetTitle class="font-accent text-page-title">Add Dependency</SheetTitle>
-    </SheetHeader>
-
+<Popover bind:open>
+  <PopoverTrigger>
+    <Button variant="outline" size="sm" class="w-full">Add Dependency</Button>
+  </PopoverTrigger>
+  <PopoverContent class="w-80 p-3" align="start">
     <!-- Error Banner -->
     {#if error}
-      <div class="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+      <div class="mb-3 p-2 rounded-md bg-destructive/10 text-destructive text-sm">
         {error}
       </div>
     {/if}
 
     <!-- Search Input -->
-    <div class="mb-4">
+    <div class="mb-3">
       <Input
         value={searchTerm}
         oninput={(e: Event) => (searchTerm = (e.target as HTMLInputElement).value)}
         placeholder="Search issues..."
         disabled={loading}
-        class="text-body"
+        class="text-body h-8"
       />
     </div>
 
     <!-- Results List -->
-    <div class="flex-1 overflow-y-auto space-y-2">
+    <div class="max-h-56 overflow-y-auto space-y-1">
       {#if filteredIssues.length === 0}
         {#if searchTerm}
           <EmptyState
@@ -165,7 +144,7 @@
           <EmptyState
             icon={Link}
             title="No available issues"
-            description="All other issues are already dependencies or there are none to add"
+            description="All other issues are already linked"
             variant="subtle"
           />
         {/if}
@@ -175,14 +154,14 @@
             type="button"
             onclick={() => addDependency(availableIssue.id)}
             disabled={loading}
-            class="w-full flex items-center gap-2 p-3 rounded-md bg-muted/50 hover:bg-muted text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full flex items-center gap-2 p-2 rounded-md hover:bg-muted text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Badge variant={getStatusVariant(availableIssue.status)} class="shrink-0">
+            <Badge variant={getStatusBadgeVariant(availableIssue.status)} class="shrink-0 text-xs">
               P{availableIssue.priority}
             </Badge>
             <div class="flex-1 min-w-0">
-              <p class="text-body truncate">{availableIssue.title}</p>
-              <p class="text-metadata text-foreground-muted truncate">
+              <p class="text-body text-sm truncate">{availableIssue.title}</p>
+              <p class="text-xs text-foreground-muted truncate">
                 {availableIssue.project?.name || 'Project'} • {availableIssue.epic?.name || 'Epic'}
               </p>
             </div>
@@ -190,12 +169,5 @@
         {/each}
       {/if}
     </div>
-
-    <!-- Footer -->
-    <div class="mt-4 pt-4 border-t border-border">
-      <p class="text-metadata text-foreground-muted text-center">
-        Showing {filteredIssues.length} issue{filteredIssues.length !== 1 ? 's' : ''}
-      </p>
-    </div>
-  </SheetContent>
-</Sheet>
+  </PopoverContent>
+</Popover>

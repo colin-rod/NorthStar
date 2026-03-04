@@ -41,7 +41,7 @@ export const blockedIssues: Readable<Issue[]> = derived(issues, ($issues) => {
  * Issues currently in progress
  */
 export const doingIssues: Readable<Issue[]> = derived(issues, ($issues) => {
-  return $issues.filter((issue) => issue.status === 'doing');
+  return $issues.filter((issue) => issue.status === 'in_progress');
 });
 
 /**

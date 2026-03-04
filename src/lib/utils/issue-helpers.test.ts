@@ -18,6 +18,7 @@ import {
   isValidStoryPoints,
   ALLOWED_STORY_POINTS,
   getAllowedStatusTransitions,
+  getStatusGroup,
 } from './issue-helpers';
 
 import type { Issue, Dependency, IssueStatus } from '$lib/types';
@@ -32,7 +33,6 @@ const createIssue = (
   number: parseInt(id, 36), // Convert id to a number
   project_id: 'project-1',
   epic_id: 'epic-1',
-  parent_issue_id: null,
   milestone_id: null,
   title: `Issue ${id}`,
   status,
@@ -68,8 +68,14 @@ describe('isBlocked', () => {
     expect(isBlocked(issue)).toBe(true);
   });
 
-  it('should return true when dependency is in doing status', () => {
-    const blockingIssue = createIssue('B', 'doing');
+  it('should return true when dependency is in backlog status', () => {
+    const blockingIssue = createIssue('B', 'backlog');
+    const issue = createIssue('A', 'todo', [createDependencyWithIssue(blockingIssue)]);
+    expect(isBlocked(issue)).toBe(true);
+  });
+
+  it('should return true when dependency is in in_progress status', () => {
+    const blockingIssue = createIssue('B', 'in_progress');
     const issue = createIssue('A', 'todo', [createDependencyWithIssue(blockingIssue)]);
     expect(isBlocked(issue)).toBe(true);
   });
@@ -104,7 +110,7 @@ describe('isBlocked', () => {
 
   it('should return true when at least one dependency is blocking', () => {
     const doneIssue = createIssue('B', 'done');
-    const blockingIssue = createIssue('C', 'doing');
+    const blockingIssue = createIssue('C', 'in_progress');
     const issue = createIssue('A', 'todo', [
       createDependencyWithIssue(doneIssue),
       createDependencyWithIssue(blockingIssue),
@@ -138,8 +144,13 @@ describe('isReady', () => {
     expect(isReady(issue)).toBe(true);
   });
 
-  it('should return false when status is doing', () => {
-    const issue = createIssue('A', 'doing', []);
+  it('should return false when status is backlog', () => {
+    const issue = createIssue('A', 'backlog', []);
+    expect(isReady(issue)).toBe(false);
+  });
+
+  it('should return false when status is in_progress', () => {
+    const issue = createIssue('A', 'in_progress', []);
     expect(isReady(issue)).toBe(false);
   });
 
@@ -159,7 +170,7 @@ describe('isReady', () => {
   });
 
   it('should return false when status is todo but blocked', () => {
-    const blockingIssue = createIssue('B', 'doing');
+    const blockingIssue = createIssue('B', 'in_progress');
     const issue = createIssue('A', 'todo', [createDependencyWithIssue(blockingIssue)]);
     expect(isReady(issue)).toBe(false);
   });
@@ -191,12 +202,12 @@ describe('getBlockingDependencies', () => {
 
   it('should return only blocking dependencies (not done/canceled)', () => {
     const todoIssue = createIssue('B', 'todo');
-    const doingIssue = createIssue('C', 'doing');
+    const inProgressIssue = createIssue('C', 'in_progress');
     const doneIssue = createIssue('D', 'done');
     const canceledIssue = createIssue('E', 'canceled');
     const issue = createIssue('A', 'todo', [
       createDependencyWithIssue(todoIssue),
-      createDependencyWithIssue(doingIssue),
+      createDependencyWithIssue(inProgressIssue),
       createDependencyWithIssue(doneIssue),
       createDependencyWithIssue(canceledIssue),
     ]);
@@ -226,7 +237,7 @@ describe('getBlockingDependencies', () => {
   });
 
   it('should filter out undefined dependency issues', () => {
-    const validIssue = createIssue('B', 'doing');
+    const validIssue = createIssue('B', 'in_progress');
     const dependencies: Dependency[] = [
       createDependencyWithIssue(validIssue),
       { issue_id: 'A', depends_on_issue_id: 'C', depends_on_issue: undefined },
@@ -252,12 +263,12 @@ describe('getSatisfiedDependencies', () => {
 
   it('should return only done and canceled dependencies', () => {
     const todoIssue = createIssue('B', 'todo');
-    const doingIssue = createIssue('C', 'doing');
+    const inProgressIssue = createIssue('C', 'in_progress');
     const doneIssue = createIssue('D', 'done');
     const canceledIssue = createIssue('E', 'canceled');
     const issue = createIssue('A', 'todo', [
       createDependencyWithIssue(todoIssue),
-      createDependencyWithIssue(doingIssue),
+      createDependencyWithIssue(inProgressIssue),
       createDependencyWithIssue(doneIssue),
       createDependencyWithIssue(canceledIssue),
     ]);
@@ -268,10 +279,10 @@ describe('getSatisfiedDependencies', () => {
 
   it('should return empty array when all dependencies are blocking', () => {
     const todoIssue = createIssue('B', 'todo');
-    const doingIssue = createIssue('C', 'doing');
+    const inProgressIssue = createIssue('C', 'in_progress');
     const issue = createIssue('A', 'todo', [
       createDependencyWithIssue(todoIssue),
-      createDependencyWithIssue(doingIssue),
+      createDependencyWithIssue(inProgressIssue),
     ]);
     expect(getSatisfiedDependencies(issue)).toEqual([]);
   });
@@ -311,8 +322,8 @@ describe('isTerminal', () => {
     expect(isTerminal(issue)).toBe(false);
   });
 
-  it('should return false for doing status', () => {
-    const issue = createIssue('A', 'doing');
+  it('should return false for in_progress status', () => {
+    const issue = createIssue('A', 'in_progress');
     expect(isTerminal(issue)).toBe(false);
   });
 
@@ -320,15 +331,24 @@ describe('isTerminal', () => {
     const issue = createIssue('A', 'in_review');
     expect(isTerminal(issue)).toBe(false);
   });
+
+  it('should return false for backlog status', () => {
+    const issue = createIssue('A', 'backlog');
+    expect(isTerminal(issue)).toBe(false);
+  });
 });
 
 describe('getStatusColor', () => {
+  it('should return secondary for backlog', () => {
+    expect(getStatusColor('backlog')).toBe('secondary');
+  });
+
   it('should return secondary for todo', () => {
     expect(getStatusColor('todo')).toBe('secondary');
   });
 
-  it('should return default for doing', () => {
-    expect(getStatusColor('doing')).toBe('default');
+  it('should return default for in_progress', () => {
+    expect(getStatusColor('in_progress')).toBe('default');
   });
 
   it('should return outline for in_review', () => {
@@ -406,19 +426,24 @@ describe('ALLOWED_STORY_POINTS', () => {
 });
 
 describe('getAllowedStatusTransitions', () => {
-  it('should return correct transitions from todo', () => {
-    const transitions = getAllowedStatusTransitions('todo');
-    expect(transitions).toEqual(['doing', 'canceled']);
+  it('should return correct transitions from backlog', () => {
+    const transitions = getAllowedStatusTransitions('backlog');
+    expect(transitions).toEqual(['todo', 'canceled']);
   });
 
-  it('should return correct transitions from doing', () => {
-    const transitions = getAllowedStatusTransitions('doing');
+  it('should return correct transitions from todo', () => {
+    const transitions = getAllowedStatusTransitions('todo');
+    expect(transitions).toEqual(['in_progress', 'backlog', 'canceled']);
+  });
+
+  it('should return correct transitions from in_progress', () => {
+    const transitions = getAllowedStatusTransitions('in_progress');
     expect(transitions).toEqual(['in_review', 'todo', 'canceled']);
   });
 
   it('should return correct transitions from in_review', () => {
     const transitions = getAllowedStatusTransitions('in_review');
-    expect(transitions).toEqual(['done', 'doing', 'canceled']);
+    expect(transitions).toEqual(['done', 'in_progress', 'canceled']);
   });
 
   it('should return empty array from done (terminal state)', () => {
@@ -428,11 +453,43 @@ describe('getAllowedStatusTransitions', () => {
 
   it('should return correct transitions from canceled (can reopen)', () => {
     const transitions = getAllowedStatusTransitions('canceled');
-    expect(transitions).toEqual(['todo']);
+    expect(transitions).toEqual(['backlog']);
   });
 
   it('should return empty array for unknown status', () => {
     const transitions = getAllowedStatusTransitions('unknown');
     expect(transitions).toEqual([]);
+  });
+});
+
+describe('getStatusGroup', () => {
+  it('should map project statuses correctly', () => {
+    expect(getStatusGroup('project', 'backlog')).toBe('backlog');
+    expect(getStatusGroup('project', 'planned')).toBe('planned');
+    expect(getStatusGroup('project', 'active')).toBe('active');
+    expect(getStatusGroup('project', 'on_hold')).toBe('paused');
+    expect(getStatusGroup('project', 'completed')).toBe('completed');
+    expect(getStatusGroup('project', 'canceled')).toBe('canceled');
+  });
+
+  it('should map epic statuses correctly', () => {
+    expect(getStatusGroup('epic', 'backlog')).toBe('backlog');
+    expect(getStatusGroup('epic', 'active')).toBe('active');
+    expect(getStatusGroup('epic', 'on_hold')).toBe('paused');
+    expect(getStatusGroup('epic', 'completed')).toBe('completed');
+    expect(getStatusGroup('epic', 'canceled')).toBe('canceled');
+  });
+
+  it('should map issue statuses correctly', () => {
+    expect(getStatusGroup('issue', 'backlog')).toBe('backlog');
+    expect(getStatusGroup('issue', 'todo')).toBe('planned');
+    expect(getStatusGroup('issue', 'in_progress')).toBe('active');
+    expect(getStatusGroup('issue', 'in_review')).toBe('active');
+    expect(getStatusGroup('issue', 'done')).toBe('completed');
+    expect(getStatusGroup('issue', 'canceled')).toBe('canceled');
+  });
+
+  it('should return backlog for unknown status', () => {
+    expect(getStatusGroup('issue', 'unknown')).toBe('backlog');
   });
 });

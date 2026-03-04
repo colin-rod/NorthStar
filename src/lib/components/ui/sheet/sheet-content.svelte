@@ -74,7 +74,7 @@
     {@render children?.()}
     <!-- North Design: Subtle close button -->
     <SheetPrimitive.Close
-      class="absolute end-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none text-foreground-muted hover:text-foreground"
+      class="absolute end-3 top-3 flex items-center justify-center h-11 w-11 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none text-foreground-muted hover:text-foreground"
     >
       <XIcon class="size-5" />
       <span class="sr-only">Close</span>

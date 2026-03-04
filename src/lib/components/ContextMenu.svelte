@@ -68,18 +68,28 @@
   const isProject = $derived(node?.type === 'project');
   const isEpic = $derived(node?.type === 'epic');
   const isIssue = $derived(node?.type === 'issue');
-  const isSubIssue = $derived(node?.type === 'sub-issue');
-  const isIssueOrSub = $derived(isIssue || isSubIssue);
 
   const projectStatuses = [
+    { value: 'backlog', label: 'Backlog' },
+    { value: 'planned', label: 'Planned' },
     { value: 'active', label: 'Active' },
-    { value: 'done', label: 'Done' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'canceled', label: 'Canceled' },
+  ];
+
+  const epicStatuses = [
+    { value: 'backlog', label: 'Backlog' },
+    { value: 'active', label: 'Active' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'completed', label: 'Completed' },
     { value: 'canceled', label: 'Canceled' },
   ];
 
   const issueStatuses = [
+    { value: 'backlog', label: 'Backlog' },
     { value: 'todo', label: 'Todo' },
-    { value: 'doing', label: 'In Progress' },
+    { value: 'in_progress', label: 'In Progress' },
     { value: 'in_review', label: 'In Review' },
     { value: 'done', label: 'Done' },
     { value: 'canceled', label: 'Canceled' },
@@ -189,7 +199,7 @@
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Status</CM.ContextMenuSubTrigger>
           <CM.ContextMenuSubContent>
-            {#each projectStatuses as s}
+            {#each epicStatuses as s}
               <CM.ContextMenuItem
                 onclick={() => {
                   onStatusChange?.(node!, s.value);
@@ -264,8 +274,8 @@
         </CM.ContextMenuItem>
       {/if}
 
-      <!-- ===== ISSUE or SUB-ISSUE ===== -->
-      {#if isIssueOrSub}
+      <!-- ===== ISSUE ===== -->
+      {#if isIssue}
         <CM.ContextMenuSub>
           <CM.ContextMenuSubTrigger>Status</CM.ContextMenuSubTrigger>
           <CM.ContextMenuSubContent>
@@ -337,18 +347,6 @@
             {/each}
           </CM.ContextMenuSubContent>
         </CM.ContextMenuSub>
-
-        {#if isIssue}
-          <CM.ContextMenuSeparator />
-          <CM.ContextMenuItem
-            onclick={() => {
-              onAddChild?.(node!);
-              onClose();
-            }}
-          >
-            Add Sub-issue
-          </CM.ContextMenuItem>
-        {/if}
 
         <CM.ContextMenuSeparator />
 

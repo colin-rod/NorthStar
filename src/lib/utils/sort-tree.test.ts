@@ -15,7 +15,7 @@ import type { Project, Epic, Issue, StoryPoints } from '$lib/types';
 const createProject = (
   id: string,
   name: string,
-  status: 'active' | 'done' | 'canceled' = 'active',
+  status: 'backlog' | 'planned' | 'active' | 'on_hold' | 'completed' | 'canceled' = 'active',
 ): Project => ({
   id,
   user_id: 'user-1',
@@ -32,7 +32,7 @@ const createEpic = (
   id: string,
   project_id: string,
   name: string,
-  status: 'active' | 'done' | 'canceled' = 'active',
+  status: 'backlog' | 'active' | 'on_hold' | 'completed' | 'canceled' = 'active',
 ): Epic => ({
   id,
   project_id,
@@ -52,14 +52,13 @@ const createIssue = (
   project_id: string,
   title: string,
   priority: number = 1,
-  status: 'todo' | 'doing' | 'in_review' | 'done' | 'canceled' = 'todo',
+  status: 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done' | 'canceled' = 'todo',
   story_points: StoryPoints | null = null,
 ): Issue => ({
   id,
   project_id,
   epic_id,
   number: parseInt(id, 36),
-  parent_issue_id: null,
   milestone_id: null,
   title,
   description: null,
@@ -162,7 +161,7 @@ describe('sortTree - Status Sorting', () => {
     epic.issues = [
       createIssue('I1', 'E1', 'A', 'Done Issue', 1, 'done'),
       createIssue('I2', 'E1', 'A', 'Todo Issue', 1, 'todo'),
-      createIssue('I3', 'E1', 'A', 'Doing Issue', 1, 'doing'),
+      createIssue('I3', 'E1', 'A', 'In Progress Issue', 1, 'in_progress'),
       createIssue('I4', 'E1', 'A', 'In Review Issue', 1, 'in_review'),
       createIssue('I5', 'E1', 'A', 'Canceled Issue', 1, 'canceled'),
     ];
@@ -170,10 +169,10 @@ describe('sortTree - Status Sorting', () => {
     project.epics = [epic];
 
     const sorted = sortTree([project], 'status', 'asc');
-    // Expected order: todo > doing > in_review > done > canceled
+    // Expected order: todo > in_progress > in_review > done > canceled
     expect(sorted[0].epics?.[0].issues?.map((i) => i.status)).toEqual([
       'todo',
-      'doing',
+      'in_progress',
       'in_review',
       'done',
       'canceled',
@@ -181,27 +180,27 @@ describe('sortTree - Status Sorting', () => {
   });
 
   it('should sort projects by status using custom order', () => {
-    const projectA = createProject('A', 'Project A', 'done');
+    const projectA = createProject('A', 'Project A', 'completed');
     const projectB = createProject('B', 'Project B', 'active');
     const projectC = createProject('C', 'Project C', 'canceled');
 
     const projects = [projectA, projectB, projectC];
     const sorted = sortTree(projects, 'status', 'asc');
 
-    // Expected order: active > done > canceled
-    expect(sorted.map((p) => p.status)).toEqual(['active', 'done', 'canceled']);
+    // Expected order: active > completed > canceled
+    expect(sorted.map((p) => p.status)).toEqual(['active', 'completed', 'canceled']);
   });
 
   it('should sort epics by status using custom order', () => {
     const project = createProject('A', 'Project A');
-    const epic1 = createEpic('E1', 'A', 'Epic 1', 'done');
+    const epic1 = createEpic('E1', 'A', 'Epic 1', 'completed');
     const epic2 = createEpic('E2', 'A', 'Epic 2', 'active');
     const epic3 = createEpic('E3', 'A', 'Epic 3', 'canceled');
 
     project.epics = [epic1, epic2, epic3];
 
     const sorted = sortTree([project], 'status', 'asc');
-    expect(sorted[0].epics?.map((e) => e.status)).toEqual(['active', 'done', 'canceled']);
+    expect(sorted[0].epics?.map((e) => e.status)).toEqual(['active', 'completed', 'canceled']);
   });
 });
 

@@ -76,6 +76,8 @@ const baseProject = {
   user_id: 'user-1',
   created_at: new Date().toISOString(),
   archived_at: null,
+  color: null,
+  icon: null,
   status: 'active',
   description: null,
   epics: [
@@ -98,7 +100,6 @@ const baseProject = {
           priority: 0,
           project_id: 'project-1',
           epic_id: 'epic-1',
-          parent_issue_id: null,
           milestone_id: null,
           story_points: null,
           sort_order: 1,
@@ -343,20 +344,6 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
     expect(toast).toHaveTextContent('Issue created');
   });
 
-  it('calls ?/createSubIssue when creating a child of an issue', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({ ok: true } as Response);
-    render(ProjectsPage, { props: { data: pageData } });
-
-    await fireEvent.click(screen.getByRole('button', { name: 'Create sub-issue child' }));
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('?/createSubIssue'),
-      expect.objectContaining({ method: 'POST' }),
-    );
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Sub-issue created');
-  });
-
   it('shows error toast when epic creation fails', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response);
     render(ProjectsPage, { props: { data: pageData } });
@@ -375,16 +362,6 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
 
     const toast = await screen.findByRole('alert');
     expect(toast).toHaveTextContent('Failed to create issue');
-  });
-
-  it('shows error toast when sub-issue creation fails', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response);
-    render(ProjectsPage, { props: { data: pageData } });
-
-    await fireEvent.click(screen.getByRole('button', { name: 'Create sub-issue child' }));
-
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to create sub-issue');
   });
 });
 
@@ -457,18 +434,6 @@ describe('ProjectsPage - form response effect', () => {
 
     const toast = await screen.findByRole('status');
     expect(toast).toHaveTextContent('Issue created');
-  });
-
-  it('shows Sub-issue created for createSubIssue form action', async () => {
-    render(ProjectsPage, { props: { data: pageData } });
-
-    mockPageStore.set({
-      url: new URL('http://localhost/projects'),
-      form: { success: true, action: 'createSubIssue' },
-    });
-
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Sub-issue created');
   });
 });
 

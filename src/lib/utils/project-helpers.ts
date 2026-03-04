@@ -28,8 +28,8 @@ export function computeProjectMetrics(issues: Issue[]): ProjectMetrics {
     if (issue.story_points !== null) {
       totalStoryPoints += issue.story_points;
 
-      // Active = Ready (todo) + Doing
-      if (issue.status === 'todo' || issue.status === 'doing') {
+      // Active = Ready (todo) + In Progress
+      if (issue.status === 'todo' || issue.status === 'in_progress') {
         activeStoryPoints += issue.story_points;
       }
     }

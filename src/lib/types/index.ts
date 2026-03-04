@@ -26,6 +26,8 @@ export interface Project {
   number: number;
   name: string;
   description: string | null;
+  color?: string | null;
+  icon?: string | null;
   created_at: string;
   archived_at: string | null;
   status: ProjectStatus;
@@ -34,7 +36,8 @@ export interface Project {
   epics?: Epic[];
 }
 
-export type ProjectStatus = 'active' | 'done' | 'canceled';
+export type ProjectStatus = 'backlog' | 'planned' | 'active' | 'on_hold' | 'completed' | 'canceled';
+export type StatusGroup = 'backlog' | 'planned' | 'active' | 'paused' | 'completed' | 'canceled';
 
 /**
  * Epic
@@ -59,7 +62,7 @@ export interface Epic {
   milestone?: Milestone;
 }
 
-export type EpicStatus = 'active' | 'done' | 'canceled';
+export type EpicStatus = 'backlog' | 'active' | 'on_hold' | 'completed' | 'canceled';
 
 /**
  * Milestone
@@ -86,7 +89,6 @@ export interface Issue {
   project_id: string;
   epic_id: string;
   number: number;
-  parent_issue_id: string | null;
   milestone_id: string | null;
   title: string;
   description: string | null;
@@ -100,14 +102,12 @@ export interface Issue {
   project?: Project;
   epic?: Epic;
   milestone?: Milestone;
-  parent_issue?: Issue;
-  sub_issues?: Issue[];
   dependencies?: Dependency[]; // Issues this depends on
   blocked_by?: Dependency[]; // Dependencies where this issue is blocked (with depends_on_issue populated)
   blocking?: Dependency[]; // Dependencies where this issue blocks others (with issue populated)
 }
 
-export type IssueStatus = 'todo' | 'doing' | 'in_review' | 'done' | 'canceled';
+export type IssueStatus = 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done' | 'canceled';
 
 /**
  * Story Points
@@ -153,7 +153,6 @@ export interface CreateIssueInput {
   status?: IssueStatus;
   priority?: number;
   story_points?: StoryPoints | null;
-  parent_issue_id?: string | null;
   milestone_id?: string | null;
 }
 
@@ -201,7 +200,6 @@ export interface EpicPageData {
 export interface IssuePageData {
   issue: Issue;
   dependencies: Dependency[];
-  subIssues: Issue[];
 }
 
 /**

@@ -41,7 +41,7 @@
     default: 'h-10 px-4 py-2',
     sm: 'h-9 px-3 py-1.5 text-sm',
     lg: 'h-11 px-4 py-2.5',
-    icon: 'h-10 w-10 p-0',
+    icon: 'h-11 w-11 p-0',
   };
 </script>
 

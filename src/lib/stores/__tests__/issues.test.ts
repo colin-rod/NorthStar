@@ -131,7 +131,7 @@ describe('issues store helpers', () => {
         {
           id: '2',
           title: 'Issue 2',
-          status: 'doing',
+          status: 'in_progress',
           priority: 1,
         } as Issue,
       ];

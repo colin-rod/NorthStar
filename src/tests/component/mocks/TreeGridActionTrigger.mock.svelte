@@ -33,7 +33,9 @@
 <button type="button" onclick={() => onCellEdit('project-1', 'name', 'New Name')}
   >Cell edit project</button
 >
-<button type="button" onclick={() => onCellEdit('epic-1', 'status', 'done')}>Cell edit epic</button>
+<button type="button" onclick={() => onCellEdit('epic-1', 'status', 'completed')}
+  >Cell edit epic</button
+>
 <button type="button" onclick={() => onCellEdit('issue-1', 'priority', '1')}>Cell edit issue</button
 >
 <button type="button" onclick={() => onCreateChild('project-1', 'project', { title: 'New Epic' })}

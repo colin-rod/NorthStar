@@ -145,7 +145,6 @@ export type Database = {
           id: string;
           milestone_id: string | null;
           number: number;
-          parent_issue_id: string | null;
           priority: number;
           project_id: string;
           sort_order: number | null;
@@ -162,7 +161,6 @@ export type Database = {
           id?: string;
           milestone_id?: string | null;
           number?: number;
-          parent_issue_id?: string | null;
           priority: number;
           project_id: string;
           sort_order?: number | null;
@@ -179,7 +177,6 @@ export type Database = {
           id?: string;
           milestone_id?: string | null;
           number?: number;
-          parent_issue_id?: string | null;
           priority?: number;
           project_id?: string;
           sort_order?: number | null;
@@ -202,13 +199,6 @@ export type Database = {
             columns: ['milestone_id'];
             isOneToOne: false;
             referencedRelation: 'milestones';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'issues_parent_issue_id_fkey';
-            columns: ['parent_issue_id'];
-            isOneToOne: false;
-            referencedRelation: 'issues';
             referencedColumns: ['id'];
           },
           {

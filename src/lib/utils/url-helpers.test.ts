@@ -160,41 +160,41 @@ describe('parseStatuses', () => {
 
   it('parses single valid status', () => {
     expect(parseStatuses('todo')).toEqual(['todo']);
-    expect(parseStatuses('doing')).toEqual(['doing']);
+    expect(parseStatuses('in_progress')).toEqual(['in_progress']);
     expect(parseStatuses('in_review')).toEqual(['in_review']);
     expect(parseStatuses('done')).toEqual(['done']);
     expect(parseStatuses('canceled')).toEqual(['canceled']);
   });
 
   it('parses multiple valid statuses', () => {
-    expect(parseStatuses('todo,doing')).toEqual(['todo', 'doing']);
+    expect(parseStatuses('todo,in_progress')).toEqual(['todo', 'in_progress']);
     expect(parseStatuses('todo,in_review,done')).toEqual(['todo', 'in_review', 'done']);
   });
 
   it('filters out invalid status values', () => {
-    expect(parseStatuses('todo,invalid,doing')).toEqual(['todo', 'doing']);
+    expect(parseStatuses('todo,invalid,in_progress')).toEqual(['todo', 'in_progress']);
     expect(parseStatuses('invalid')).toEqual([]);
     expect(parseStatuses('todo,bad,unknown,done')).toEqual(['todo', 'done']);
   });
 
   it('trims whitespace from status values', () => {
-    expect(parseStatuses('  todo  , doing  ')).toEqual(['todo', 'doing']);
+    expect(parseStatuses('  todo  , in_progress  ')).toEqual(['todo', 'in_progress']);
     expect(parseStatuses(' in_review , done ')).toEqual(['in_review', 'done']);
   });
 
   it('filters out empty strings from malformed input', () => {
-    expect(parseStatuses('todo,,doing')).toEqual(['todo', 'doing']);
+    expect(parseStatuses('todo,,in_progress')).toEqual(['todo', 'in_progress']);
     expect(parseStatuses(',,,todo,,')).toEqual(['todo']);
   });
 
   it('preserves duplicate statuses', () => {
-    expect(parseStatuses('todo,todo,doing')).toEqual(['todo', 'todo', 'doing']);
+    expect(parseStatuses('todo,todo,in_progress')).toEqual(['todo', 'todo', 'in_progress']);
   });
 
   it('handles all valid statuses together', () => {
-    expect(parseStatuses('todo,doing,in_review,done,canceled')).toEqual([
+    expect(parseStatuses('todo,in_progress,in_review,done,canceled')).toEqual([
       'todo',
-      'doing',
+      'in_progress',
       'in_review',
       'done',
       'canceled',
@@ -210,16 +210,16 @@ describe('parseStatuses', () => {
   });
 
   it('parses virtual statuses combined with real statuses', () => {
-    expect(parseStatuses('ready,doing')).toEqual(['ready', 'doing']);
+    expect(parseStatuses('ready,in_progress')).toEqual(['ready', 'in_progress']);
     expect(parseStatuses('blocked,todo')).toEqual(['blocked', 'todo']);
   });
 
   it('handles all statuses including virtual ones', () => {
-    expect(parseStatuses('ready,blocked,todo,doing,in_review,done,canceled')).toEqual([
+    expect(parseStatuses('ready,blocked,todo,in_progress,in_review,done,canceled')).toEqual([
       'ready',
       'blocked',
       'todo',
-      'doing',
+      'in_progress',
       'in_review',
       'done',
       'canceled',

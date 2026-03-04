@@ -23,7 +23,7 @@ describe('IssueTable', () => {
 
     expect(formatStatus('todo')).toBe('Todo');
     expect(formatStatus('in_review')).toBe('In Review');
-    expect(formatStatus('doing')).toBe('Doing');
+    expect(formatStatus('in_progress')).toBe('In Progress');
   });
 
   it('should determine sort comparison correctly', () => {
@@ -38,7 +38,6 @@ describe('IssueTable', () => {
         sort_order: 0,
         project_id: 'proj1',
         epic_id: 'epic1',
-        parent_issue_id: null,
         milestone_id: null,
         created_at: '2024-01-01',
         description: null,
@@ -48,13 +47,12 @@ describe('IssueTable', () => {
         id: '2',
         number: 2,
         title: 'A Task',
-        status: 'doing',
+        status: 'in_progress',
         priority: 0,
         story_points: 5,
         sort_order: 1,
         project_id: 'proj1',
         epic_id: 'epic1',
-        parent_issue_id: null,
         milestone_id: null,
         created_at: '2024-01-02',
         description: null,

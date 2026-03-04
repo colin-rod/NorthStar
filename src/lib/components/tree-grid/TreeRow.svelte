@@ -125,7 +125,7 @@
 
   // Handle double-click to open drawer
   function handleDoubleClick() {
-    if ((node.type === 'issue' || node.type === 'sub-issue') && onIssueClick) {
+    if (node.type === 'issue' && onIssueClick) {
       onIssueClick(node.data as Issue);
     } else if (node.type === 'project' && onProjectClick) {
       const projectEpics = allNodes

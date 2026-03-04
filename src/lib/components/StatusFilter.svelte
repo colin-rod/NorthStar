@@ -30,8 +30,9 @@
   const allOptions: StatusOption[] = [
     { value: 'ready', label: 'Ready', description: 'Todo + no blockers', section: 'computed' },
     { value: 'blocked', label: 'Blocked', description: 'Has unresolved deps', section: 'computed' },
+    { value: 'backlog', label: 'Backlog', section: 'raw' },
     { value: 'todo', label: 'Todo (all)', description: 'Includes blocked', section: 'raw' },
-    { value: 'doing', label: 'In Progress', section: 'raw' },
+    { value: 'in_progress', label: 'In Progress', section: 'raw' },
     { value: 'in_review', label: 'In Review', section: 'raw' },
     { value: 'done', label: 'Done', section: 'raw' },
     { value: 'canceled', label: 'Canceled', section: 'raw' },
@@ -42,8 +43,9 @@
     const counts = new Map<string, number>();
     counts.set('ready', issues.filter((i) => isReady(i)).length);
     counts.set('blocked', issues.filter((i) => isBlocked(i)).length);
+    counts.set('backlog', issues.filter((i) => i.status === 'backlog').length);
     counts.set('todo', issues.filter((i) => i.status === 'todo').length);
-    counts.set('doing', issues.filter((i) => i.status === 'doing').length);
+    counts.set('in_progress', issues.filter((i) => i.status === 'in_progress').length);
     counts.set('in_review', issues.filter((i) => i.status === 'in_review').length);
     counts.set('done', issues.filter((i) => i.status === 'done').length);
     counts.set('canceled', issues.filter((i) => i.status === 'canceled').length);

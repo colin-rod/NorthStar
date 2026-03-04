@@ -14,7 +14,6 @@ describe('IssueRow - Blocked State Display', () => {
       priority: 0,
       project_id: 'proj-1',
       epic_id: 'epic-1',
-      parent_issue_id: null,
       milestone_id: null,
       story_points: null,
       sort_order: 1,
@@ -27,6 +26,8 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        color: null,
+        icon: null,
         status: 'active',
         description: null,
       },
@@ -53,7 +54,6 @@ describe('IssueRow - Blocked State Display', () => {
             priority: 0,
             project_id: 'proj-1',
             epic_id: 'epic-1',
-            parent_issue_id: null,
             milestone_id: null,
             story_points: null,
             sort_order: 1,
@@ -68,11 +68,10 @@ describe('IssueRow - Blocked State Display', () => {
             id: 'dep-2',
             number: 2,
             title: 'Dependency 2',
-            status: 'doing',
+            status: 'in_progress',
             priority: 0,
             project_id: 'proj-1',
             epic_id: 'epic-1',
-            parent_issue_id: null,
             milestone_id: null,
             story_points: null,
             sort_order: 2,
@@ -98,7 +97,6 @@ describe('IssueRow - Blocked State Display', () => {
       priority: 0,
       project_id: 'proj-1',
       epic_id: 'epic-1',
-      parent_issue_id: null,
       milestone_id: null,
       story_points: null,
       sort_order: 1,
@@ -111,6 +109,8 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        color: null,
+        icon: null,
         status: 'active',
         description: null,
       },
@@ -137,7 +137,6 @@ describe('IssueRow - Blocked State Display', () => {
             priority: 0,
             project_id: 'proj-1',
             epic_id: 'epic-1',
-            parent_issue_id: null,
             milestone_id: null,
             story_points: null,
             sort_order: 1,
@@ -162,7 +161,6 @@ describe('IssueRow - Blocked State Display', () => {
       priority: 0,
       project_id: 'proj-1',
       epic_id: 'epic-1',
-      parent_issue_id: null,
       milestone_id: null,
       story_points: null,
       sort_order: 1,
@@ -175,6 +173,8 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        color: null,
+        icon: null,
         status: 'active',
         description: null,
       },
@@ -206,7 +206,6 @@ describe('IssueRow - Blocked State Display', () => {
       priority: 0,
       project_id: 'proj-1',
       epic_id: 'epic-1',
-      parent_issue_id: null,
       milestone_id: null,
       story_points: null,
       sort_order: 1,
@@ -219,6 +218,8 @@ describe('IssueRow - Blocked State Display', () => {
         user_id: 'user-1',
         created_at: new Date().toISOString(),
         archived_at: null,
+        color: null,
+        icon: null,
         status: 'active',
         description: null,
       },
@@ -245,7 +246,6 @@ describe('IssueRow - Blocked State Display', () => {
             priority: 0,
             project_id: 'proj-1',
             epic_id: 'epic-1',
-            parent_issue_id: null,
             milestone_id: null,
             story_points: null,
             sort_order: 1,
@@ -264,7 +264,6 @@ describe('IssueRow - Blocked State Display', () => {
             priority: 0,
             project_id: 'proj-1',
             epic_id: 'epic-1',
-            parent_issue_id: null,
             milestone_id: null,
             story_points: null,
             sort_order: 2,
@@ -292,7 +291,6 @@ describe('IssueRow - Additional Scenarios', () => {
     priority: 0,
     project_id: 'proj-1',
     epic_id: 'epic-1',
-    parent_issue_id: null,
     milestone_id: null,
     story_points: null,
     sort_order: 1,
@@ -305,6 +303,8 @@ describe('IssueRow - Additional Scenarios', () => {
       user_id: 'user-1',
       created_at: new Date().toISOString(),
       archived_at: null,
+      color: null,
+      icon: null,
       status: 'active',
       description: null,
     },
@@ -335,76 +335,6 @@ describe('IssueRow - Additional Scenarios', () => {
     const p1Issue = { ...baseIssue, priority: 1 };
     rerender({ issue: p1Issue });
     expect(screen.getByText('P1')).toBeInTheDocument();
-  });
-
-  it('should render expand/collapse chevron when hasSubIssues is true', () => {
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 3,
-        doneSubIssueCount: 0,
-        isExpanded: false,
-      },
-    });
-
-    expect(screen.getByLabelText('Expand sub-issues')).toBeInTheDocument();
-    expect(screen.getByText('0/3')).toBeInTheDocument();
-  });
-
-  it('should render sub-issue pill with correct done count', () => {
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 3,
-        doneSubIssueCount: 2,
-        isExpanded: false,
-      },
-    });
-
-    expect(screen.getByText('2/3')).toBeInTheDocument();
-  });
-
-  it('should render sub-issue pill with all done (1/1)', () => {
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 1,
-        doneSubIssueCount: 1,
-        isExpanded: false,
-      },
-    });
-
-    expect(screen.getByText('1/1')).toBeInTheDocument();
-  });
-
-  it('should not render sub-issue pill when hasSubIssues is false', () => {
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: false,
-        subIssueCount: 0,
-        doneSubIssueCount: 0,
-      },
-    });
-
-    expect(screen.queryByText(/\d+\/\d+/)).not.toBeInTheDocument();
-  });
-
-  it('should show expanded chevron when isExpanded is true', () => {
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 2,
-        doneSubIssueCount: 0,
-        isExpanded: true,
-      },
-    });
-
-    expect(screen.getByLabelText('Collapse sub-issues')).toBeInTheDocument();
   });
 
   it('should render move up button when onMoveUp is provided', () => {
@@ -462,7 +392,14 @@ describe('IssueRow - Additional Scenarios', () => {
   });
 
   it('should render with different status colors', () => {
-    const statuses: Array<Issue['status']> = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+    const statuses: Array<Issue['status']> = [
+      'backlog',
+      'todo',
+      'in_progress',
+      'in_review',
+      'done',
+      'canceled',
+    ];
 
     statuses.forEach((status) => {
       const statusIssue = { ...baseIssue, status };
@@ -504,25 +441,6 @@ describe('IssueRow - Additional Scenarios', () => {
     expect(onMoveDown).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onToggleExpand when chevron is clicked', async () => {
-    const onToggleExpand = vi.fn();
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 2,
-        doneSubIssueCount: 0,
-        isExpanded: false,
-        onToggleExpand,
-      },
-    });
-
-    const chevron = screen.getByLabelText('Expand sub-issues');
-    await fireEvent.click(chevron);
-
-    expect(onToggleExpand).toHaveBeenCalledTimes(1);
-  });
-
   it('should call onClick when issue row is clicked', async () => {
     const onClick = vi.fn();
     render(IssueRow, {
@@ -536,30 +454,6 @@ describe('IssueRow - Additional Scenarios', () => {
     await fireEvent.click(issueTitle);
 
     expect(onClick).toHaveBeenCalled();
-  });
-
-  it('should handle click on chevron button', async () => {
-    const onToggleExpand = vi.fn();
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 2,
-        doneSubIssueCount: 0,
-        isExpanded: false,
-        onToggleExpand,
-      },
-    });
-
-    const chevron = screen.getByLabelText('Expand sub-issues');
-
-    // Chevron is a native <button>, so Enter/Space are handled by the browser.
-    // Verify click works correctly.
-    await fireEvent.click(chevron);
-    expect(onToggleExpand).toHaveBeenCalledTimes(1);
-
-    await fireEvent.click(chevron);
-    expect(onToggleExpand).toHaveBeenCalledTimes(2);
   });
 
   it('should handle drag events on drag handle', async () => {
@@ -582,18 +476,6 @@ describe('IssueRow - Additional Scenarios', () => {
     await fireEvent.mouseLeave(dragHandle);
 
     expect(dragHandle).toBeInTheDocument();
-  });
-
-  it('should not render chevron or expand button when hasSubIssues is false', () => {
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: false,
-      },
-    });
-
-    expect(screen.queryByLabelText('Expand sub-issues')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Collapse sub-issues')).not.toBeInTheDocument();
   });
 
   it('should not render move buttons when onMoveUp and onMoveDown are not provided', () => {
@@ -624,102 +506,5 @@ describe('IssueRow - Additional Scenarios', () => {
     await fireEvent.touchEnd(dragHandle);
 
     expect(dragHandle).toBeInTheDocument();
-  });
-});
-
-describe('IssueRow - Accessibility: No Nested Interactive Elements', () => {
-  const baseIssue: Issue = {
-    id: '1',
-    number: 1,
-    title: 'Test Issue',
-    status: 'todo',
-    priority: 0,
-    project_id: 'proj-1',
-    epic_id: 'epic-1',
-    parent_issue_id: null,
-    milestone_id: null,
-    story_points: null,
-    sort_order: 1,
-    created_at: new Date().toISOString(),
-    description: null,
-    project: {
-      id: 'proj-1',
-      number: 1,
-      name: 'Test Project',
-      user_id: 'user-1',
-      created_at: new Date().toISOString(),
-      archived_at: null,
-      status: 'active',
-      description: null,
-    },
-    epic: {
-      id: 'epic-1',
-      number: 1,
-      name: 'Test Epic',
-      project_id: 'proj-1',
-      status: 'active',
-      is_default: false,
-      sort_order: null,
-      description: null,
-      priority: null,
-    },
-    dependencies: [],
-  };
-
-  it('should not have nested interactive elements inside buttons', () => {
-    const { container } = render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 3,
-        doneSubIssueCount: 1,
-        isExpanded: false,
-        onToggleExpand: vi.fn(),
-      },
-    });
-
-    const buttons = container.querySelectorAll('button');
-    buttons.forEach((button) => {
-      const nestedInteractive = button.querySelectorAll('button, [role="button"]');
-      expect(nestedInteractive.length).toBe(0);
-    });
-  });
-
-  it('should render chevron as a button element, not a div with role="button"', () => {
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 2,
-        doneSubIssueCount: 0,
-        isExpanded: false,
-        onToggleExpand: vi.fn(),
-      },
-    });
-
-    const chevron = screen.getByLabelText('Expand sub-issues');
-    expect(chevron.tagName).toBe('BUTTON');
-  });
-
-  it('should not call onClick when chevron is clicked', async () => {
-    const onClick = vi.fn();
-    const onToggleExpand = vi.fn();
-    render(IssueRow, {
-      props: {
-        issue: baseIssue,
-        hasSubIssues: true,
-        subIssueCount: 2,
-        doneSubIssueCount: 0,
-        isExpanded: false,
-        onClick,
-        onToggleExpand,
-      },
-    });
-
-    const chevron = screen.getByLabelText('Expand sub-issues');
-    await fireEvent.click(chevron);
-
-    expect(onToggleExpand).toHaveBeenCalledTimes(1);
-    expect(onClick).not.toHaveBeenCalled();
   });
 });

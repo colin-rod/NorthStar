@@ -16,8 +16,11 @@
   let open = $state(false);
 
   const statusOptions: { value: ProjectStatus; label: string }[] = [
+    { value: 'backlog', label: 'Backlog' },
+    { value: 'planned', label: 'Planned' },
     { value: 'active', label: 'Active' },
-    { value: 'done', label: 'Done' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'completed', label: 'Completed' },
     { value: 'canceled', label: 'Canceled' },
   ];
 

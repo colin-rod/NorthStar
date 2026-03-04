@@ -26,6 +26,7 @@
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
+  import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
   import Lock from '@lucide/svelte/icons/lock';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import Inbox from '@lucide/svelte/icons/inbox';
@@ -36,27 +37,6 @@
   }
 
   let { issues, onRowClick }: Props = $props();
-
-  // Status color dot mapping
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      todo: 'bg-status-todo',
-      doing: 'bg-status-doing',
-      in_review: 'bg-status-in-review',
-      done: 'bg-status-done',
-      blocked: 'bg-status-blocked',
-      canceled: 'bg-status-canceled',
-    };
-    return colors[status] || 'bg-status-todo';
-  };
-
-  // Format status for display
-  function formatStatus(status: IssueStatus): string {
-    return status
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
 </script>
 
 <!-- North Design: Clean table with subtle borders -->
@@ -134,7 +114,7 @@
             <td class="px-3 py-4">
               <div class="flex items-center gap-2">
                 <div
-                  class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}
+                  class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusDotClass(issue.status)}`}
                 ></div>
                 <span class="text-metadata">{formatStatus(issue.status)}</span>
               </div>

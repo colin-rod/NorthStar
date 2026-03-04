@@ -26,8 +26,9 @@
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import DependencyChip from '$lib/components/DependencyChip.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
+  import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
+  import { getProjectColor } from '$lib/utils/project-colors';
   import GripVertical from '@lucide/svelte/icons/grip-vertical';
-  import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
@@ -39,12 +40,6 @@
     issue: Issue;
     onClick?: () => void;
     dragDisabled?: boolean;
-    hasSubIssues?: boolean;
-    subIssueCount?: number;
-    doneSubIssueCount?: number;
-    isExpanded?: boolean;
-    isSubIssue?: boolean;
-    onToggleExpand?: (() => void) | null;
     onMoveUp?: (() => void) | null;
     onMoveDown?: (() => void) | null;
     showReorderHint?: boolean;
@@ -54,12 +49,6 @@
     issue,
     onClick = () => {},
     dragDisabled = $bindable(true),
-    hasSubIssues = false,
-    subIssueCount = 0,
-    doneSubIssueCount = 0,
-    isExpanded = false,
-    isSubIssue = false,
-    onToggleExpand = null,
     onMoveUp = null,
     onMoveDown = null,
     showReorderHint = false,
@@ -68,23 +57,8 @@
   // Compute blocked status
   let blocked = $derived(isBlocked(issue));
 
-  // Status color dot mapping (4px diameter)
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      todo: 'bg-status-todo',
-      doing: 'bg-status-doing',
-      in_review: 'bg-status-in-review',
-      done: 'bg-status-done',
-      blocked: 'bg-status-blocked',
-      canceled: 'bg-status-canceled',
-    };
-    return colors[status] || 'bg-status-todo';
-  };
-
-  const formatStatusLabel = (status: string) =>
-    status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-
-  let statusLabel = $derived(formatStatusLabel(issue.status));
+  let statusLabel = $derived(formatStatus(issue.status));
+  let projectColor = $derived(getProjectColor(issue.project?.color));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -137,39 +111,16 @@
   {/if}
 
   <!-- Main Content Area (non-interactive container) -->
-  <div
-    class="flex-1 flex items-start gap-3 min-w-0"
-    style={isSubIssue ? 'margin-left: 3rem;' : 'margin-left: 2rem;'}
-  >
-    <!-- Expand/Collapse Chevron (sibling button for parents with sub-issues) -->
-    {#if hasSubIssues}
-      <button
-        type="button"
-        onclick={(e) => {
-          e.stopPropagation();
-          onToggleExpand?.();
-        }}
-        class="flex items-center gap-1 shrink-0 pt-1 cursor-pointer"
-        aria-label={isExpanded ? 'Collapse sub-issues' : 'Expand sub-issues'}
-      >
-        {#if isExpanded}
-          <ChevronDown class="h-4 w-4 text-muted-foreground" />
-        {:else}
-          <ChevronRight class="h-4 w-4 text-muted-foreground" />
-        {/if}
-        <Badge variant="outline" class="text-xs">{doneSubIssueCount}/{subIssueCount}</Badge>
-      </button>
-    {:else}
-      <!-- Spacer for alignment when no chevron -->
-      <div class="w-4 shrink-0"></div>
-    {/if}
+  <div class="flex-1 flex items-start gap-3 min-w-0 ml-8">
+    <!-- Spacer for alignment -->
+    <div class="w-4 shrink-0"></div>
 
     <!-- Clickable Content Area (sibling button) -->
     <button type="button" onclick={onClick} class="flex-1 text-left flex items-start gap-3 min-w-0">
       <!-- Status indicator: small colored dot per North spec -->
       <div class="flex items-center gap-1 pt-1 shrink-0">
         <div
-          class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusColor(issue.status)}`}
+          class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusDotClass(issue.status)}`}
           aria-hidden="true"
         ></div>
         <span class="sr-only">{statusLabel}</span>
@@ -196,8 +147,9 @@
         </h3>
 
         <!-- Metadata: 13px, secondary color -->
-        <p class="text-metadata mt-1 truncate">
-          {issue.project?.name} / {issue.epic?.name}
+        <p class="text-metadata mt-1 truncate flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-sm shrink-0 {projectColor.bg}"></span>
+          <span>{issue.project?.name} / {issue.epic?.name}</span>
         </p>
 
         <!-- Inline dependency chip with popover -->

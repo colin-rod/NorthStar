@@ -49,7 +49,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       milestone:milestones(*),
       dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
-        depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(*, epic:epics(*), project:projects(*))
+        depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status)
       ),
       blocked_by:dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
@@ -66,13 +66,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
           epic:epics(id, name),
           project:projects(id, name)
         )
-      ),
-      sub_issues:issues!parent_issue_id(
-        id,
-        title,
-        status,
-        priority,
-        sort_order
       )
     `,
   );
@@ -117,7 +110,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   // 5. Load all epics for the user (for epic picker in IssueSheet)
   const { data: epics } = await locals.supabase
     .from('epics')
-    .select('*')
+    .select('id, number, name, description, project_id, status, priority, sort_order, is_default')
     .order('sort_order', { ascending: true });
 
   // 6. Load all milestones for the user (global, cross-project)
@@ -188,7 +181,7 @@ export const actions: Actions = {
     // Status
     const status = formData.get('status')?.toString();
     if (status !== undefined) {
-      const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+      const validStatuses = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
       if (!validStatuses.includes(status)) {
         return fail(400, { error: 'Invalid status value' });
       }
@@ -226,22 +219,15 @@ export const actions: Actions = {
     // Epic ID
     const epicId = formData.get('epic_id')?.toString();
     if (epicId !== undefined) {
-      // Check if this is a sub-issue (has parent_issue_id)
+      // Fetch issue to verify project ownership
       const { data: issue } = await supabase
         .from('issues')
-        .select('parent_issue_id, project_id')
+        .select('project_id')
         .eq('id', id)
         .single();
 
       if (!issue) {
         return fail(404, { error: 'Issue not found' });
-      }
-
-      // Block epic changes for sub-issues
-      if (issue.parent_issue_id) {
-        return fail(400, {
-          error: 'Cannot change epic for sub-issues - they inherit from parent',
-        });
       }
 
       // Verify epic exists and belongs to same project as issue
@@ -520,12 +506,11 @@ export const actions: Actions = {
       return fail(400, { error: 'Epic not found or does not belong to selected project' });
     }
 
-    // Get next sort_order (scoped to epic, exclude sub-issues)
+    // Get next sort_order (scoped to epic)
     const { data: existingIssues } = await supabase
       .from('issues')
       .select('sort_order')
       .eq('epic_id', epicId)
-      .is('parent_issue_id', null)
       .order('sort_order', { ascending: false })
       .limit(1);
 

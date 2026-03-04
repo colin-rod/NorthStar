@@ -62,13 +62,6 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
           epic:epics(id, name),
           project:projects(id, name)
         )
-      ),
-      sub_issues:issues!parent_issue_id(
-        id,
-        title,
-        status,
-        priority,
-        sort_order
       )
     `,
     )
@@ -140,9 +133,8 @@ export const actions: Actions = {
     // 2. Parse form data
     const formData = await request.formData();
     const titleRaw = formData.get('title')?.toString().trim();
-    let epicId = formData.get('epicId')?.toString();
+    const epicId = formData.get('epicId')?.toString();
     const projectId = formData.get('projectId')?.toString();
-    const parentIssueId = formData.get('parent_issue_id')?.toString() || null;
 
     // 3. Validation
     if (!titleRaw || titleRaw.length === 0) {
@@ -158,71 +150,28 @@ export const actions: Actions = {
     // titleRaw is validated above to be non-empty
     const title = titleRaw;
 
-    // 4. If creating sub-issue, validate parent and inherit epic
-    if (parentIssueId) {
-      // Fetch parent issue to inherit epic_id
-      const { data: parentIssue, error: parentError } = await supabase
-        .from('issues')
-        .select('epic_id, project_id')
-        .eq('id', parentIssueId)
-        .single();
+    // 4. Get next sort_order (scoped to epic)
+    const { data: existingIssues } = await supabase
+      .from('issues')
+      .select('sort_order')
+      .eq('epic_id', epicId)
+      .order('sort_order', { ascending: false })
+      .limit(1);
 
-      if (parentError || !parentIssue) {
-        return fail(400, { error: 'Parent issue not found' });
-      }
-
-      // Override epicId with parent's epic (force inheritance)
-      epicId = parentIssue.epic_id;
-
-      // Verify project matches (redundant with DB trigger, but good UX)
-      if (parentIssue.project_id !== projectId) {
-        return fail(400, { error: 'Sub-issue must be in same project as parent' });
-      }
-    }
-
-    // 5. Get next sort_order (scoped to parent if sub-issue, or epic if top-level)
-    let sortOrderQuery;
-    if (parentIssueId) {
-      // Sub-issue: sort order scoped to parent's sub-issues
-      sortOrderQuery = supabase
-        .from('issues')
-        .select('sort_order')
-        .eq('parent_issue_id', parentIssueId)
-        .order('sort_order', { ascending: false })
-        .limit(1);
-    } else {
-      // Top-level issue: sort order scoped to epic (exclude sub-issues)
-      sortOrderQuery = supabase
-        .from('issues')
-        .select('sort_order')
-        .eq('epic_id', epicId)
-        .is('parent_issue_id', null)
-        .order('sort_order', { ascending: false })
-        .limit(1);
-    }
-
-    const { data: existingIssues } = await sortOrderQuery;
     const nextSortOrder =
       existingIssues?.[0]?.sort_order != null ? existingIssues[0].sort_order + 1 : 0;
 
-    // 6. Insert issue with defaults
-    const insertData: Record<string, string | number> = {
-      title: title as string, // Validated above - titleRaw is non-empty string
-      epic_id: epicId as string,
-      project_id: projectId as string,
-      status: 'todo',
-      priority: 2, // P2 default
-      sort_order: nextSortOrder,
-    };
-
-    // Add parent_issue_id if creating sub-issue
-    if (parentIssueId) {
-      insertData.parent_issue_id = parentIssueId;
-    }
-
+    // 5. Insert issue with defaults
     const { data, error: insertError } = await supabase
       .from('issues')
-      .insert(insertData)
+      .insert({
+        title: title as string,
+        epic_id: epicId as string,
+        project_id: projectId as string,
+        status: 'todo',
+        priority: 2, // P2 default
+        sort_order: nextSortOrder,
+      })
       .select()
       .single();
 
@@ -491,7 +440,7 @@ export const actions: Actions = {
     // Status
     const status = formData.get('status')?.toString();
     if (status !== undefined) {
-      const validStatuses = ['todo', 'doing', 'in_review', 'done', 'canceled'];
+      const validStatuses = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
       if (!validStatuses.includes(status)) {
         return fail(400, { error: 'Invalid status value' });
       }
@@ -529,22 +478,15 @@ export const actions: Actions = {
     // Epic ID
     const epicId = formData.get('epic_id')?.toString();
     if (epicId !== undefined) {
-      // Check if this is a sub-issue (has parent_issue_id)
+      // Fetch issue to verify project ownership
       const { data: issue } = await supabase
         .from('issues')
-        .select('parent_issue_id, project_id')
+        .select('project_id')
         .eq('id', id)
         .single();
 
       if (!issue) {
         return fail(404, { error: 'Issue not found' });
-      }
-
-      // Block epic changes for sub-issues
-      if (issue.parent_issue_id) {
-        return fail(400, {
-          error: 'Cannot change epic for sub-issues - they inherit from parent',
-        });
       }
 
       // Verify epic exists and belongs to same project as issue

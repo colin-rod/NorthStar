@@ -4,15 +4,14 @@
  * Calculate Total Story Points and Progress rollups for tree grid nodes.
  *
  * Rollup Rules:
- * - Sub-issue: No rollup (displays only its own SP)
- * - Issue: Issue SP + sum(sub-issue SP)
+ * - Issue: own SP
  * - Epic: sum(issue total SP)
  * - Project: sum(epic total SP)
  *
  * Progress Rules:
- * - Progress = (Done SP / Total SP) * 100
- * - If Total SP = 0, progress = 100% if all Done, else 0%
- * - Sub-issues do not have progress
+ * - Progress = (Done SP / Non-Canceled SP) * 100
+ * - Canceled issues are excluded from both numerator and denominator
+ * - If Non-Canceled SP = 0, progress = 100% if all non-canceled done, else 0%
  */
 
 import { getDescendantIssues } from './tree-grid-helpers';
@@ -28,20 +27,9 @@ import type { TreeNode, Progress } from '$lib/types/tree-grid';
  * @returns Total story points or null if not applicable
  */
 export function calculateTotalPoints(node: TreeNode, allNodes: TreeNode[]): number | null {
-  // Sub-issues don't have rollup
-  if (node.type === 'sub-issue') {
-    return null;
-  }
-
-  // Issue: own SP + sum of sub-issue SP
+  // Issue: own SP
   if (node.type === 'issue') {
-    const issuePoints = (node.data as Issue).story_points || 0;
-    const subIssues = allNodes.filter((n) => n.type === 'sub-issue' && n.parentId === node.id);
-    const subIssuePoints = subIssues.reduce(
-      (sum, sub) => sum + ((sub.data as Issue).story_points || 0),
-      0,
-    );
-    return issuePoints + subIssuePoints;
+    return (node.data as Issue).story_points || 0;
   }
 
   // Epic: sum of all child issue totals
@@ -64,18 +52,14 @@ export function calculateTotalPoints(node: TreeNode, allNodes: TreeNode[]): numb
  *
  * Progress is calculated as:
  * - (Completed SP / Total SP) * 100
- * - Completed SP = sum of all Done/Canceled issue SP
+ * - Completed SP = sum of all Done issue SP (canceled excluded)
+ * - Total SP = sum of all non-canceled issue SP
  *
  * @param node - Tree node to calculate for
  * @param allNodes - All tree nodes (needed to find descendants)
  * @returns Progress object or null if not applicable
  */
 export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progress | null {
-  // Sub-issues don't have progress
-  if (node.type === 'sub-issue') {
-    return null;
-  }
-
   // Get all descendant issues (recursive)
   const descendantIssues = getDescendantIssues(node, allNodes);
 
@@ -84,17 +68,19 @@ export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progres
     return { completed: 0, total: 0, percentage: 0 };
   }
 
-  // Calculate total and completed story points
-  const totalPoints = descendantIssues.reduce(
+  // Exclude canceled issues from totals (not in denominator OR numerator)
+  const nonCanceledIssues = descendantIssues.filter(
+    (issue) => (issue.data as Issue).status !== 'canceled',
+  );
+
+  // Calculate total and completed story points (canceled excluded)
+  const totalPoints = nonCanceledIssues.reduce(
     (sum, issue) => sum + ((issue.data as Issue).story_points || 0),
     0,
   );
 
-  const completedPoints = descendantIssues
-    .filter((issue) => {
-      const status = (issue.data as Issue).status;
-      return status === 'done' || status === 'canceled';
-    })
+  const completedPoints = nonCanceledIssues
+    .filter((issue) => (issue.data as Issue).status === 'done')
     .reduce((sum, issue) => sum + ((issue.data as Issue).story_points || 0), 0);
 
   // Calculate percentage
@@ -102,11 +88,10 @@ export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progres
   if (totalPoints > 0) {
     percentage = Math.round((completedPoints / totalPoints) * 100);
   } else {
-    // Fallback: If all issues are done/canceled, show 100%, else 0%
-    const allDone = descendantIssues.every((issue) => {
-      const status = (issue.data as Issue).status;
-      return status === 'done' || status === 'canceled';
-    });
+    // Fallback: If all non-canceled issues are done, show 100%, else 0%
+    const allDone =
+      nonCanceledIssues.length > 0 &&
+      nonCanceledIssues.every((issue) => (issue.data as Issue).status === 'done');
     percentage = allDone ? 100 : 0;
   }
 

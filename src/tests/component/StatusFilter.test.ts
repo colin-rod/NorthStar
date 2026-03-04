@@ -26,7 +26,6 @@ const mockIssues: Issue[] = [
     project_id: 'p1',
     epic_id: 'e1',
     number: 1,
-    parent_issue_id: null,
     milestone_id: null,
     title: 'Issue 1',
     description: null,
@@ -41,11 +40,10 @@ const mockIssues: Issue[] = [
     project_id: 'p1',
     epic_id: 'e1',
     number: 2,
-    parent_issue_id: null,
     milestone_id: null,
     title: 'Issue 2',
     description: null,
-    status: 'doing',
+    status: 'in_progress',
     priority: 1,
     story_points: null,
     sort_order: 1,
@@ -79,7 +77,7 @@ describe('StatusFilter', () => {
 
   it('should show count when multiple statuses selected', () => {
     render(StatusFilter, {
-      props: { selectedStatuses: ['todo', 'doing'], issues: mockIssues },
+      props: { selectedStatuses: ['todo', 'in_progress'], issues: mockIssues },
     });
 
     expect(screen.getByText('Status (2)')).toBeInTheDocument();

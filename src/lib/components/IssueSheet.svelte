@@ -27,12 +27,19 @@
   import { Button } from '$lib/components/ui/button';
   import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
   import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
-  import { invalidateAll } from '$app/navigation';
+  import { invalidateAll, goto } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
-  import InlineSubIssueForm from '$lib/components/InlineSubIssueForm.svelte';
+  import {
+    getStatusBadgeVariant,
+    formatStatus,
+    getEpicStatusVariant,
+  } from '$lib/utils/design-tokens';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import { computeIssueCounts, computeProgress } from '$lib/utils/issue-counts';
   import DependencyManagementSection from '$lib/components/DependencyManagementSection.svelte';
+  import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
@@ -81,9 +88,6 @@
   let activeSaveCount = $state(0);
   let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
   let latestSaveRequestId = $state(0);
-
-  // Sub-issues state
-  let showSubIssueForm = $state(false);
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
   // svelte-ignore state_referenced_locally
@@ -267,34 +271,6 @@
   let blockingIssues = $derived(
     issue?.blocking?.map((dep) => dep.issue).filter((i): i is Issue => i !== undefined) || [],
   );
-
-  // Get sub-issues
-  let subIssues = $derived(issue?.sub_issues || []);
-
-  // Helper to get status badge variant
-  function getStatusVariant(
-    status: IssueStatus,
-  ):
-    | 'secondary'
-    | 'default'
-    | 'outline'
-    | 'destructive'
-    | 'status-todo'
-    | 'status-doing'
-    | 'status-in-review'
-    | 'status-done'
-    | 'status-blocked'
-    | 'status-canceled'
-    | undefined {
-    const variantMap: Record<IssueStatus, any> = {
-      todo: 'status-todo',
-      doing: 'status-doing',
-      in_review: 'status-in-review',
-      done: 'status-done',
-      canceled: 'status-canceled',
-    };
-    return variantMap[status];
-  }
 
   // Auto-save function
   async function autoSave(
@@ -485,7 +461,6 @@
           ...newIssue,
           blocked_by: [],
           blocking: [],
-          sub_issues: [],
         };
         currentIssueId = newIssue.id;
 
@@ -610,14 +585,6 @@
       prevEpicId = localEpicId;
     }
   });
-
-  // Format status for display
-  function formatStatus(status: IssueStatus): string {
-    return status
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
 </script>
 
 <Sheet bind:open>
@@ -633,17 +600,7 @@
     {#if internalMode === 'create' || issue}
       <!-- Loading overlay -->
       {#if loading || createLoading}
-        <div
-          role="status"
-          aria-live="polite"
-          aria-label="Loading"
-          class="absolute inset-0 bg-background/50 flex items-center justify-center z-50 rounded-t-lg"
-        >
-          <div
-            aria-hidden="true"
-            class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
-          ></div>
-        </div>
+        <LoadingOverlay />
       {/if}
 
       <!-- Header -->
@@ -683,9 +640,7 @@
         <form onsubmit={handleCreateSubmit} class="space-y-6 pb-6">
           <!-- Basic Info Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Basic Info
-            </h3>
+            <h3 class="section-header">Basic Info</h3>
             <div>
               <Label for="title" class="text-metadata mb-2 block">Title</Label>
               <Input
@@ -705,9 +660,7 @@
 
           <!-- Organization Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-              Organization
-            </h3>
+            <h3 class="section-header">Organization</h3>
             <div class="space-y-4">
               <!-- Project Select -->
               <div>
@@ -791,8 +744,9 @@
                   disabled={loading}
                   class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  <option value="backlog">Backlog</option>
                   <option value="todo">Todo</option>
-                  <option value="doing">In Progress</option>
+                  <option value="in_progress">In Progress</option>
                   <option value="in_review">In Review</option>
                   <option value="done">Done</option>
                   <option value="canceled">Canceled</option>
@@ -861,9 +815,7 @@
 
           <!-- Description Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Description
-            </h3>
+            <h3 class="section-header">Description</h3>
             <RichTextEditor
               content={localDescription}
               onchange={handleDescriptionChange}
@@ -875,50 +827,13 @@
 
           <!-- Attachments Section -->
           <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Attachments
-            </h3>
+            <h3 class="section-header">Attachments</h3>
             <AttachmentList
               {attachments}
               onUpload={handleAttachmentUpload}
               onDelete={handleAttachmentDelete}
               disabled={loading}
             />
-          </section>
-
-          <!-- Organization & Estimation Section -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Organization
-            </h3>
-            <div class="space-y-2">
-              <!-- Epic -->
-              <div class="flex items-center gap-3">
-                <label for="epic" class="text-xs text-foreground-muted w-20 shrink-0">Epic</label>
-                {#if issue?.parent_issue_id}
-                  <div
-                    class="flex h-8 flex-1 rounded-md border border-input bg-muted px-3 text-sm items-center"
-                  >
-                    <span class="text-foreground-muted truncate">
-                      {projectEpics.find((e) => e.id === localEpicId)?.name}
-                      <span class="text-metadata ml-1">(inherited)</span>
-                    </span>
-                  </div>
-                {:else}
-                  <select
-                    id="epic"
-                    bind:value={localEpicId}
-                    onchange={handleEpicChange}
-                    disabled={loading}
-                    class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {#each projectEpics as epic (epic.id)}
-                      <option value={epic.id}>{epic.name}</option>
-                    {/each}
-                  </select>
-                {/if}
-              </div>
-            </div>
           </section>
 
           <!-- Dependencies Section -->
@@ -929,57 +844,6 @@
               {blockedByIssues}
               {blockingIssues}
             />
-
-            <!-- Sub-issues Section -->
-            <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-                Sub-issues
-              </h3>
-
-              <div class="space-y-2">
-                <!-- Sub-issues List -->
-                {#if subIssues.length > 0}
-                  {#each subIssues as subIssue (subIssue.id)}
-                    <button
-                      type="button"
-                      onclick={() => {
-                        issue = subIssue;
-                        showSubIssueForm = false;
-                      }}
-                      class="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted w-full text-left transition-colors"
-                      title="Open sub-issue"
-                    >
-                      <Badge variant={getStatusVariant(subIssue.status)} class="shrink-0">
-                        {formatStatus(subIssue.status)}
-                      </Badge>
-                      <span class="text-body flex-1 truncate">{subIssue.title}</span>
-                    </button>
-                  {/each}
-                {:else if !showSubIssueForm}
-                  <p class="text-metadata text-foreground-muted">No sub-issues</p>
-                {/if}
-
-                <!-- Inline Form for Creating Sub-issue -->
-                {#if showSubIssueForm}
-                  <InlineSubIssueForm
-                    parentIssueId={issue.id}
-                    epicId={issue.epic_id}
-                    projectId={issue.project_id}
-                    onCancel={() => (showSubIssueForm = false)}
-                    onSuccess={() => (showSubIssueForm = false)}
-                  />
-                {:else}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onclick={() => (showSubIssueForm = true)}
-                    class="w-full"
-                  >
-                    Add Sub-issue
-                  </Button>
-                {/if}
-              </div>
-            </section>
           {/if}
         </div>
       {/if}

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import type { Project, Epic, Attachment } from '$lib/types';
+  import type { Project, Epic, Attachment, ProjectStatus } from '$lib/types';
+  import ProjectIconPicker from '$lib/components/ProjectIconPicker.svelte';
+  import type { ProjectColor } from '$lib/utils/project-colors';
+  import type { ProjectIconKey } from '$lib/utils/project-icons';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
   import { computeIssueCounts, computeProgress } from '$lib/utils/issue-counts';
@@ -13,6 +16,9 @@
   import { deserialize } from '$app/forms';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import IssueCountsBadges from '$lib/components/IssueCountsBadges.svelte';
+  import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
   import { supabase } from '$lib/supabase';
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
   import { normalizeDescription } from '$lib/utils/text-helpers';
@@ -51,7 +57,7 @@
 
   let localName = $state('');
   let localDescription = $state<string | null>(null);
-  let localStatus = $state<'active' | 'done' | 'canceled'>('active');
+  let localStatus = $state<ProjectStatus>('active');
   let attachments = $state<Attachment[]>([]);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
@@ -208,9 +214,17 @@
   }
 
   function handleStatusChange(event: Event) {
-    const value = (event.target as HTMLSelectElement).value as 'active' | 'done' | 'canceled';
+    const value = (event.target as HTMLSelectElement).value as ProjectStatus;
     localStatus = value;
     autoSave('status', value);
+  }
+
+  function handleColorChange(color: ProjectColor) {
+    autoSave('color', color);
+  }
+
+  function handleIconChange(icon: ProjectIconKey) {
+    autoSave('icon', icon);
   }
 
   function handleDescriptionChange(html: string) {
@@ -319,12 +333,6 @@
       createLoading = false;
     }
   }
-
-  const getEpicStatusVariant = (status: string) => {
-    if (status === 'active') return 'default';
-    if (status === 'done') return 'status-done';
-    return 'status-canceled';
-  };
 </script>
 
 <Sheet bind:open>
@@ -337,11 +345,7 @@
     {#if internalMode === 'create' || effectiveProject}
       <!-- Loading overlay -->
       {#if createLoading}
-        <div
-          class="absolute inset-0 bg-background/50 flex items-center justify-center z-50 rounded-t-lg"
-        >
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <LoadingOverlay />
       {/if}
 
       <SheetHeader class="mb-6">
@@ -401,7 +405,7 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-6 pb-6">
-          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
+          <div aria-live="polite" class="text-metadata text-foreground-muted">
             {#if saveState === 'saving'}
               Saving...
             {:else if saveState === 'saved'}
@@ -410,6 +414,19 @@
               Save failed. Please retry.
             {/if}
           </div>
+
+          <!-- Appearance -->
+          <section>
+            <div class="flex items-center gap-3">
+              <label class="text-xs text-foreground-muted w-20 shrink-0">Appearance</label>
+              <ProjectIconPicker
+                color={effectiveProject?.color ?? null}
+                icon={effectiveProject?.icon ?? null}
+                onColorChange={handleColorChange}
+                onIconChange={handleIconChange}
+              />
+            </div>
+          </section>
 
           <!-- Name -->
           <section>
@@ -472,25 +489,23 @@
           <!-- Stats -->
           {#if metrics}
             <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-                Stats
-              </h3>
-              <div class="grid grid-cols-3 gap-3 text-metadata">
+              <h3 class="section-header">Stats</h3>
+              <div class="grid grid-cols-4 gap-3 text-metadata">
                 <div class="flex flex-col gap-1">
-                  <span class="text-lg font-semibold">{metrics.totalIssues}</span>
+                  <span class="text-section-header">{metrics.totalIssues}</span>
                   <span class="text-foreground-secondary">Issues</span>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-lg font-semibold">{epics.length}</span>
+                  <span class="text-section-header">{epics.length}</span>
                   <span class="text-foreground-secondary">Epics</span>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-lg font-semibold">{metrics.activeStoryPoints}</span>
-                  <span class="text-foreground-secondary">Active SP</span>
+                  <span class="text-section-header">{metrics.activeStoryPoints}</span>
+                  <span class="text-foreground-secondary">Active pts</span>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-lg font-semibold">{metrics.totalStoryPoints}</span>
-                  <span class="text-foreground-secondary">Total SP</span>
+                  <span class="text-section-header">{metrics.totalStoryPoints}</span>
+                  <span class="text-foreground-secondary">Total pts</span>
                 </div>
               </div>
             </section>
@@ -499,116 +514,15 @@
           <!-- Progress -->
           {#if counts}
             <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-                Progress
-              </h3>
-              <div class="grid grid-cols-3 gap-3 text-metadata">
-                <div class="flex items-center gap-2">
-                  <Badge variant="default" class="text-xs">{counts.ready}</Badge>
-                  <span class="text-foreground-secondary">Ready</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-doing" class="text-xs">{counts.doing}</Badge>
-                  <span class="text-foreground-secondary">Doing</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
-                  <span class="text-foreground-secondary">In Review</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
-                  <span class="text-foreground-secondary">Blocked</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-done" class="text-xs">{counts.done}</Badge>
-                  <span class="text-foreground-secondary">Done</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge variant="status-canceled" class="text-xs">{counts.canceled}</Badge>
-                  <span class="text-foreground-secondary">Canceled</span>
-                </div>
-              </div>
+              <h3 class="section-header">Progress</h3>
+              <IssueCountsBadges {counts} />
               {#if computeProgress(counts).total > 0}
-                <div class="mt-3 flex items-center gap-2">
-                  <div
-                    class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden"
-                    role="progressbar"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow={Math.max(
-                      0,
-                      Math.min(100, Number(computeProgress(counts).percentage) || 0),
-                    )}
-                    aria-label="Project completion progress"
-                  >
-                    <div
-                      class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                      style="width: {computeProgress(counts).percentage}%"
-                    ></div>
-                  </div>
-                  <span class="text-metadata text-foreground-secondary shrink-0">
-                    {computeProgress(counts).percentage}%
-                  </span>
+                <div class="mt-3">
+                  <ProgressBar
+                    percentage={computeProgress(counts).percentage}
+                    ariaLabel="Project completion progress"
+                  />
                 </div>
-              {/if}
-            </section>
-          {/if}
-
-          <!-- Epics -->
-          {#if epics.length > 0 || onAddEpic}
-            <section>
-              <h3 class="text-xs uppercase font-medium text-foreground-muted mb-3 tracking-wide">
-                Epics
-              </h3>
-              <div class="space-y-2">
-                {#each epics as epic (epic.id)}
-                  {@const epicCounts = computeIssueCounts(epic.issues ?? [])}
-                  {@const epicProgress = computeProgress(epicCounts)}
-                  <button
-                    type="button"
-                    onclick={() => onEpicClick?.(epic)}
-                    class="w-full flex flex-col gap-1 p-2 rounded-md bg-muted/50 text-left {onEpicClick
-                      ? 'hover:bg-muted cursor-pointer'
-                      : 'cursor-default'}"
-                  >
-                    <div class="flex items-center gap-2">
-                      <Badge variant={getEpicStatusVariant(epic.status)} class="text-xs shrink-0">
-                        {epic.status}
-                      </Badge>
-                      <span class="text-body flex-1 truncate">{epic.name}</span>
-                      {#if epicProgress.total > 0}
-                        <span class="text-metadata text-foreground-secondary shrink-0">
-                          {epicProgress.completed}/{epicProgress.total} done
-                        </span>
-                      {/if}
-                    </div>
-                    {#if epicProgress.total > 0}
-                      <div
-                        class="h-0.75 w-full bg-muted rounded-full overflow-hidden"
-                        role="progressbar"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        aria-valuenow={epicProgress.percentage}
-                        aria-label="{epic.name} completion"
-                      >
-                        <div
-                          class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                          style="width: {epicProgress.percentage}%"
-                        ></div>
-                      </div>
-                    {/if}
-                  </button>
-                {/each}
-              </div>
-              {#if onAddEpic}
-                <button
-                  type="button"
-                  onclick={onAddEpic}
-                  class="mt-2 w-full flex items-center gap-1 px-2 py-1.5 rounded-md text-sm text-foreground-muted hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  <span class="text-base leading-none">+</span>
-                  <span>Add epic</span>
-                </button>
               {/if}
             </section>
           {/if}

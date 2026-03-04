@@ -210,3 +210,17 @@
     gap: 48px;
   }
 }
+
+/* North Design System Component Classes */
+@layer components {
+  /* Section header inside sheets/panels (e.g. "Basic Info", "Progress", "Epics") */
+  .section-header {
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 500; /* font-medium */
+    text-transform: uppercase;
+    letter-spacing: 0.05em; /* tracking-wide */
+    color: hsl(var(--foreground-muted));
+    margin-bottom: 0.75rem; /* mb-3 */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
