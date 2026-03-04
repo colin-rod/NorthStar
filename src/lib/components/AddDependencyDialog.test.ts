@@ -186,7 +186,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should render the dialog with title', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -200,7 +199,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should render search input placeholder', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -214,7 +212,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should display available issues', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -229,7 +226,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should show empty state when no issues available', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: [],
         blockedByIssues: [],
@@ -243,7 +239,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should display issue count in footer', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -257,7 +252,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should render priority badges for each issue', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -272,7 +266,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should show project and epic names for each issue', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -354,7 +347,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: [issueWithoutNames],
         blockedByIssues: [],
@@ -369,7 +361,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should show "No matching issues found" when search has no results', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -390,7 +381,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: singleIssue,
         blockedByIssues: [],
@@ -404,7 +394,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should pluralize issue count correctly - plural', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -441,7 +430,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: { ...mockIssue, id: 'issue-1' },
         projectIssues: allIssues,
         blockedByIssues,
@@ -459,7 +447,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should show "No available issues" when projectIssues is empty', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: [],
         blockedByIssues: [],
@@ -473,7 +460,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
   it('should show "No matching issues found" when search filters all issues', () => {
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -501,7 +487,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -529,7 +514,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -562,7 +546,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -585,7 +568,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: null,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],
@@ -619,7 +601,6 @@ describe('AddDependencyDialog - Component Rendering', () => {
 
     render(AddDependencyDialog, {
       props: {
-        open: true,
         issue: mockIssue,
         projectIssues: mockAvailableIssues,
         blockedByIssues: [],

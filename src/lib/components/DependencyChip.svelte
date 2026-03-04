@@ -36,7 +36,11 @@
 
 {#if totalDeps > 0}
   <Popover bind:open>
-    <span onmouseenter={() => (open = true)} onmouseleave={() => (open = false)}>
+    <span
+      role="presentation"
+      onmouseenter={() => (open = true)}
+      onmouseleave={() => (open = false)}
+    >
       <PopoverTrigger>
         {#if hasBlockers}
           <button
