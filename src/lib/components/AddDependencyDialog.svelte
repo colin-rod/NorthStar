@@ -28,6 +28,7 @@
   let open = $state(false);
   let searchTerm = $state('');
   let loading = $state(false);
+  let adding = $state(false);
   let error = $state<string | null>(null);
 
   // Filter available issues (exclude self and existing dependencies)
@@ -64,8 +65,9 @@
 
   // Add dependency handler
   async function addDependency(dependsOnIssueId: string) {
-    if (!issue) return;
+    if (!issue || adding) return;
 
+    adding = true;
     loading = true;
     error = null;
 
@@ -100,6 +102,7 @@
       console.error('Add dependency error:', err);
     } finally {
       loading = false;
+      adding = false;
     }
   }
 </script>
