@@ -338,6 +338,10 @@
           saveState = 'saved';
           queueSaveStateIdleReset();
         }
+        toast.success('Changes saved successfully', {
+          duration: 2000,
+          ...successToastA11y,
+        });
         options.onSuccess?.();
         await invalidateAll();
       } else {
@@ -776,6 +780,18 @@
                   class="text-body h-8 flex-1"
                 />
               </div>
+
+              {#if saveState !== 'idle'}
+                <p class="text-xs text-right text-foreground-muted" aria-live="polite">
+                  {#if saveState === 'saving'}
+                    Saving...
+                  {:else if saveState === 'saved'}
+                    ✓ Saved
+                  {:else if saveState === 'error'}
+                    Save failed. Please retry.
+                  {/if}
+                </p>
+              {/if}
 
               <!-- Status -->
               <div class="flex items-center gap-3">

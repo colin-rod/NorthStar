@@ -5,7 +5,7 @@
    * Renders context-sensitive actions based on node type:
    * - project: Status, | Add Epic | Rename, Archive, Delete
    * - epic: Status, Priority, Milestone, | Add Issue | Rename, Delete
-   * - issue: Status, Priority, Story Points, Milestone, | Rename, Delete
+   * - issue: Status, Priority, Story Points, Milestone, | Delete
    */
 
   import * as CM from '$lib/components/ui/context-menu';
@@ -429,15 +429,6 @@
         </CM.ContextMenuSub>
 
         <CM.ContextMenuSeparator />
-
-        <CM.ContextMenuItem
-          onclick={() => {
-            onRename?.(node!);
-            onClose();
-          }}
-        >
-          Rename
-        </CM.ContextMenuItem>
 
         <CM.ContextMenuItem
           class="text-destructive focus:text-destructive"
