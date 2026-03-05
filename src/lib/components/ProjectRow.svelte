@@ -59,9 +59,9 @@
       aria-expanded={isExpanded}
     >
       {#if isExpanded}
-        <ChevronDown class="h-5 w-5 text-muted-foreground" />
+        <ChevronDown aria-hidden="true" class="h-5 w-5 text-muted-foreground" />
       {:else}
-        <ChevronRight class="h-5 w-5 text-muted-foreground" />
+        <ChevronRight aria-hidden="true" class="h-5 w-5 text-muted-foreground" />
       {/if}
     </button>
 
@@ -70,7 +70,7 @@
       class="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-1 {projectColor.bg}"
     >
       {#key project.icon}
-        <ProjectIcon size={13} class="text-white" />
+        <ProjectIcon aria-hidden="true" size={13} class="text-white" />
       {/key}
     </div>
 

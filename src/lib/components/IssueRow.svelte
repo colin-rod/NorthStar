@@ -86,7 +86,7 @@
     }}
     ontouchend={() => (dragDisabled = true)}
   >
-    <GripVertical class="h-4 w-4 text-muted-foreground" />
+    <GripVertical aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
   </div>
 
   {#if showReorderHint && !$reorderHintDismissed}
@@ -105,7 +105,7 @@
           dismissReorderHint();
         }}
       >
-        <X class="h-3 w-3" />
+        <X aria-hidden="true" class="h-3 w-3" />
       </button>
     </div>
   {/if}
@@ -125,7 +125,7 @@
         ></div>
         <span class="sr-only">{statusLabel}</span>
         {#if blocked}
-          <Lock class="h-4 w-4 text-status-blocked-strong" />
+          <Lock aria-hidden="true" class="h-4 w-4 text-status-blocked-strong" />
         {/if}
       </div>
 
@@ -137,12 +137,14 @@
       <div class="flex-1 min-w-0">
         <!-- Title: 16px, weight 500 (medium bold-ish) -->
         <h3 class="text-issue-title truncate flex items-center gap-2">
-          <span class="text-muted-foreground font-mono text-sm">I-{issue.number}</span>
-          <span class="mx-1 text-muted-foreground">·</span>
+          <span aria-label="Issue {issue.number}" class="text-muted-foreground font-mono text-sm"
+            >I-{issue.number}</span
+          >
+          <span aria-hidden="true" class="mx-1 text-muted-foreground">·</span>
           <span class="flex-1 truncate">{issue.title}</span>
           <!-- Ready indicator: green checkmark for todo status when not blocked -->
           {#if issue.status === 'todo' && !blocked}
-            <CheckCircle2 class="h-4 w-4 text-status-done shrink-0" />
+            <CheckCircle2 aria-hidden="true" class="h-4 w-4 text-status-done shrink-0" />
           {/if}
         </h3>
 
@@ -175,7 +177,7 @@
           class="p-1 hover:bg-surface-subtle rounded"
           aria-label="Move up"
         >
-          <ChevronUp class="h-4 w-4 text-muted-foreground" />
+          <ChevronUp aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
         </button>
       {/if}
       {#if onMoveDown}
@@ -187,7 +189,7 @@
           class="p-1 hover:bg-surface-subtle rounded"
           aria-label="Move down"
         >
-          <ChevronDown class="h-4 w-4 text-muted-foreground" />
+          <ChevronDown aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
         </button>
       {/if}
     </div>

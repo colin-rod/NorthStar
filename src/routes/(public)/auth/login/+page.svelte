@@ -75,7 +75,9 @@
                   name="password"
                   autocomplete="current-password"
                   required
+                  aria-describedby="login-password-hint"
                 />
+                <p id="login-password-hint" class="sr-only">Enter your account password</p>
               </div>
               <Button type="submit" class="w-full" disabled={loginLoading} aria-busy={loginLoading}>
                 {loginLoading ? 'Logging in...' : 'Login'}

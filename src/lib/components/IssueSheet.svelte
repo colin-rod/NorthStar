@@ -725,7 +725,7 @@
                   bind:value={selectedProjectId}
                   required
                   disabled={createLoading}
-                  class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input"
                 >
                   {#each projects as project (project.id)}
                     <option value={project.id}>{project.name}</option>
@@ -741,7 +741,7 @@
                   bind:value={localEpicId}
                   required
                   disabled={createLoading}
-                  class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input"
                 >
                   {#each projectEpics as epic (epic.id)}
                     <option value={epic.id}>{epic.name}</option>
@@ -787,7 +787,7 @@
                   bind:value={localStatus}
                   onchange={handleStatusChange}
                   disabled={loading}
-                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input-sm"
                 >
                   <option value="backlog">Backlog</option>
                   <option value="todo">Todo</option>
@@ -808,7 +808,7 @@
                   bind:value={localPriority}
                   onchange={handlePriorityChange}
                   disabled={loading}
-                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input-sm"
                 >
                   <option value={0}>P0 (Critical)</option>
                   <option value={1}>P1 (High)</option>
@@ -846,7 +846,7 @@
                   value={localStoryPoints?.toString() ?? 'null'}
                   onchange={handleStoryPointsChange}
                   disabled={loading}
-                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input-sm"
                 >
                   <option value="null">Not set</option>
                   {#each ALLOWED_STORY_POINTS as points (points)}

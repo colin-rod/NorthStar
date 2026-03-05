@@ -323,7 +323,6 @@
   function handleBulkAction(action: string) {
     if (action === 'delete') {
       // TODO: Implement bulk delete with confirmation
-      console.log('Bulk delete:', selectedIds);
     }
   }
 

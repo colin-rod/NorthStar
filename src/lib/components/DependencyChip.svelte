@@ -49,7 +49,7 @@
             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-bg-blocked text-status-blocked-strong border border-status-blocked/20 hover:bg-bg-blocked/70 transition-colors cursor-pointer"
             onclick={(e) => e.stopPropagation()}
           >
-            <Lock class="h-3 w-3" />
+            <Lock aria-hidden="true" class="h-3 w-3" />
             {blockingDeps.length} blocked
           </button>
         {:else}
@@ -59,7 +59,7 @@
             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border-divider hover:bg-surface-subtle transition-colors cursor-pointer"
             onclick={(e) => e.stopPropagation()}
           >
-            <CircleCheck class="h-3 w-3" />
+            <CircleCheck aria-hidden="true" class="h-3 w-3" />
             {satisfiedDeps.length} dep{satisfiedDeps.length !== 1 ? 's' : ''}
           </button>
         {/if}
@@ -89,6 +89,7 @@
                   >
                   <span class="text-xs truncate flex-1">{dep.title}</span>
                   <ArrowRight
+                    aria-hidden="true"
                     class="h-3 w-3 text-muted-foreground opacity-100 md:opacity-0 md:group-hover/dep:opacity-100 transition-opacity shrink-0"
                   />
                 </button>
@@ -118,6 +119,7 @@
                   >
                   <span class="text-xs truncate flex-1 text-muted-foreground">{dep.title}</span>
                   <ArrowRight
+                    aria-hidden="true"
                     class="h-3 w-3 text-muted-foreground opacity-100 md:opacity-0 md:group-hover/dep:opacity-100 transition-opacity shrink-0"
                   />
                 </button>
