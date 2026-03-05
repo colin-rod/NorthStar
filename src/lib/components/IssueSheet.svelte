@@ -94,6 +94,24 @@
   let loading = $state(false);
   let activeSaveCount = $state(0);
   let latestSaveRequestId = $state(0);
+  type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+  let saveState = $state<SaveState>('idle');
+  let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function clearSaveStateResetTimeout() {
+    if (saveStateResetTimeout) {
+      clearTimeout(saveStateResetTimeout);
+      saveStateResetTimeout = null;
+    }
+  }
+
+  function queueSaveStateIdleReset() {
+    clearSaveStateResetTimeout();
+    saveStateResetTimeout = setTimeout(() => {
+      saveState = 'idle';
+      saveStateResetTimeout = null;
+    }, 1500);
+  }
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
   // svelte-ignore state_referenced_locally
@@ -171,6 +189,8 @@
       lastPersistedDescriptionNormalized = normalizeDescription(issue.description);
       descriptionSaveInFlight = false;
       descriptionInFlightNormalized = null;
+      saveState = 'idle';
+      clearSaveStateResetTimeout();
 
       // Load attachments and links for this issue
       if (internalMode === 'edit') {
@@ -291,6 +311,8 @@
     latestSaveRequestId = requestId;
     activeSaveCount += 1;
     loading = activeSaveCount > 0;
+    clearSaveStateResetTimeout();
+    saveState = 'saving';
 
     try {
       const formData = new FormData();
@@ -305,6 +327,10 @@
       const result = deserialize(await response.text());
 
       if (result.type === 'success') {
+        if (requestId === latestSaveRequestId) {
+          saveState = 'saved';
+          queueSaveStateIdleReset();
+        }
         toast.success('Changes saved successfully', {
           duration: 2000,
           ...successToastA11y,
@@ -312,6 +338,9 @@
         options.onSuccess?.();
         await invalidateAll();
       } else {
+        if (requestId === latestSaveRequestId) {
+          saveState = 'error';
+        }
         const error = (result as any).data?.error || 'Failed to save';
         toast.error(error, {
           duration: 5000,
@@ -320,6 +349,9 @@
       }
     } catch (error) {
       console.error('Auto-save error:', error);
+      if (requestId === latestSaveRequestId) {
+        saveState = 'error';
+      }
       toast.error('Network error - please try again', {
         duration: 5000,
         ...errorToastA11y,
@@ -654,6 +686,18 @@
           {/if}
         </div>
       </SheetHeader>
+
+      {#if internalMode === 'edit' && saveState !== 'idle'}
+        <p class="text-xs text-muted-foreground mb-2">
+          {#if saveState === 'saving'}
+            Saving...
+          {:else if saveState === 'saved'}
+            ✓ Saved
+          {:else if saveState === 'error'}
+            Save failed. Please retry.
+          {/if}
+        </p>
+      {/if}
 
       {#if internalMode === 'create'}
         <!-- Create mode: form with submit button -->
