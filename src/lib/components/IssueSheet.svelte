@@ -105,6 +105,7 @@
   // Create mode state
   let selectedProjectId = $state('');
   let createLoading = $state(false);
+  let createModeInitialized = $state(false);
 
   // Description state
   let localDescription = $state<string | null>(null);
@@ -198,9 +199,10 @@
     }
   });
 
-  // Initialize create mode defaults when sheet opens
+  // Initialize create mode defaults ONCE when sheet opens (guard prevents re-running on prop changes)
   $effect(() => {
-    if (internalMode === 'create' && open) {
+    if (internalMode === 'create' && open && !createModeInitialized) {
+      createModeInitialized = true;
       localTitle = '';
       localStatus = 'todo';
       localPriority = 2;
@@ -215,7 +217,7 @@
       if (ctx) {
         selectedProjectId = ctx.projectId;
         localEpicId = ctx.epicId;
-      } else if (projects.length > 0 && !selectedProjectId) {
+      } else if (projects.length > 0) {
         selectedProjectId = projects[0].id;
       }
     }
@@ -235,6 +237,7 @@
   // Reset state when sheet closes
   $effect(() => {
     if (!open) {
+      createModeInitialized = false;
       expanded = false;
       selectedProjectId = '';
       localEpicId = '';
