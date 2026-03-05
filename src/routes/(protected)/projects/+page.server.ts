@@ -57,6 +57,22 @@ export const load: PageServerLoad = async ({ locals: { supabase, session }, url 
           issue_id,
           depends_on_issue_id,
           depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status, number, title)
+        ),
+        blocked_by:dependencies!dependencies_issue_id_fkey(
+          depends_on_issue_id,
+          depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(
+            id, title, status, priority, epic_id, project_id,
+            epic:epics(id, name),
+            project:projects(id, name)
+          )
+        ),
+        blocking:dependencies!dependencies_depends_on_issue_id_fkey(
+          issue_id,
+          issue:issues!dependencies_issue_id_fkey(
+            id, title, status, priority, epic_id, project_id,
+            epic:epics(id, name),
+            project:projects(id, name)
+          )
         )
       `,
       )
@@ -417,6 +433,7 @@ export const actions: Actions = {
     const title = formData.get('title')?.toString().trim();
     const epicId = formData.get('epicId')?.toString();
     const projectId = formData.get('projectId')?.toString();
+    const parentIssueId = formData.get('parentIssueId')?.toString() || null;
 
     if (!title || title.length === 0) {
       return fail(400, { error: 'Issue title is required' });
@@ -446,6 +463,7 @@ export const actions: Actions = {
         title,
         epic_id: epicId,
         project_id: projectId,
+        ...(parentIssueId ? { parent_issue_id: parentIssueId } : {}),
         status: 'todo',
         priority: 3, // Default P3
         sort_order: nextSortOrder,

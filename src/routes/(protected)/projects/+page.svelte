@@ -8,6 +8,7 @@
 
   import { page } from '$app/stores';
   import { goto, invalidateAll } from '$app/navigation';
+  import { deserialize } from '$app/forms';
   import TreeGrid from '$lib/components/tree-grid/TreeGrid.svelte';
   import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
   import EpicDetailSheet from '$lib/components/EpicDetailSheet.svelte';
@@ -114,6 +115,18 @@
   $effect(() => {
     if (!projectDetailSheetOpen && $projectSheetOpen) {
       projectSheetOpen.set(false);
+    }
+  });
+
+  // Sync selectedIssue with fresh data after invalidateAll (e.g. after adding a dependency)
+  $effect(() => {
+    if ($selectedIssue && $isIssueSheetOpen) {
+      const freshIssue = data.projects
+        .flatMap((p) => p.epics?.flatMap((e) => e.issues || []) || [])
+        .find((i) => i.id === $selectedIssue?.id);
+      if (freshIssue) {
+        selectedIssue.set(freshIssue);
+      }
     }
   });
 
@@ -245,8 +258,12 @@
           body: formData,
         });
 
-        if (response.ok) {
+        const result = deserialize(await response.text());
+
+        if (result.type === 'success') {
+          const newIssue = (result.data as any).issue;
           await invalidateAll();
+          openIssueSheet({ ...newIssue, blocked_by: [], blocking: [] });
           showToast('Issue created', 'success');
         } else {
           showToast('Failed to create issue', 'error');
@@ -279,13 +296,17 @@
       formData.append('projectId', projectId);
 
       try {
-        const response = await fetch('?/createSubIssue', {
+        const response = await fetch('?/createIssue', {
           method: 'POST',
           body: formData,
         });
 
-        if (response.ok) {
+        const result = deserialize(await response.text());
+
+        if (result.type === 'success') {
+          const newIssue = (result.data as any).issue;
           await invalidateAll();
+          openIssueSheet({ ...newIssue, blocked_by: [], blocking: [] });
           showToast('Sub-issue created', 'success');
         } else {
           showToast('Failed to create sub-issue', 'error');
