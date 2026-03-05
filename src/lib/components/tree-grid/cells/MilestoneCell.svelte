@@ -9,33 +9,23 @@
    */
 
   import type { TreeNode } from '$lib/types/tree-grid';
-  import type { Issue, Epic } from '$lib/types';
+  import type { Issue } from '$lib/types';
 
   interface Props {
     node: TreeNode;
-    onEdit: (value: string | null) => void;
   }
 
-  let { node, onEdit }: Props = $props();
+  let { node }: Props = $props();
 
-  // Projects don't have milestones
-  const isApplicable = $derived(node.type !== 'project');
+  // Only issues have milestones
+  const isApplicable = $derived(node.type === 'issue');
 
-  // Get milestone from node data (only issues have milestones)
+  // Get milestone from node data
   const milestone = $derived.by(() => {
-    if (!isApplicable || node.type === 'epic') return null;
+    if (!isApplicable) return null;
     const data = node.data as Issue;
     return data.milestone || null;
   });
-
-  const milestoneId = $derived.by(() => {
-    if (!isApplicable || node.type === 'epic') return null;
-    const data = node.data as Issue;
-    return data.milestone_id || null;
-  });
-
-  // TODO: Load available milestones from context/store
-  const availableMilestones: any[] = [];
 </script>
 
 {#if !isApplicable}

@@ -37,19 +37,21 @@
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import type { TreeNode } from '$lib/types/tree-grid';
+  import * as Dialog from '$lib/components/ui/dialog';
+  import { Button } from '$lib/components/ui/button';
 
   let { data }: { data: PageData } = $props();
 
   // URL-based state for expanded items (enables deep-linking)
   let expandedProjectId = $derived($page.url.searchParams.get('project') || null);
   let expandedEpicId = $derived($page.url.searchParams.get('epic') || null);
+  let openIssueId = $derived($page.url.searchParams.get('issue') || null);
 
   // Build expandedIds set from URL params
   let expandedIds = $derived.by(() => {
     const ids = new Set<string>();
     if (expandedProjectId) ids.add(expandedProjectId);
     if (expandedEpicId) ids.add(expandedEpicId);
-    // TODO: Add issue expansion from URL if needed
     return ids;
   });
 
@@ -71,6 +73,9 @@
   let selectedEpicForDetail: Epic | null = $state(null);
   let selectedEpicCounts: IssueCounts | null = $state(null);
   let selectedEpicIssues: Issue[] = $state([]);
+
+  // Bulk delete dialog state
+  let bulkDeleteDialogOpen = $state(false);
 
   // Context menu state
   let contextMenuOpen = $state(false);
@@ -121,6 +126,29 @@
     }
   });
 
+  // Auto-open IssueSheet when ?issue=<id> is present in URL (deep-link support)
+  $effect(() => {
+    if (!openIssueId) return;
+    const allIssues = data.projects.flatMap((p) => p.epics?.flatMap((e) => e.issues || []) || []);
+    const issue = allIssues.find((i) => i.id === openIssueId);
+    if (issue && !$isIssueSheetOpen) {
+      openIssueSheet({
+        ...issue,
+        blocked_by: issue.blocked_by || [],
+        blocking: issue.blocking || [],
+      });
+    }
+  });
+
+  // Clear ?issue= param when IssueSheet closes
+  $effect(() => {
+    if (!$isIssueSheetOpen && openIssueId) {
+      const url = new URL($page.url);
+      url.searchParams.delete('issue');
+      goto(url, { replaceState: true, noScroll: true });
+    }
+  });
+
   // Sync selectedIssue with fresh data after invalidateAll (e.g. after adding a dependency)
   $effect(() => {
     const projects = data.projects;
@@ -168,8 +196,10 @@
         }
         url.searchParams.set('epic', id);
       }
+    } else {
+      // Issues are leaf nodes - opening is handled via handleIssueClick
+      return;
     }
-    // TODO: Handle issue expansion if needed
 
     goto(url, { replaceState: true, noScroll: true });
   }
@@ -327,7 +357,42 @@
 
   function handleBulkAction(action: string) {
     if (action === 'delete') {
-      // TODO: Implement bulk delete with confirmation
+      bulkDeleteDialogOpen = true;
+    }
+  }
+
+  async function confirmBulkDelete() {
+    bulkDeleteDialogOpen = false;
+    const actionMap: Record<string, string> = {
+      project: '?/deleteProject',
+      epic: '?/deleteEpic',
+      issue: '?/deleteIssue',
+    };
+
+    const deletes = Array.from(selectedIds).map((id) => {
+      let type = 'issue';
+      if (data.projects.some((p) => p.id === id)) {
+        type = 'project';
+      } else if (data.projects.some((p) => p.epics?.some((e: Epic) => e.id === id))) {
+        type = 'epic';
+      }
+      const formData = new FormData();
+      formData.append('id', id);
+      return fetch(actionMap[type], { method: 'POST', body: formData });
+    });
+
+    try {
+      const results = await Promise.all(deletes);
+      const failed = results.filter((r) => !r.ok).length;
+      selectedIds = new Set();
+      await invalidateAll();
+      if (failed > 0) {
+        showToast(`${failed} item(s) failed to delete`, 'error');
+      } else {
+        showToast(`${deletes.length} item(s) deleted`, 'success');
+      }
+    } catch {
+      showToast('Failed to delete items', 'error');
     }
   }
 
@@ -488,6 +553,17 @@
     }
   }
 
+  function handleIssueClick(issue: Issue) {
+    const url = new URL($page.url);
+    url.searchParams.set('issue', issue.id);
+    goto(url, { replaceState: true, noScroll: true });
+    openIssueSheet({
+      ...issue,
+      blocked_by: issue.blocked_by || [],
+      blocking: issue.blocking || [],
+    });
+  }
+
   function showToast(message: string, type: 'success' | 'error') {
     feedbackMessage = message;
     feedbackType = type;
@@ -599,7 +675,7 @@
       onCreateChild={handleCreateChild}
       onBulkAction={handleBulkAction}
       onShowToast={showToast}
-      onIssueClick={openIssueSheet}
+      onIssueClick={handleIssueClick}
       onProjectClick={handleProjectDoubleClick}
       onEpicClick={handleEpicDoubleClick}
       onContextMenu={handleContextMenu}
@@ -666,6 +742,25 @@
   milestones={data.milestones ?? []}
   onMilestoneChange={handleContextMilestoneChange}
 />
+
+<!-- Bulk delete confirmation dialog -->
+<Dialog.Root bind:open={bulkDeleteDialogOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Delete {selectedIds.size} item{selectedIds.size === 1 ? '' : 's'}?</Dialog.Title
+      >
+      <Dialog.Description>
+        This will permanently delete the selected items. This action cannot be undone.
+      </Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Button variant="outline" onclick={() => (bulkDeleteDialogOpen = false)}>Cancel</Button>
+      <Button variant="destructive" onclick={confirmBulkDelete}>
+        Delete {selectedIds.size} item{selectedIds.size === 1 ? '' : 's'}
+      </Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
 
 <!-- Simple toast-style feedback -->
 {#if showFeedback}

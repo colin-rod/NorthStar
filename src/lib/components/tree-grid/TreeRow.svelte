@@ -16,6 +16,7 @@
   import TitleCell from './cells/TitleCell.svelte';
   import StatusCell from './cells/StatusCell.svelte';
 
+  import MilestoneCell from './cells/MilestoneCell.svelte';
   import TotalPointsCell from './cells/TotalPointsCell.svelte';
   import ProgressCell from './cells/ProgressCell.svelte';
 
@@ -181,6 +182,11 @@
   <!-- Status -->
   <td class="py-4 px-4">
     <StatusCell {node} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
+  </td>
+
+  <!-- Milestone -->
+  <td class="py-4 px-4 hidden md:table-cell">
+    <MilestoneCell {node} />
   </td>
 
   <!-- Total Story Points (Rollup) -->

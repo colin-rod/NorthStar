@@ -271,7 +271,7 @@
     { key: 'select', header: '', width: '40px', hideOnMobile: true },
     { key: 'title', header: 'Title', width: 'flex min-w-[340px]', hideOnMobile: false },
     { key: 'status', header: 'Status', width: '140px', hideOnMobile: false },
-
+    { key: 'milestone', header: 'Milestone', width: '160px', hideOnMobile: true },
     { key: 'total_sp', header: 'Total pts', width: '96px', hideOnMobile: true },
     { key: 'progress', header: 'Progress', width: '140px', hideOnMobile: true },
   ];

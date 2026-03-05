@@ -169,24 +169,6 @@ export const shadows = {
 } as const;
 
 /**
- * Check if an issue is blocked
- * TODO: Implement actual dependency checking logic
- */
-export function isIssueBlocked(_issue: { dependencies?: unknown[] }): boolean {
-  // Placeholder implementation
-  // Real implementation should check if any dependency has status NOT in ['done', 'canceled']
-  return false;
-}
-
-/**
- * Check if an issue is ready
- * Ready = status 'todo' AND not blocked
- */
-export function isIssueReady(issue: { status: string; dependencies?: unknown[] }): boolean {
-  return issue.status === 'todo' && !isIssueBlocked(issue);
-}
-
-/**
  * Story Points
  * Valid story point values per North/CLAUDE.md spec
  */

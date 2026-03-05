@@ -615,7 +615,7 @@ File: `src/routes/(protected)/+page.svelte` (modify existing)
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="text-3xl font-bold">Issues</h1>
-    <!-- TODO: Add "New Issue" button -->
+    <!-- New Issue button added in final implementation -->
   </div>
 
   <!-- Project Filter -->

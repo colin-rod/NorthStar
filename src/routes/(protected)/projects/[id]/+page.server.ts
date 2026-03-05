@@ -96,6 +96,70 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 export const actions: Actions = {
   /**
+   * Create a new epic in this project
+   */
+  createEpic: async ({ params, request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const name = formData.get('name')?.toString().trim();
+    const status = formData.get('status')?.toString() || 'active';
+    const projectId = params.id;
+
+    if (!name || name.length === 0) {
+      return fail(400, { error: 'Epic name is required' });
+    }
+    if (name.length > 100) {
+      return fail(400, { error: 'Epic name must be 100 characters or less' });
+    }
+    if (!['backlog', 'active', 'on_hold', 'completed', 'canceled'].includes(status)) {
+      return fail(400, { error: 'Invalid status' });
+    }
+
+    // Verify project exists and user owns it
+    const { data: project } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (!project) {
+      return fail(404, { error: 'Project not found' });
+    }
+
+    // Get max sort_order for this project
+    const { data: maxOrderEpic } = await supabase
+      .from('epics')
+      .select('sort_order')
+      .eq('project_id', projectId)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextSortOrder = (maxOrderEpic?.sort_order ?? -1) + 1;
+
+    const { data, error } = await supabase
+      .from('epics')
+      .insert({
+        name,
+        project_id: projectId,
+        status,
+        sort_order: nextSortOrder,
+        is_default: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Create epic error:', error);
+      return fail(500, { error: 'Failed to create epic' });
+    }
+
+    return { success: true, action: 'createEpic', epic: data };
+  },
+
+  /**
    * Update an issue
    */
   updateIssue: async ({ request, locals: { supabase, session } }) => {
@@ -286,6 +350,200 @@ export const actions: Actions = {
     }
 
     return { success: true, action: 'createMilestone', milestone: data };
+  },
+
+  updateProject: async ({ request, locals: { supabase, session } }) => {
+    if (!session) {
+      return fail(401, { error: 'Unauthorized' });
+    }
+
+    const formData = await request.formData();
+    const id = formData.get('id')?.toString();
+
+    if (!id) {
+      return fail(400, { error: 'Project ID is required' });
+    }
+
+    const updates: Record<string, unknown> = {};
+
+    const name = formData.get('name');
+    if (name !== null) {
+      const trimmedName = name.toString().trim();
+      if (trimmedName.length === 0) {
+        return fail(400, { error: 'Project name is required' });
+      }
+      if (trimmedName.length > 100) {
+        return fail(400, { error: 'Project name must be 100 characters or less' });
+      }
+      updates.name = trimmedName;
+    }
+
+    const description = formData.get('description');
+    if (description !== null) {
+      updates.description = description.toString() === '' ? null : description.toString();
+    }
+
+    const status = formData.get('status');
+    if (status !== null) {
+      const s = status.toString();
+      if (!['backlog', 'planned', 'active', 'on_hold', 'completed', 'canceled'].includes(s)) {
+        return fail(400, { error: 'Invalid status value' });
+      }
+      updates.status = s;
+    }
+
+    const color = formData.get('color');
+    if (color !== null) {
+      const validColors = [
+        'gray',
+        'red',
+        'orange',
+        'amber',
+        'green',
+        'teal',
+        'blue',
+        'violet',
+        'pink',
+        'rose',
+      ];
+      const c = color.toString();
+      if (!validColors.includes(c)) {
+        return fail(400, { error: 'Invalid color value' });
+      }
+      updates.color = c;
+    }
+
+    const icon = formData.get('icon');
+    if (icon !== null) {
+      updates.icon = icon.toString();
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return { success: true, action: 'update' };
+    }
+
+    const { error } = await supabase
+      .from('projects')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', session.user.id);
+
+    if (error) {
+      console.error('Update project error:', error);
+      return fail(500, { error: 'Failed to update project' });
+    }
+
+    return { success: true, action: 'update' };
+  },
+
+  createAttachment: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const entityType = d.get('entity_type')?.toString();
+    const entityId = d.get('entity_id')?.toString();
+    const fileName = d.get('file_name')?.toString();
+    const fileSize = Number(d.get('file_size')?.toString() ?? '0');
+    const mimeType = d.get('mime_type')?.toString();
+    const storagePath = d.get('storage_path')?.toString();
+
+    if (!entityType || !entityId || !fileName || !mimeType || !storagePath) {
+      return fail(400, { error: 'Missing required attachment fields' });
+    }
+
+    const validEntityTypes = ['project', 'epic', 'issue'];
+    if (!validEntityTypes.includes(entityType)) {
+      return fail(400, { error: 'Invalid entity type' });
+    }
+
+    const { data, error } = await supabase
+      .from('attachments')
+      .insert({
+        user_id: session.user.id,
+        entity_type: entityType,
+        entity_id: entityId,
+        file_name: fileName,
+        file_size: fileSize,
+        mime_type: mimeType,
+        storage_path: storagePath,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to save attachment:', error);
+      return fail(500, { error: 'Failed to save attachment' });
+    }
+
+    return { success: true, attachment: data };
+  },
+
+  deleteAttachment: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const id = d.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Attachment ID is required' });
+
+    await supabase.from('attachments').delete().eq('id', id).eq('user_id', session.user.id);
+
+    return { success: true };
+  },
+
+  createLink: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const entityType = d.get('entity_type')?.toString();
+    const entityId = d.get('entity_id')?.toString();
+    const url = d.get('url')?.toString();
+    const label = d.get('label')?.toString();
+
+    if (!entityType || !entityId || !url || !label) {
+      return fail(400, { error: 'Missing required link fields' });
+    }
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return fail(400, { error: 'URL must use http or https' });
+      }
+    } catch {
+      return fail(400, { error: 'Invalid URL' });
+    }
+
+    const { data, error } = await supabase
+      .from('links')
+      .insert({
+        user_id: session.user.id,
+        entity_type: entityType,
+        entity_id: entityId,
+        url,
+        label,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to save link:', error);
+      return fail(500, { error: 'Failed to save link' });
+    }
+
+    return { success: true, link: data };
+  },
+
+  deleteLink: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const d = await request.formData();
+    const id = d.get('id')?.toString();
+
+    if (!id) return fail(400, { error: 'Link ID is required' });
+
+    await supabase.from('links').delete().eq('id', id).eq('user_id', session.user.id);
+
+    return { success: true };
   },
 
   /**

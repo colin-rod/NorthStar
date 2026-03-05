@@ -571,6 +571,22 @@
             </section>
           {/if}
 
+          <!-- Progress -->
+          {#if counts}
+            <section>
+              <h3 class="section-header">Progress</h3>
+              <IssueCountsBadges {counts} />
+              {#if computeProgress(counts).total > 0}
+                <div class="mt-3">
+                  <ProgressBar
+                    percentage={computeProgress(counts).percentage}
+                    ariaLabel="Project completion progress"
+                  />
+                </div>
+              {/if}
+            </section>
+          {/if}
+
           <!-- Epics -->
           {#if epics.length > 0}
             <section>
@@ -590,22 +606,6 @@
                   </button>
                 {/each}
               </div>
-            </section>
-          {/if}
-
-          <!-- Progress -->
-          {#if counts}
-            <section>
-              <h3 class="section-header">Progress</h3>
-              <IssueCountsBadges {counts} />
-              {#if computeProgress(counts).total > 0}
-                <div class="mt-3">
-                  <ProgressBar
-                    percentage={computeProgress(counts).percentage}
-                    ariaLabel="Project completion progress"
-                  />
-                </div>
-              {/if}
             </section>
           {/if}
         </div>
