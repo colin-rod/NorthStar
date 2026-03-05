@@ -204,17 +204,17 @@ describe('IssueSheet description auto-save guards', () => {
     await fireEvent.input(titleInput, { target: { value: 'Issue One Updated' } });
     await fireEvent.blur(titleInput);
 
-    expect(await screen.findByText('Saving...')).toBeInTheDocument();
+    expect(await screen.findByText('Saving')).toBeInTheDocument();
 
     resolveFetch!({ ok: true, text: async () => JSON.stringify({ type: 'success' }) });
 
     await waitFor(() => {
-      expect(screen.getByText('✓ Saved')).toBeInTheDocument();
+      expect(screen.getByText('Saved')).toBeInTheDocument();
     });
 
     await vi.advanceTimersByTimeAsync(1500);
 
-    expect(screen.queryByText('✓ Saved')).not.toBeInTheDocument();
+    expect(screen.queryByText('Saved')).not.toBeInTheDocument();
   });
 
   it('passes polite status semantics to success toasts', async () => {
@@ -305,6 +305,6 @@ describe('IssueSheet description auto-save guards', () => {
     await fireEvent.input(titleInput, { target: { value: 'Issue One Failed Save' } });
     await fireEvent.blur(titleInput);
 
-    expect(await screen.findByText('Save failed. Please retry.')).toBeInTheDocument();
+    expect(await screen.findByText('Save failed')).toBeInTheDocument();
   });
 });
