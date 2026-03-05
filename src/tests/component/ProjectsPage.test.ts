@@ -14,6 +14,10 @@ vi.mock('$app/navigation', () => ({
   invalidateAll: vi.fn(() => Promise.resolve()),
 }));
 
+vi.mock('$app/forms', () => ({
+  deserialize: (text: string) => JSON.parse(text),
+}));
+
 let mockPageStore: ReturnType<typeof writable>;
 
 vi.mock('$app/stores', () => ({
@@ -185,14 +189,14 @@ describe('ProjectsPage - Filter panel toggle', () => {
     render(ProjectsPage, { props: { data: pageData } });
     const filtersBtn = screen.getByRole('button', { name: /Filters/i });
 
-    // Initially shows ▼ (closed)
-    expect(filtersBtn).toHaveTextContent('▼');
+    // Initially closed
+    expect(filtersBtn).toHaveAttribute('aria-expanded', 'false');
 
     await fireEvent.click(filtersBtn);
-    expect(filtersBtn).toHaveTextContent('▲');
+    expect(filtersBtn).toHaveAttribute('aria-expanded', 'true');
 
     await fireEvent.click(filtersBtn);
-    expect(filtersBtn).toHaveTextContent('▼');
+    expect(filtersBtn).toHaveAttribute('aria-expanded', 'false');
   });
 });
 
@@ -331,7 +335,30 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
   });
 
   it('calls ?/createIssue when creating a child of an epic', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({ ok: true } as Response);
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          type: 'success',
+          data: {
+            issue: {
+              id: 'issue-2',
+              title: 'New Issue',
+              status: 'todo',
+              priority: 1,
+              project_id: 'project-1',
+              epic_id: 'epic-1',
+              milestone_id: null,
+              story_points: null,
+              sort_order: 2,
+              created_at: new Date().toISOString(),
+              parent_issue_id: null,
+              description: null,
+            },
+          },
+          status: 200,
+        }),
+    } as unknown as Response);
     render(ProjectsPage, { props: { data: pageData } });
 
     await fireEvent.click(screen.getByRole('button', { name: 'Create issue child' }));
@@ -355,7 +382,11 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
   });
 
   it('shows error toast when issue creation fails', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response);
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      text: async () =>
+        JSON.stringify({ type: 'failure', data: { error: 'Server error' }, status: 400 }),
+    } as unknown as Response);
     render(ProjectsPage, { props: { data: pageData } });
 
     await fireEvent.click(screen.getByRole('button', { name: 'Create issue child' }));
