@@ -6,6 +6,7 @@
    * Projects → Epics → Issues → Sub-issues
    */
 
+  import { untrack } from 'svelte';
   import { page } from '$app/stores';
   import { goto, invalidateAll } from '$app/navigation';
   import { deserialize } from '$app/forms';
@@ -122,10 +123,14 @@
 
   // Sync selectedIssue with fresh data after invalidateAll (e.g. after adding a dependency)
   $effect(() => {
-    if ($selectedIssue && $isIssueSheetOpen) {
-      const freshIssue = data.projects
+    const projects = data.projects;
+    const currentIssue = untrack(() => $selectedIssue);
+    const sheetOpen = untrack(() => $isIssueSheetOpen);
+
+    if (currentIssue && sheetOpen) {
+      const freshIssue = projects
         .flatMap((p) => p.epics?.flatMap((e) => e.issues || []) || [])
-        .find((i) => i.id === $selectedIssue?.id);
+        .find((i) => i.id === currentIssue.id);
       if (freshIssue) {
         selectedIssue.set(freshIssue);
       }
