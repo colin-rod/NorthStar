@@ -56,6 +56,7 @@
       }}
       class="flex items-center shrink-0 pt-1 cursor-pointer"
       aria-label={isExpanded ? 'Collapse project' : 'Expand project'}
+      aria-expanded={isExpanded}
     >
       {#if isExpanded}
         <ChevronDown class="h-5 w-5 text-muted-foreground" />

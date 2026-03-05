@@ -203,9 +203,6 @@
           queueSaveStateIdleReset();
         }
         await invalidateAll();
-        toast.success('Changes saved successfully', {
-          duration: 2000,
-        });
       } else {
         if (requestId === latestSaveRequestId) {
           saveState = 'error';
@@ -567,16 +564,6 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-6 pb-6">
-          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
-            {#if saveState === 'saving'}
-              Saving...
-            {:else if saveState === 'saved'}
-              ✓ Saved
-            {:else if saveState === 'error'}
-              Save failed. Please retry.
-            {/if}
-          </div>
-
           <!-- Name -->
           <section>
             <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">

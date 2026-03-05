@@ -192,9 +192,6 @@
           queueSaveStateIdleReset();
         }
         await invalidateAll();
-        toast.success('Changes saved successfully', {
-          duration: 2000,
-        });
       } else {
         if (requestId === latestSaveRequestId) {
           saveState = 'error';
@@ -438,16 +435,6 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-6 pb-6">
-          <div aria-live="polite" class="text-metadata text-foreground-muted">
-            {#if saveState === 'saving'}
-              Saving...
-            {:else if saveState === 'saved'}
-              ✓ Saved
-            {:else if saveState === 'error'}
-              Save failed. Please retry.
-            {/if}
-          </div>
-
           <!-- Name + Icon -->
           <section>
             <div class="flex items-center gap-3">
@@ -531,24 +518,24 @@
           {#if metrics}
             <section>
               <h3 class="section-header">Stats</h3>
-              <div class="grid grid-cols-4 gap-3 text-metadata">
+              <dl class="grid grid-cols-4 gap-3 text-metadata">
                 <div class="flex flex-col gap-1">
-                  <span class="text-section-header">{metrics.totalIssues}</span>
-                  <span class="text-foreground-secondary">Issues</span>
+                  <dd class="text-section-header">{metrics.totalIssues}</dd>
+                  <dt class="text-foreground-secondary">Issues</dt>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-section-header">{epics.length}</span>
-                  <span class="text-foreground-secondary">Epics</span>
+                  <dd class="text-section-header">{epics.length}</dd>
+                  <dt class="text-foreground-secondary">Epics</dt>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-section-header">{metrics.activeStoryPoints}</span>
-                  <span class="text-foreground-secondary">Active pts</span>
+                  <dd class="text-section-header">{metrics.activeStoryPoints}</dd>
+                  <dt class="text-foreground-secondary">Active pts</dt>
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-section-header">{metrics.totalStoryPoints}</span>
-                  <span class="text-foreground-secondary">Total pts</span>
+                  <dd class="text-section-header">{metrics.totalStoryPoints}</dd>
+                  <dt class="text-foreground-secondary">Total pts</dt>
                 </div>
-              </div>
+              </dl>
             </section>
           {/if}
 

@@ -60,7 +60,7 @@
     <!-- Blocking Summary -->
     {#if blockingDeps.length > 0}
       <div class="flex items-center gap-1 text-sm text-destructive font-medium mb-2">
-        <Lock class="h-4 w-4" />
+        <Lock class="h-4 w-4" aria-hidden="true" />
         Blocked by {blockingDeps.length}
         {blockingDeps.length === 1 ? 'dependency' : 'dependencies'}
       </div>
@@ -70,9 +70,9 @@
     {#if blockingDeps.length > 0}
       <div>
         <p class="text-metadata text-foreground-muted mb-2">Waiting on:</p>
-        <div class="space-y-2">
+        <ul class="space-y-2">
           {#each blockingDeps as dep (dep.id)}
-            <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
+            <li class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
               <Badge variant={getStatusBadgeVariant(dep.status)} class="shrink-0">
                 {formatStatus(dep.status)}
               </Badge>
@@ -88,9 +88,9 @@
               >
                 <X class="h-4 w-4" />
               </button>
-            </div>
+            </li>
           {/each}
-        </div>
+        </ul>
       </div>
     {/if}
 
@@ -98,9 +98,9 @@
     {#if satisfiedDeps.length > 0}
       <div>
         <p class="text-metadata text-foreground-muted mb-2">Satisfied dependencies</p>
-        <div class="space-y-2">
+        <ul class="space-y-2">
           {#each satisfiedDeps as dep (dep.id)}
-            <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
+            <li class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
               <Badge variant={getStatusBadgeVariant(dep.status)} class="shrink-0">
                 {formatStatus(dep.status)}
               </Badge>
@@ -116,9 +116,9 @@
               >
                 <X class="h-4 w-4" />
               </button>
-            </div>
+            </li>
           {/each}
-        </div>
+        </ul>
       </div>
     {/if}
 
@@ -131,9 +131,9 @@
     {#if blockingIssues.length > 0}
       <div>
         <p class="text-metadata text-foreground-muted mb-2">Blocking:</p>
-        <div class="space-y-2">
+        <ul class="space-y-2">
           {#each blockingIssues as blocked (blocked.id)}
-            <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+            <li class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
               <Badge variant={getStatusBadgeVariant(blocked.status)} class="shrink-0">
                 {formatStatus(blocked.status)}
               </Badge>
@@ -141,9 +141,9 @@
               <span class="text-metadata text-foreground-muted shrink-0">
                 {blocked.epic?.name}
               </span>
-            </div>
+            </li>
           {/each}
-        </div>
+        </ul>
       </div>
     {/if}
 

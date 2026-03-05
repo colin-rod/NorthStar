@@ -23,6 +23,14 @@ export default {
         'north-lg': '24px',
         'north-xl': '32px',
         'north-2xl': '48px',
+        /* North 4px grid numeric scale */
+        1: '4px',
+        2: '8px',
+        3: '12px',
+        4: '16px',
+        6: '24px',
+        8: '32px',
+        12: '48px',
       },
       fontFamily: {
         ui: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
@@ -36,16 +44,6 @@ export default {
         'issue-title': ['16px', { lineHeight: '1.3', fontWeight: '500' }],
         body: ['15px', { lineHeight: '1.5', fontWeight: '400' }],
         metadata: ['13px', { lineHeight: '1.5', fontWeight: '500' }],
-      },
-      spacing: {
-        /* North spacing scale based on 4px grid */
-        1: '4px',
-        2: '8px',
-        3: '12px',
-        4: '16px',
-        6: '24px',
-        8: '32px',
-        12: '48px',
       },
       borderRadius: {
         sm: '6px' /* Small radius */,

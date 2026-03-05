@@ -340,10 +340,6 @@
         }
         options.onSuccess?.();
         await invalidateAll();
-        toast.success('Changes saved successfully', {
-          duration: 2000,
-          ...successToastA11y,
-        });
       } else {
         if (requestId === latestSaveRequestId) {
           saveState = 'error';
@@ -763,16 +759,6 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-4 pb-6">
-          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
-            {#if saveState === 'saving'}
-              Saving...
-            {:else if saveState === 'saved'}
-              ✓ Saved
-            {:else if saveState === 'error'}
-              Save failed. Please retry.
-            {/if}
-          </div>
-
           <!-- Basic Info Section -->
           <section>
             <div class="space-y-2">
@@ -857,7 +843,6 @@
                 >
                 <select
                   id="story_points"
-                  inputmode="numeric"
                   value={localStoryPoints?.toString() ?? 'null'}
                   onchange={handleStoryPointsChange}
                   disabled={loading}

@@ -77,7 +77,7 @@
                   required
                 />
               </div>
-              <Button type="submit" class="w-full" disabled={loginLoading}>
+              <Button type="submit" class="w-full" disabled={loginLoading} aria-busy={loginLoading}>
                 {loginLoading ? 'Logging in...' : 'Login'}
               </Button>
             </div>
@@ -129,7 +129,12 @@
                   required
                 />
               </div>
-              <Button type="submit" class="w-full" disabled={signupLoading}>
+              <Button
+                type="submit"
+                class="w-full"
+                disabled={signupLoading}
+                aria-busy={signupLoading}
+              >
                 {signupLoading ? 'Creating account...' : 'Sign Up'}
               </Button>
             </div>
@@ -161,7 +166,12 @@
                   required
                 />
               </div>
-              <Button type="submit" class="w-full" disabled={magicLinkLoading}>
+              <Button
+                type="submit"
+                class="w-full"
+                disabled={magicLinkLoading}
+                aria-busy={magicLinkLoading}
+              >
                 {magicLinkLoading ? 'Sending...' : 'Send Magic Link'}
               </Button>
             </div>

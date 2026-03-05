@@ -70,6 +70,7 @@
 
   <div class="flex gap-2">
     <div class="flex-1">
+      <label for="title" class="sr-only">Issue title</label>
       <input
         bind:this={inputElement}
         id="title"

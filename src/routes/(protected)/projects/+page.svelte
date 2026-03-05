@@ -33,6 +33,8 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import FolderOpen from '@lucide/svelte/icons/folder-open';
   import SearchX from '@lucide/svelte/icons/search-x';
+  import ChevronUp from '@lucide/svelte/icons/chevron-up';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import type { TreeNode } from '$lib/types/tree-grid';
 
   let { data }: { data: PageData } = $props();
@@ -529,6 +531,7 @@
       <!-- Filters Button -->
       <button
         onclick={toggleFilterPanel}
+        aria-expanded={filterPanelOpen}
         class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-surface-subtle hover:text-foreground"
       >
         Filters
@@ -537,7 +540,11 @@
             {activeFilterCount}
           </span>
         {/if}
-        <span class="text-muted-foreground">{filterPanelOpen ? '▲' : '▼'}</span>
+        {#if filterPanelOpen}
+          <ChevronUp class="h-4 w-4 text-muted-foreground" />
+        {:else}
+          <ChevronDown class="h-4 w-4 text-muted-foreground" />
+        {/if}
       </button>
       <NewButtonDropdown />
     </div>
