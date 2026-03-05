@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 
-import { formatFileSize, buildStoragePath, isImageFile } from '$lib/utils/attachment-helpers';
+import {
+  formatFileSize,
+  buildStoragePath,
+  isImageFile,
+  MAX_FILE_SIZE_BYTES,
+  ALLOWED_MIME_TYPES,
+} from '$lib/utils/attachment-helpers';
 
 describe('formatFileSize', () => {
   it('formats bytes correctly', () => {
@@ -44,6 +50,51 @@ describe('buildStoragePath', () => {
     const path1 = buildStoragePath('user-1', 'issue', 'issue-1', 'file.pdf');
     const path2 = buildStoragePath('user-1', 'issue', 'issue-1', 'file.pdf');
     expect(path1).not.toBe(path2);
+  });
+});
+
+describe('MAX_FILE_SIZE_BYTES', () => {
+  it('is 10MB', () => {
+    expect(MAX_FILE_SIZE_BYTES).toBe(10 * 1024 * 1024);
+  });
+});
+
+describe('ALLOWED_MIME_TYPES', () => {
+  it('allows common image types', () => {
+    expect(ALLOWED_MIME_TYPES.has('image/jpeg')).toBe(true);
+    expect(ALLOWED_MIME_TYPES.has('image/png')).toBe(true);
+    expect(ALLOWED_MIME_TYPES.has('image/gif')).toBe(true);
+    expect(ALLOWED_MIME_TYPES.has('image/webp')).toBe(true);
+    expect(ALLOWED_MIME_TYPES.has('image/svg+xml')).toBe(true);
+  });
+
+  it('allows PDF and office document types', () => {
+    expect(ALLOWED_MIME_TYPES.has('application/pdf')).toBe(true);
+    expect(
+      ALLOWED_MIME_TYPES.has(
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ),
+    ).toBe(true);
+    expect(
+      ALLOWED_MIME_TYPES.has('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+    ).toBe(true);
+  });
+
+  it('allows text types', () => {
+    expect(ALLOWED_MIME_TYPES.has('text/plain')).toBe(true);
+    expect(ALLOWED_MIME_TYPES.has('text/csv')).toBe(true);
+    expect(ALLOWED_MIME_TYPES.has('text/markdown')).toBe(true);
+  });
+
+  it('allows archive types', () => {
+    expect(ALLOWED_MIME_TYPES.has('application/zip')).toBe(true);
+  });
+
+  it('rejects executable and script types', () => {
+    expect(ALLOWED_MIME_TYPES.has('application/x-executable')).toBe(false);
+    expect(ALLOWED_MIME_TYPES.has('application/javascript')).toBe(false);
+    expect(ALLOWED_MIME_TYPES.has('text/html')).toBe(false);
+    expect(ALLOWED_MIME_TYPES.has('application/x-sh')).toBe(false);
   });
 });
 

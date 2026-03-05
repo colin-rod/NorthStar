@@ -9,6 +9,7 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
+import { MAX_FILE_SIZE_BYTES, ALLOWED_MIME_TYPES } from '$lib/utils/attachment-helpers';
 import {
   parseProjectIds,
   parsePriorities,
@@ -311,13 +312,27 @@ export const actions: Actions = {
       return fail(400, { error: 'Invalid entity type' });
     }
 
+    if (isNaN(fileSize) || fileSize <= 0 || fileSize > MAX_FILE_SIZE_BYTES) {
+      return fail(400, { error: 'Invalid file size' });
+    }
+
+    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+      return fail(400, { error: 'File type not allowed' });
+    }
+
+    if (!storagePath.startsWith(`${session.user.id}/`)) {
+      return fail(400, { error: 'Invalid storage path' });
+    }
+
+    const sanitizedFileName = fileName.replace(/[/\\]/g, '_');
+
     const { data, error } = await supabase
       .from('attachments')
       .insert({
         user_id: session.user.id,
         entity_type: entityType,
         entity_id: entityId,
-        file_name: fileName,
+        file_name: sanitizedFileName,
         file_size: fileSize,
         mime_type: mimeType,
         storage_path: storagePath,
@@ -360,6 +375,15 @@ export const actions: Actions = {
 
     if (!entityType || !entityId || !url || !label) {
       return fail(400, { error: 'Missing required link fields' });
+    }
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return fail(400, { error: 'URL must use http or https' });
+      }
+    } catch {
+      return fail(400, { error: 'Invalid URL' });
     }
 
     const { data, error } = await supabase

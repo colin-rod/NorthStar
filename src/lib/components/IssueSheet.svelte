@@ -92,10 +92,7 @@
 
   // Loading state
   let loading = $state(false);
-  type SaveState = 'idle' | 'saving' | 'saved' | 'error';
-  let saveState = $state<SaveState>('idle');
   let activeSaveCount = $state(0);
-  let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
   let latestSaveRequestId = $state(0);
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
@@ -208,11 +205,6 @@
       localPriority = 2;
       localStoryPoints = null;
       localMilestoneId = null;
-      saveState = 'idle';
-      if (saveStateResetTimeout) {
-        clearTimeout(saveStateResetTimeout);
-        saveStateResetTimeout = null;
-      }
       const ctx = get(createIssueContext);
       if (ctx) {
         selectedProjectId = ctx.projectId;
@@ -242,34 +234,12 @@
       selectedProjectId = '';
       localEpicId = '';
       createLoading = false;
-      saveState = 'idle';
-      if (saveStateResetTimeout) {
-        clearTimeout(saveStateResetTimeout);
-        saveStateResetTimeout = null;
-      }
       // Reset internal mode back to parent's mode after close animation
       setTimeout(() => {
         internalMode = mode;
       }, 300);
     }
   });
-
-  function clearSaveStateResetTimeout() {
-    if (saveStateResetTimeout) {
-      clearTimeout(saveStateResetTimeout);
-      saveStateResetTimeout = null;
-    }
-  }
-
-  function queueSaveStateIdleReset() {
-    clearSaveStateResetTimeout();
-    saveStateResetTimeout = setTimeout(() => {
-      if (saveState === 'saved') {
-        saveState = 'idle';
-      }
-      saveStateResetTimeout = null;
-    }, 1500);
-  }
 
   // Breadcrumb for edit mode header: "ProjectName / E-N EpicName"
   let issueBreadcrumb = $derived.by(() => {
@@ -321,8 +291,6 @@
     latestSaveRequestId = requestId;
     activeSaveCount += 1;
     loading = activeSaveCount > 0;
-    clearSaveStateResetTimeout();
-    saveState = 'saving';
 
     try {
       const formData = new FormData();
@@ -337,10 +305,6 @@
       const result = deserialize(await response.text());
 
       if (result.type === 'success') {
-        if (requestId === latestSaveRequestId) {
-          saveState = 'saved';
-          queueSaveStateIdleReset();
-        }
         toast.success('Changes saved successfully', {
           duration: 2000,
           ...successToastA11y,
@@ -348,9 +312,6 @@
         options.onSuccess?.();
         await invalidateAll();
       } else {
-        if (requestId === latestSaveRequestId) {
-          saveState = 'error';
-        }
         const error = (result as any).data?.error || 'Failed to save';
         toast.error(error, {
           duration: 5000,
@@ -358,9 +319,6 @@
         });
       }
     } catch (error) {
-      if (requestId === latestSaveRequestId) {
-        saveState = 'error';
-      }
       console.error('Auto-save error:', error);
       toast.error('Network error - please try again', {
         duration: 5000,
@@ -783,18 +741,6 @@
                   class="text-body h-8 flex-1"
                 />
               </div>
-
-              {#if saveState !== 'idle'}
-                <p class="text-xs text-right text-foreground-muted" aria-live="polite">
-                  {#if saveState === 'saving'}
-                    Saving...
-                  {:else if saveState === 'saved'}
-                    ✓ Saved
-                  {:else if saveState === 'error'}
-                    Save failed. Please retry.
-                  {/if}
-                </p>
-              {/if}
 
               <!-- Status -->
               <div class="flex items-center gap-3">

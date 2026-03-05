@@ -8,6 +8,8 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { Actions, PageServerLoad } from './$types';
 
+import { env } from '$env/dynamic/private';
+
 export const load: PageServerLoad = async ({ locals }) => {
   // Redirect if already logged in
   const {
@@ -20,6 +22,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
   signup: async ({ request, locals, url }) => {
+    const trustedOrigin = env.ORIGIN ?? url.origin;
     const formData = await request.formData();
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
@@ -49,7 +52,7 @@ export const actions: Actions = {
       email,
       password,
       options: {
-        emailRedirectTo: `${url.origin}/auth/confirm`,
+        emailRedirectTo: `${trustedOrigin}/auth/confirm`,
       },
     });
 

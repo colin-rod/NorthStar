@@ -16,10 +16,24 @@
   let inputLabel = $state('');
   let inputUrl = $state('');
   let adding = $state(false);
+  let urlError = $state('');
 
   async function handleAdd() {
     const url = inputUrl.trim();
     if (!url) return;
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        urlError = 'URL must start with http:// or https://';
+        return;
+      }
+    } catch {
+      urlError = 'Please enter a valid URL';
+      return;
+    }
+    urlError = '';
+
     const label = inputLabel.trim() || url;
     adding = true;
     try {
@@ -99,6 +113,9 @@
               onkeydown={handleKeydown}
               class="h-8 text-sm"
             />
+            {#if urlError}
+              <p class="text-xs text-destructive mt-1">{urlError}</p>
+            {/if}
           </div>
           <div class="flex justify-end gap-2 pt-1">
             <button
@@ -107,6 +124,7 @@
                 popoverOpen = false;
                 inputLabel = '';
                 inputUrl = '';
+                urlError = '';
               }}
               class="text-xs text-foreground-muted hover:text-foreground"
             >

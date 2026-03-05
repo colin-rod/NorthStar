@@ -16,6 +16,7 @@
   import DependencyChip from '$lib/components/DependencyChip.svelte';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import Badge from '$lib/components/ui/badge/badge.svelte';
+  import StoryPointsBadge from '$lib/components/StoryPointsBadge.svelte';
   import { isLastChild } from '$lib/utils/tree-grid-helpers';
   import { getProjectColor } from '$lib/utils/project-colors';
   import { getProjectIcon } from '$lib/utils/project-icons';
@@ -194,7 +195,7 @@
         <PriorityBadge priority={issuePriority} />
       {/if}
       {#if issueSp !== null}
-        <Badge variant="secondary" class="text-xs tabular-nums">{issueSp} pts</Badge>
+        <StoryPointsBadge story_points={issueSp} />
       {/if}
       {#if issueMilestone}
         <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>

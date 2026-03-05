@@ -922,6 +922,15 @@ export const actions: Actions = {
       return fail(400, { error: 'Missing required link fields' });
     }
 
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return fail(400, { error: 'URL must use http or https' });
+      }
+    } catch {
+      return fail(400, { error: 'Invalid URL' });
+    }
+
     const { data, error } = await supabase
       .from('links')
       .insert({
