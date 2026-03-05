@@ -60,6 +60,14 @@ export function calculateTotalPoints(node: TreeNode, allNodes: TreeNode[]): numb
  * @returns Progress object or null if not applicable
  */
 export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progress | null {
+  // Issue: progress is based on its own status
+  if (node.type === 'issue') {
+    const issue = node.data as Issue;
+    if (issue.status === 'canceled') return null;
+    const done = issue.status === 'done';
+    return { completed: done ? 1 : 0, total: 1, percentage: done ? 100 : 0 };
+  }
+
   // Get all descendant issues (recursive)
   const descendantIssues = getDescendantIssues(node, allNodes);
 

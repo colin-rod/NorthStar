@@ -35,6 +35,9 @@
   import { Button } from '$lib/components/ui/button';
   import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
   import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
+  import CheckIcon from '@lucide/svelte/icons/check';
+  import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
+  import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll, goto } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
@@ -258,6 +261,13 @@
       setTimeout(() => {
         internalMode = mode;
       }, 300);
+    }
+  });
+
+  // Sync internalMode when sheet opens
+  $effect(() => {
+    if (open) {
+      internalMode = mode;
     }
   });
 
@@ -646,7 +656,16 @@
       open = isOpen;
     }}
   >
-    {#if internalMode === 'create' || issue}
+    {#if open && internalMode === 'edit' && !issue}
+      <!-- Skeleton while issue data populates -->
+      <div class="space-y-5 pb-6">
+        <Skeleton class="h-5 w-2/3" />
+        <Skeleton class="h-8 w-full" />
+        <Skeleton class="h-8 w-full" />
+        <Skeleton class="h-8 w-3/4" />
+        <Skeleton class="h-24 w-full" />
+      </div>
+    {:else if internalMode === 'create' || issue}
       <!-- Loading overlay -->
       {#if loading || createLoading}
         <LoadingOverlay />
@@ -688,15 +707,24 @@
       </SheetHeader>
 
       {#if internalMode === 'edit' && saveState !== 'idle'}
-        <p class="text-xs text-muted-foreground mb-2">
+        <div class="flex items-center mb-3 text-xs">
           {#if saveState === 'saving'}
-            Saving...
+            <span class="inline-flex items-center gap-1.5 text-muted-foreground">
+              <span class="size-1.5 rounded-full bg-muted-foreground animate-pulse"></span>
+              Saving
+            </span>
           {:else if saveState === 'saved'}
-            ✓ Saved
+            <span class="inline-flex items-center gap-1.5 text-green-600 dark:text-green-400">
+              <CheckIcon class="size-3" />
+              Saved
+            </span>
           {:else if saveState === 'error'}
-            Save failed. Please retry.
+            <span class="inline-flex items-center gap-1.5 text-destructive">
+              <AlertCircleIcon class="size-3" />
+              Save failed
+            </span>
           {/if}
-        </p>
+        </div>
       {/if}
 
       {#if internalMode === 'create'}

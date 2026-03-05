@@ -16,6 +16,9 @@
   import { Button } from '$lib/components/ui/button';
   import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
   import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
+  import CheckIcon from '@lucide/svelte/icons/check';
+  import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
+  import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
@@ -424,7 +427,15 @@
     class={expanded && isDesktop() ? 'p-6' : sheetClass}
     bind:ref={sheetContentRef}
   >
-    {#if internalMode === 'create' || effectiveEpic}
+    {#if open && internalMode === 'edit' && !effectiveEpic}
+      <!-- Skeleton while epic data populates -->
+      <div class="space-y-5 pb-6">
+        <Skeleton class="h-5 w-2/3" />
+        <Skeleton class="h-8 w-full" />
+        <Skeleton class="h-8 w-3/4" />
+        <Skeleton class="h-24 w-full" />
+      </div>
+    {:else if internalMode === 'create' || effectiveEpic}
       <!-- Loading overlay -->
       {#if createLoading}
         <LoadingOverlay />
@@ -461,6 +472,27 @@
           {/if}
         </div>
       </SheetHeader>
+
+      {#if internalMode === 'edit' && saveState !== 'idle'}
+        <div class="flex items-center mb-3 text-xs">
+          {#if saveState === 'saving'}
+            <span class="inline-flex items-center gap-1.5 text-muted-foreground">
+              <span class="size-1.5 rounded-full bg-muted-foreground animate-pulse"></span>
+              Saving
+            </span>
+          {:else if saveState === 'saved'}
+            <span class="inline-flex items-center gap-1.5 text-green-600 dark:text-green-400">
+              <CheckIcon class="size-3" />
+              Saved
+            </span>
+          {:else if saveState === 'error'}
+            <span class="inline-flex items-center gap-1.5 text-destructive">
+              <AlertCircleIcon class="size-3" />
+              Save failed
+            </span>
+          {/if}
+        </div>
+      {/if}
 
       {#if internalMode === 'create'}
         <!-- Create mode: form with submit button -->
