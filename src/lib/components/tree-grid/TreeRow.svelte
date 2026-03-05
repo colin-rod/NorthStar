@@ -16,7 +16,6 @@
   import TitleCell from './cells/TitleCell.svelte';
   import StatusCell from './cells/StatusCell.svelte';
 
-  import MilestoneCell from './cells/MilestoneCell.svelte';
   import TotalPointsCell from './cells/TotalPointsCell.svelte';
   import ProgressCell from './cells/ProgressCell.svelte';
 
@@ -141,7 +140,7 @@
 </script>
 
 <tr
-  class="relative border-b border-border-divider hover:bg-surface-subtle transition-all duration-150 group {bgClass} {isSelected
+  class="relative border-b border-border-divider hover:bg-surface-subtle transition-all duration-150 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset {bgClass} {isSelected
     ? 'bg-primary-tint'
     : ''} {dragClasses} {expansionClasses}"
   data-node-id={node.id}
@@ -182,11 +181,6 @@
   <!-- Status -->
   <td class="py-4 px-4">
     <StatusCell {node} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
-  </td>
-
-  <!-- Milestone -->
-  <td class="py-4 px-4 hidden md:table-cell">
-    <MilestoneCell {node} />
   </td>
 
   <!-- Total Story Points (Rollup) -->

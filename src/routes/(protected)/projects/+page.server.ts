@@ -545,7 +545,7 @@ export const actions: Actions = {
 
     // Epic ID
     const epicId = formData.get('epic_id')?.toString();
-    if (epicId !== undefined) {
+    if (epicId !== undefined && epicId !== '') {
       // Fetch issue to verify project ownership
       const { data: issue } = await supabase
         .from('issues')

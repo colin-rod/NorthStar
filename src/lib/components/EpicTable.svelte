@@ -178,7 +178,6 @@
                     <IssueRow
                       {issue}
                       onClick={() => onOpenIssueSheet(issue)}
-                      dragDisabled={true}
                       onMoveUp={null}
                       onMoveDown={null}
                     />

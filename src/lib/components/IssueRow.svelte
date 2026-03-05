@@ -22,37 +22,24 @@
    */
 
   import type { Issue } from '$lib/types';
-  import Badge from '$lib/components/ui/badge/badge.svelte';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import DependencyChip from '$lib/components/DependencyChip.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
   import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
   import { getProjectColor } from '$lib/utils/project-colors';
-  import GripVertical from '@lucide/svelte/icons/grip-vertical';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
   import Lock from '@lucide/svelte/icons/lock';
-  import X from '@lucide/svelte/icons/x';
-  import { dismissReorderHint, reorderHintDismissed } from '$lib/stores/ui-hints';
 
   interface Props {
     issue: Issue;
     onClick?: () => void;
-    dragDisabled?: boolean;
     onMoveUp?: (() => void) | null;
     onMoveDown?: (() => void) | null;
-    showReorderHint?: boolean;
   }
 
-  let {
-    issue,
-    onClick = () => {},
-    dragDisabled = $bindable(true),
-    onMoveUp = null,
-    onMoveDown = null,
-    showReorderHint = false,
-  }: Props = $props();
+  let { issue, onClick = () => {}, onMoveUp = null, onMoveDown = null }: Props = $props();
 
   // Compute blocked status
   let blocked = $derived(isBlocked(issue));
@@ -68,53 +55,8 @@
     ? 'bg-bg-blocked/50 border-l-[3px] border-l-status-blocked'
     : ''}"
 >
-  <!-- Drag Handle (left side, hover-visible) -->
-  <div
-    role="button"
-    tabindex="-1"
-    class="absolute left-0 flex items-center justify-center w-8 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
-    aria-label="Drag to reorder"
-    onmousedown={() => {
-      dragDisabled = false;
-      dismissReorderHint();
-    }}
-    onmouseup={() => (dragDisabled = true)}
-    onmouseleave={() => (dragDisabled = true)}
-    ontouchstart={() => {
-      dragDisabled = false;
-      dismissReorderHint();
-    }}
-    ontouchend={() => (dragDisabled = true)}
-  >
-    <GripVertical aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
-  </div>
-
-  {#if showReorderHint && !$reorderHintDismissed}
-    <div
-      class="absolute left-8 top-1/2 -translate-y-1/2 z-10 flex items-center gap-2 rounded-md border border-border-divider bg-surface px-2 py-1 text-xs text-muted-foreground shadow-sm"
-      role="status"
-      aria-live="polite"
-    >
-      <span>Tip: Hover and drag to reorder</span>
-      <button
-        type="button"
-        class="rounded p-0.5 hover:bg-surface-subtle"
-        aria-label="Dismiss reorder tip"
-        onclick={(e) => {
-          e.stopPropagation();
-          dismissReorderHint();
-        }}
-      >
-        <X aria-hidden="true" class="h-3 w-3" />
-      </button>
-    </div>
-  {/if}
-
   <!-- Main Content Area (non-interactive container) -->
-  <div class="flex-1 flex items-start gap-3 min-w-0 ml-8">
-    <!-- Spacer for alignment -->
-    <div class="w-4 shrink-0"></div>
-
+  <div class="flex-1 flex items-start gap-3 min-w-0">
     <!-- Clickable Content Area (sibling button) -->
     <button type="button" onclick={onClick} class="flex-1 text-left flex items-start gap-3 min-w-0">
       <!-- Status indicator: small colored dot per North spec -->

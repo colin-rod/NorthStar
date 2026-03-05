@@ -1,4 +1,6 @@
 // src/lib/utils/group-issues.ts
+import { ISSUE_STATUS_LABELS, getStatusLabel } from './status-labels';
+
 import type { Issue } from '$lib/types';
 
 export interface IssueGroup {
@@ -64,15 +66,7 @@ function getGroupKeyAndLabel(issue: Issue, groupBy: string): { key: string; labe
 }
 
 function formatStatus(status: string): string {
-  const map: Record<string, string> = {
-    todo: 'Todo',
-    backlog: 'Backlog',
-    in_progress: 'In Progress',
-    in_review: 'In Review',
-    done: 'Done',
-    canceled: 'Canceled',
-  };
-  return map[status] || status;
+  return getStatusLabel(ISSUE_STATUS_LABELS, status);
 }
 
 function compareGroupKeys(a: string, b: string, groupBy: string): number {

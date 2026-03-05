@@ -100,7 +100,7 @@
         </div>
         <div class="flex items-center gap-1.5">
           <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
-          <span class="text-metadata text-foreground-secondary">Doing</span>
+          <span class="text-metadata text-foreground-secondary">In Progress</span>
         </div>
         <div class="flex items-center gap-1.5">
           <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>

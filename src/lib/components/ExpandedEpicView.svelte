@@ -140,7 +140,6 @@
             <IssueRow
               {issue}
               onClick={() => onIssueClick(issue)}
-              dragDisabled={true}
               onMoveUp={null}
               onMoveDown={null}
             />

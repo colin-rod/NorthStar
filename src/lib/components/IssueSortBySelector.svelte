@@ -7,6 +7,7 @@
   import type { SortByColumn, SortDirection } from '$lib/types';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
 
   interface Props {
     selected: SortByColumn;
@@ -53,9 +54,10 @@
 <div class="flex items-center gap-2">
   <Popover bind:open>
     <PopoverTrigger
-      class="inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+      class="inline-flex items-center justify-start rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
     >
-      {buttonText}
+      <ArrowUpDown class="h-4 w-4 shrink-0" />
+      <span class="hidden md:inline ml-2">{buttonText}</span>
     </PopoverTrigger>
     <PopoverContent class="w-[200px] p-0" align="start">
       <Command>

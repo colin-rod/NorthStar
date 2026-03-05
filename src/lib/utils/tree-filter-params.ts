@@ -96,6 +96,72 @@ export function buildTreeFilterUrl(filters: TreeFilterParams, basePath: string):
   return parts.length > 0 ? `${basePath}?${parts.join('&')}` : basePath;
 }
 
+export interface FilterChip {
+  label: string;
+  param: string;
+  value: string;
+}
+
+const PROJECT_STATUS_LABELS: Record<string, string> = {
+  backlog: 'Backlog',
+  planned: 'Planned',
+  active: 'Active',
+  on_hold: 'On Hold',
+  completed: 'Completed',
+  canceled: 'Canceled',
+};
+
+const EPIC_STATUS_LABELS: Record<string, string> = {
+  backlog: 'Backlog',
+  active: 'Active',
+  on_hold: 'On Hold',
+  completed: 'Completed',
+  canceled: 'Canceled',
+};
+
+const ISSUE_STATUS_LABELS: Record<string, string> = {
+  backlog: 'Backlog',
+  todo: 'Todo',
+  in_progress: 'In Progress',
+  in_review: 'In Review',
+  done: 'Done',
+  canceled: 'Canceled',
+  ready: 'Ready',
+  blocked: 'Blocked',
+};
+
+const PRIORITY_LABELS: Record<number, string> = { 0: 'P0', 1: 'P1', 2: 'P2', 3: 'P3' };
+
+export function getFilterChips(f: TreeFilterParams): FilterChip[] {
+  const chips: FilterChip[] = [];
+
+  for (const s of f.projectStatus) {
+    chips.push({
+      label: `Project: ${PROJECT_STATUS_LABELS[s] ?? s}`,
+      param: 'project_status',
+      value: s,
+    });
+  }
+  for (const s of f.epicStatus) {
+    chips.push({ label: `Epic: ${EPIC_STATUS_LABELS[s] ?? s}`, param: 'epic_status', value: s });
+  }
+  for (const p of f.issuePriority) {
+    chips.push({ label: PRIORITY_LABELS[p] ?? `P${p}`, param: 'priority', value: String(p) });
+  }
+  for (const s of f.issueStatus) {
+    chips.push({ label: ISSUE_STATUS_LABELS[s] ?? s, param: 'status', value: s });
+  }
+  for (const sp of f.issueStoryPoints) {
+    chips.push({
+      label: sp === null ? 'SP: None' : `SP: ${sp}`,
+      param: 'story_points',
+      value: sp === null ? 'none' : String(sp),
+    });
+  }
+
+  return chips;
+}
+
 // Helper functions
 function parseEnumArray<T extends string>(value: string | null, validValues: readonly T[]): T[] {
   if (!value) return [];

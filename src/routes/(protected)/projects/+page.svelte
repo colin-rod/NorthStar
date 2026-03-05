@@ -16,6 +16,7 @@
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
   import FilterPanel from '$lib/components/FilterPanel.svelte';
+  import ActiveFilterChips from '$lib/components/ActiveFilterChips.svelte';
   import IssueGroupBySelector from '$lib/components/IssueGroupBySelector.svelte';
   import IssueSortBySelector from '$lib/components/IssueSortBySelector.svelte';
   import type { PageData } from './$types';
@@ -36,6 +37,7 @@
   import SearchX from '@lucide/svelte/icons/search-x';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
   import type { TreeNode } from '$lib/types/tree-grid';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Button } from '$lib/components/ui/button';
@@ -612,23 +614,29 @@
       <button
         onclick={toggleFilterPanel}
         aria-expanded={filterPanelOpen}
-        class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-surface-subtle hover:text-foreground"
+        class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-surface-subtle hover:text-foreground"
       >
-        Filters
+        <SlidersHorizontal class="h-4 w-4 shrink-0" />
+        <span class="hidden md:inline">Filters</span>
         {#if activeFilterCount > 0}
           <span class="rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs">
             {activeFilterCount}
           </span>
         {/if}
-        {#if filterPanelOpen}
-          <ChevronUp class="h-4 w-4 text-muted-foreground" />
-        {:else}
-          <ChevronDown class="h-4 w-4 text-muted-foreground" />
-        {/if}
+        <span class="hidden md:inline">
+          {#if filterPanelOpen}
+            <ChevronUp class="h-4 w-4 text-muted-foreground" />
+          {:else}
+            <ChevronDown class="h-4 w-4 text-muted-foreground" />
+          {/if}
+        </span>
       </button>
       <NewButtonDropdown />
     </div>
   </div>
+
+  <!-- Active Filter Chips (always visible when filters are active) -->
+  <ActiveFilterChips filterParams={data.filterParams} />
 
   <!-- Filter Panel -->
   <FilterPanel filterParams={data.filterParams} open={filterPanelOpen} />

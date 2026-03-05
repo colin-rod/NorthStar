@@ -31,7 +31,6 @@
   import { calculateNewSortOrders, moveIssueUp, moveIssueDown } from '$lib/utils/reorder';
   import { dndzone } from 'svelte-dnd-action';
   import type { Issue } from '$lib/types';
-  import { dismissReorderHint } from '$lib/stores/ui-hints';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import Inbox from '@lucide/svelte/icons/inbox';
   import ListTodo from '@lucide/svelte/icons/list-todo';
@@ -91,11 +90,9 @@
   let showInlineForm = $state(false);
 
   // Drag-and-drop state
-  let dragDisabled = $state(true);
   let isReordering = $state(false);
 
   async function handleDndConsider(e: CustomEvent) {
-    dismissReorderHint();
     visibleIssues = e.detail.items;
   }
 
@@ -316,7 +313,7 @@
             class="border rounded-lg divide-y"
             use:dndzone={{
               items: visibleIssues,
-              dragDisabled,
+              dragDisabled: true,
               flipDurationMs: 200,
               type: 'issues',
             }}
@@ -326,13 +323,11 @@
             {#each visibleIssues as issue, index (issue.id)}
               <IssueRow
                 {issue}
-                bind:dragDisabled
                 onClick={() => openIssueSheet(issue)}
                 onMoveUp={index > 0 ? () => handleMoveUp(issue.id) : null}
                 onMoveDown={index < visibleIssues.length - 1
                   ? () => handleMoveDown(issue.id)
                   : null}
-                showReorderHint={index === 0}
               />
             {/each}
           </div>

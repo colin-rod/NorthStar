@@ -10,6 +10,11 @@
 
   import type { TreeNode } from '$lib/types/tree-grid';
   import type { Project, Epic, Issue } from '$lib/types';
+  import {
+    ISSUE_STATUS_LABELS,
+    EPIC_STATUS_LABELS,
+    PROJECT_STATUS_LABELS,
+  } from '$lib/utils/status-labels';
 
   interface Props {
     node: TreeNode;
@@ -28,29 +33,29 @@
   });
 
   const projectStatusOptions = [
-    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
-    { value: 'planned', label: 'Planned', color: 'bg-status-todo' },
-    { value: 'active', label: 'Active', color: 'bg-status-doing' },
-    { value: 'on_hold', label: 'On Hold', color: 'bg-status-in-review' },
-    { value: 'completed', label: 'Completed', color: 'bg-status-done' },
-    { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
+    { value: 'backlog', label: PROJECT_STATUS_LABELS.backlog, color: 'bg-status-todo' },
+    { value: 'planned', label: PROJECT_STATUS_LABELS.planned, color: 'bg-status-todo' },
+    { value: 'active', label: PROJECT_STATUS_LABELS.active, color: 'bg-status-doing' },
+    { value: 'on_hold', label: PROJECT_STATUS_LABELS.on_hold, color: 'bg-status-in-review' },
+    { value: 'completed', label: PROJECT_STATUS_LABELS.completed, color: 'bg-status-done' },
+    { value: 'canceled', label: PROJECT_STATUS_LABELS.canceled, color: 'bg-status-canceled' },
   ];
 
   const epicStatusOptions = [
-    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
-    { value: 'active', label: 'Active', color: 'bg-status-doing' },
-    { value: 'on_hold', label: 'On Hold', color: 'bg-status-in-review' },
-    { value: 'completed', label: 'Completed', color: 'bg-status-done' },
-    { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
+    { value: 'backlog', label: EPIC_STATUS_LABELS.backlog, color: 'bg-status-todo' },
+    { value: 'active', label: EPIC_STATUS_LABELS.active, color: 'bg-status-doing' },
+    { value: 'on_hold', label: EPIC_STATUS_LABELS.on_hold, color: 'bg-status-in-review' },
+    { value: 'completed', label: EPIC_STATUS_LABELS.completed, color: 'bg-status-done' },
+    { value: 'canceled', label: EPIC_STATUS_LABELS.canceled, color: 'bg-status-canceled' },
   ];
 
   const issueStatusOptions = [
-    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
-    { value: 'todo', label: 'Todo', color: 'bg-status-todo' },
-    { value: 'in_progress', label: 'In Progress', color: 'bg-status-doing' },
-    { value: 'in_review', label: 'In Review', color: 'bg-status-in-review' },
-    { value: 'done', label: 'Done', color: 'bg-status-done' },
-    { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
+    { value: 'backlog', label: ISSUE_STATUS_LABELS.backlog, color: 'bg-status-todo' },
+    { value: 'todo', label: ISSUE_STATUS_LABELS.todo, color: 'bg-status-todo' },
+    { value: 'in_progress', label: ISSUE_STATUS_LABELS.in_progress, color: 'bg-status-doing' },
+    { value: 'in_review', label: ISSUE_STATUS_LABELS.in_review, color: 'bg-status-in-review' },
+    { value: 'done', label: ISSUE_STATUS_LABELS.done, color: 'bg-status-done' },
+    { value: 'canceled', label: ISSUE_STATUS_LABELS.canceled, color: 'bg-status-canceled' },
     // Note: 'blocked' is computed, not a stored status
   ];
 
