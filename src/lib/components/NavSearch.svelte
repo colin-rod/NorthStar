@@ -15,9 +15,13 @@
   let open = $state(false);
   let query = $state('');
   let loading = $state(false);
-  let allIssues = $state<Issue[]>([]);
+  let displayedIssues = $state<Issue[]>([]);
   let epics = $state<Epic[]>([]);
   let milestones = $state<Milestone[]>([]);
+  let epicsLoaded = false;
+
+  let abortController: AbortController | null = null;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Keep local open state in sync with the store (BottomNav sets the store directly)
   $effect(() => {
@@ -26,40 +30,60 @@
     }
   });
 
-  let filteredIssues = $derived(
-    query.trim()
-      ? allIssues.filter((issue) => {
-          const q = query.toLowerCase();
-          return (
-            issue.title.toLowerCase().includes(q) ||
-            issue.project?.name?.toLowerCase().includes(q) ||
-            issue.epic?.name?.toLowerCase().includes(q)
-          );
-        })
-      : allIssues.slice(0, 20),
-  );
+  // Debounce query changes and fetch from server
+  $effect(() => {
+    const q = query;
+    if (!open) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      fetchResults(q);
+    }, 300);
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  });
 
-  async function openSearch() {
-    open = true;
-    navSearchOpen.set(true);
+  async function fetchResults(q: string) {
+    abortController?.abort();
+    const controller = new AbortController();
+    abortController = controller;
     loading = true;
     try {
-      const res = await fetch('/api/search');
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
+        signal: controller.signal,
+      });
       if (res.ok) {
         const data = await res.json();
-        allIssues = data.issues ?? [];
-        epics = data.epics ?? [];
-        milestones = data.milestones ?? [];
+        displayedIssues = data.issues ?? [];
+        if (!epicsLoaded) {
+          epics = data.epics ?? [];
+          milestones = data.milestones ?? [];
+          epicsLoaded = true;
+        }
       }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') console.error('Search error:', err);
     } finally {
-      loading = false;
+      if (abortController === controller) loading = false;
     }
+  }
+
+  function openSearch() {
+    open = true;
+    navSearchOpen.set(true);
+    fetchResults('');
   }
 
   function closeSearch() {
     open = false;
     navSearchOpen.set(false);
     query = '';
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+    abortController?.abort();
+    abortController = null;
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
@@ -110,10 +134,10 @@
       <Command.Empty>No issues found</Command.Empty>
       <Command.Group
         heading={query.trim()
-          ? `${filteredIssues.length} result${filteredIssues.length === 1 ? '' : 's'}`
+          ? `${displayedIssues.length} result${displayedIssues.length === 1 ? '' : 's'}`
           : 'Recent issues'}
       >
-        {#each filteredIssues as issue (issue.id)}
+        {#each displayedIssues as issue (issue.id)}
           <Command.Item
             value={issue.id}
             onSelect={() => handleSelect(issue)}
@@ -153,5 +177,5 @@
   bind:issue={$selectedIssue}
   {epics}
   {milestones}
-  projectIssues={allIssues}
+  projectIssues={displayedIssues}
 />
