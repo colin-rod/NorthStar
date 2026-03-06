@@ -8,7 +8,7 @@
    * - Minimal, clean appearance
    * - Mobile-first touch targets
    */
-  import { Home, Folder, Search } from '@lucide/svelte';
+  import { Home, Folder, Search, User } from '@lucide/svelte';
 
   import { page } from '$app/stores';
   import { cn } from '$lib/utils';
@@ -18,6 +18,7 @@
   const pathname = $derived($page.url.pathname);
   const isHome = $derived(pathname === '/');
   const isProjects = $derived(pathname.startsWith('/projects'));
+  const isSettings = $derived(pathname.startsWith('/settings'));
 </script>
 
 <!-- North Design: Minimal mobile nav with burnt orange active state -->
@@ -63,5 +64,18 @@
       <Search class="w-6 h-6" />
       <span class="text-xs font-medium">Search</span>
     </button>
+
+    <a
+      href="/settings"
+      aria-label="Account"
+      aria-current={isSettings ? 'page' : undefined}
+      class={cn(
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
+        isSettings ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
+      )}
+    >
+      <User class="w-6 h-6" />
+      <span class="text-xs font-medium">Account</span>
+    </a>
   </div>
 </nav>

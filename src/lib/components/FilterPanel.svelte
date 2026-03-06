@@ -34,7 +34,12 @@
 </script>
 
 {#if open}
-  <div class="border rounded-lg p-4 space-y-4 bg-muted/20">
+  <div
+    id="filter-panel"
+    role="region"
+    aria-label="Filters"
+    class="border rounded-lg p-4 space-y-4 bg-muted/20"
+  >
     <!-- Project Filters -->
     <div>
       <h3 class="text-sm font-medium mb-2">Project Filters</h3>

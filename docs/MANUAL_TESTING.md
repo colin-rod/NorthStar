@@ -22,7 +22,7 @@ Last updated: 2026-03-01
 
 ## Navigation
 
-- [ ] Side nav (desktop): Home, Projects, Settings links work
+- [ ] Side nav (desktop): Home, Projects links work
 - [ ] Side nav (desktop): Active page is highlighted
 - [ ] Bottom nav (mobile): Home, Projects, Search icons work
 - [ ] Bottom nav (mobile): Active page icon is highlighted (burnt orange)

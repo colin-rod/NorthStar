@@ -6,6 +6,8 @@
    * - project: Status, | Add Epic | Rename, Archive, Delete
    * - epic: Status, Priority, Milestone, | Add Issue | Rename, Delete
    * - issue: Status, Priority, Story Points, Milestone, | Delete
+   *
+   * Note: "Add Sub-issue" is intentionally excluded — sub-issues are not supported.
    */
 
   import * as CM from '$lib/components/ui/context-menu';

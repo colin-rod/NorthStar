@@ -117,7 +117,7 @@
             onMoveUp();
           }}
           class="p-1 hover:bg-surface-subtle rounded"
-          aria-label="Move up"
+          aria-label="Move '{issue.title}' up"
         >
           <ChevronUp aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
         </button>
@@ -129,7 +129,7 @@
             onMoveDown();
           }}
           class="p-1 hover:bg-surface-subtle rounded"
-          aria-label="Move down"
+          aria-label="Move '{issue.title}' down"
         >
           <ChevronDown aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
         </button>
