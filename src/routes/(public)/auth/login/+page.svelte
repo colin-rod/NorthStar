@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { page } from '$app/stores';
   import type { ActionData } from './$types';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
@@ -9,6 +10,12 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
   let { form }: { form: ActionData } = $props();
+
+  const errorMessage = $derived(
+    $page.url.searchParams.get('error') === 'invalid_token'
+      ? 'This confirmation link is invalid or has expired. Please request a new one.'
+      : (form?.error ?? null),
+  );
 
   let loginLoading = $state(false);
   let signupLoading = $state(false);
@@ -23,9 +30,9 @@
     </CardHeader>
 
     <CardContent>
-      {#if form?.error}
+      {#if errorMessage}
         <Alert variant="destructive" class="mb-4">
-          <AlertDescription>{form.error}</AlertDescription>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       {/if}
 

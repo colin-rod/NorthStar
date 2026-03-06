@@ -18,6 +18,9 @@
 
   import TotalPointsCell from './cells/TotalPointsCell.svelte';
   import ProgressCell from './cells/ProgressCell.svelte';
+  import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
+  import Plus from '@lucide/svelte/icons/plus';
+  import Ellipsis from '@lucide/svelte/icons/ellipsis';
 
   interface Props {
     node: TreeNode;
@@ -38,6 +41,7 @@
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
     onContextMenu?: (node: TreeNode, event: MouseEvent) => void;
+    onAddChild?: (node: TreeNode) => void;
     showReorderHint?: boolean;
     editingNodeId?: string | null;
     onStopEdit?: () => void;
@@ -57,6 +61,7 @@
     onProjectClick,
     onEpicClick,
     onContextMenu,
+    onAddChild,
     showReorderHint = false,
     editingNodeId = null,
     onStopEdit,
@@ -121,6 +126,21 @@
   // Handle right-click to open context menu
   function handleContextMenuEvent(event: MouseEvent) {
     event.preventDefault();
+    onContextMenu?.(node, event);
+  }
+
+  function handleOpenClick(event: MouseEvent) {
+    event.stopPropagation();
+    handleDoubleClick();
+  }
+
+  function handleAddChildClick(event: MouseEvent) {
+    event.stopPropagation();
+    onAddChild?.(node);
+  }
+
+  function handleMoreClick(event: MouseEvent) {
+    event.stopPropagation();
     onContextMenu?.(node, event);
   }
 
@@ -191,5 +211,39 @@
   <!-- Progress -->
   <td class="py-4 px-4 hidden md:table-cell">
     <ProgressCell {node} />
+  </td>
+
+  <!-- Row Actions (hover/focus reveal) -->
+  <td class="py-2 px-2 hidden md:table-cell">
+    <div
+      class="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-100"
+    >
+      <button
+        type="button"
+        class="p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground"
+        title="Open detail"
+        onclick={handleOpenClick}
+      >
+        <ArrowUpRight class="h-3.5 w-3.5" />
+      </button>
+      {#if node.type !== 'issue'}
+        <button
+          type="button"
+          class="p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground"
+          title={node.type === 'project' ? 'Add epic' : 'Add issue'}
+          onclick={handleAddChildClick}
+        >
+          <Plus class="h-3.5 w-3.5" />
+        </button>
+      {/if}
+      <button
+        type="button"
+        class="p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground"
+        title="More actions"
+        onclick={handleMoreClick}
+      >
+        <Ellipsis class="h-3.5 w-3.5" />
+      </button>
+    </div>
   </td>
 </tr>

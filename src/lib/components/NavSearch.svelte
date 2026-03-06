@@ -78,6 +78,7 @@
     open = false;
     navSearchOpen.set(false);
     query = '';
+    epicsLoaded = false;
     if (debounceTimer) {
       clearTimeout(debounceTimer);
       debounceTimer = null;

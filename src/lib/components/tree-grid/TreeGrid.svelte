@@ -55,6 +55,7 @@
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
     onContextMenu?: (node: import('$lib/types/tree-grid').TreeNode, event: MouseEvent) => void;
+    onAddChildRow?: (node: import('$lib/types/tree-grid').TreeNode) => void;
     editingNodeId?: string | null;
     onStopEditNode?: () => void;
   }
@@ -74,6 +75,7 @@
     onProjectClick,
     onEpicClick,
     onContextMenu,
+    onAddChildRow,
     editingNodeId = null,
     onStopEditNode,
   }: Props = $props();
@@ -273,6 +275,7 @@
     { key: 'status', header: 'Status', width: '140px', hideOnMobile: false },
     { key: 'total_sp', header: 'Total pts', width: '96px', hideOnMobile: true },
     { key: 'progress', header: 'Progress', width: '140px', hideOnMobile: true },
+    { key: 'actions', header: '', width: '80px', hideOnMobile: true },
   ];
 
   // Drag-drop handlers
@@ -464,6 +467,7 @@
               {onProjectClick}
               {onEpicClick}
               {onContextMenu}
+              onAddChild={onAddChildRow}
               {editingNodeId}
               onStopEdit={onStopEditNode}
             />

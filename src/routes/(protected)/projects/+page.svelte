@@ -688,6 +688,7 @@
       onProjectClick={handleProjectDoubleClick}
       onEpicClick={handleEpicDoubleClick}
       onContextMenu={handleContextMenu}
+      onAddChildRow={handleContextAddChild}
       {editingNodeId}
       onStopEditNode={() => (editingNodeId = null)}
     />
