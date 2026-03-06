@@ -26,8 +26,8 @@
   const colorKeys = Object.keys(PROJECT_COLORS) as ProjectColor[];
   const iconEntries = Object.entries(PROJECT_ICONS) as [ProjectIconKey, LucideIcon][];
 
-  const avatarSize = size === 'sm' ? 'h-5 w-5' : 'h-8 w-8';
-  const iconSize = size === 'sm' ? 12 : 16;
+  let avatarSize = $derived(size === 'sm' ? 'h-5 w-5' : 'h-8 w-8');
+  let iconSize = $derived(size === 'sm' ? 12 : 16);
 </script>
 
 <Popover bind:open>

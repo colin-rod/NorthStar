@@ -477,10 +477,13 @@
                 onIconChange={handleIconChange}
               />
               <div class="flex flex-col gap-1 flex-1 min-w-0">
-                <label class="text-xs uppercase font-medium text-foreground-muted tracking-wide"
+                <label
+                  for="edit-project-name"
+                  class="text-xs uppercase font-medium text-foreground-muted tracking-wide"
                   >Name</label
                 >
                 <Input
+                  id="edit-project-name"
                   value={localName}
                   oninput={handleNameInput}
                   onblur={handleNameBlur}

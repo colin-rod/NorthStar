@@ -37,9 +37,16 @@
     onClick?: () => void;
     onMoveUp?: (() => void) | null;
     onMoveDown?: (() => void) | null;
+    dragDisabled?: boolean;
   }
 
-  let { issue, onClick = () => {}, onMoveUp = null, onMoveDown = null }: Props = $props();
+  let {
+    issue,
+    onClick = () => {},
+    onMoveUp = null,
+    onMoveDown = null,
+    dragDisabled = false,
+  }: Props = $props();
 
   // Compute blocked status
   let blocked = $derived(isBlocked(issue));
