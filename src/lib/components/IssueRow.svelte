@@ -31,6 +31,7 @@
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import CheckCircle2 from '@lucide/svelte/icons/check-circle-2';
   import Lock from '@lucide/svelte/icons/lock';
+  import GripVertical from '@lucide/svelte/icons/grip-vertical';
 
   interface Props {
     issue: Issue;
@@ -124,7 +125,7 @@
             onMoveUp();
           }}
           class="p-1 hover:bg-surface-subtle rounded"
-          aria-label="Move '{issue.title}' up"
+          aria-label="Move up"
         >
           <ChevronUp aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
         </button>
@@ -136,11 +137,19 @@
             onMoveDown();
           }}
           class="p-1 hover:bg-surface-subtle rounded"
-          aria-label="Move '{issue.title}' down"
+          aria-label="Move down"
         >
           <ChevronDown aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
         </button>
       {/if}
+    </div>
+    <div
+      aria-label="Drag to reorder"
+      role="button"
+      tabindex="0"
+      class="p-1 cursor-grab active:cursor-grabbing touch-none"
+    >
+      <GripVertical aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
     </div>
   </div>
 </div>
