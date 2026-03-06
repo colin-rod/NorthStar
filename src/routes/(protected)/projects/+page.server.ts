@@ -2,9 +2,17 @@ import { redirect, fail } from '@sveltejs/kit';
 
 import type { PageServerLoad, Actions } from './$types';
 
+import {
+  VALID_EPIC_STATUSES,
+  VALID_PROJECT_STATUSES,
+  VALID_ENTITY_TYPES,
+  MAX_NAME_LENGTH,
+} from '$lib/constants/validation';
+import { handleUpdateIssue, handleCreateIssue } from '$lib/server/issue-actions';
 import type { Project, Issue } from '$lib/types';
 import { filterTree } from '$lib/utils/filter-tree';
 import { computeIssueCounts } from '$lib/utils/issue-counts';
+import { PROJECT_COLORS } from '$lib/utils/project-colors';
 import { computeProjectMetrics } from '$lib/utils/project-helpers';
 import { sortTree } from '$lib/utils/sort-tree';
 import { parseTreeFilterParams } from '$lib/utils/tree-filter-params';
@@ -157,7 +165,7 @@ export const actions: Actions = {
     if (!name || name.length === 0) {
       return fail(400, { error: 'Project name is required' });
     }
-    if (name.length > 100) {
+    if (name.length > MAX_NAME_LENGTH) {
       return fail(400, { error: 'Project name must be 100 characters or less' });
     }
 
@@ -199,7 +207,7 @@ export const actions: Actions = {
       if (trimmedName.length === 0) {
         return fail(400, { error: 'Project name is required' });
       }
-      if (trimmedName.length > 100) {
+      if (trimmedName.length > MAX_NAME_LENGTH) {
         return fail(400, { error: 'Project name must be 100 characters or less' });
       }
       updates.name = trimmedName;
@@ -215,7 +223,7 @@ export const actions: Actions = {
     const status = formData.get('status');
     if (status !== null) {
       const s = status.toString();
-      if (!['backlog', 'planned', 'active', 'on_hold', 'completed', 'canceled'].includes(s)) {
+      if (!VALID_PROJECT_STATUSES.includes(s as (typeof VALID_PROJECT_STATUSES)[number])) {
         return fail(400, { error: 'Invalid status value' });
       }
       updates.status = s;
@@ -224,20 +232,8 @@ export const actions: Actions = {
     // Color
     const color = formData.get('color');
     if (color !== null) {
-      const validColors = [
-        'gray',
-        'red',
-        'orange',
-        'amber',
-        'green',
-        'teal',
-        'blue',
-        'violet',
-        'pink',
-        'rose',
-      ];
       const c = color.toString();
-      if (!validColors.includes(c)) {
+      if (!(c in PROJECT_COLORS)) {
         return fail(400, { error: 'Invalid color value' });
       }
       updates.color = c;
@@ -305,13 +301,13 @@ export const actions: Actions = {
     if (!name || name.length === 0) {
       return fail(400, { error: 'Epic name is required' });
     }
-    if (name.length > 100) {
+    if (name.length > MAX_NAME_LENGTH) {
       return fail(400, { error: 'Epic name must be 100 characters or less' });
     }
     if (!projectId) {
       return fail(400, { error: 'Project ID is required' });
     }
-    if (!['backlog', 'active', 'on_hold', 'completed', 'canceled'].includes(status)) {
+    if (!VALID_EPIC_STATUSES.includes(status as (typeof VALID_EPIC_STATUSES)[number])) {
       return fail(400, { error: 'Invalid status' });
     }
 
@@ -377,13 +373,13 @@ export const actions: Actions = {
       if (name.length === 0) {
         return fail(400, { error: 'Epic name cannot be empty' });
       }
-      if (name.length > 100) {
+      if (name.length > MAX_NAME_LENGTH) {
         return fail(400, { error: 'Epic name must be 100 characters or less' });
       }
       updates.name = name;
     }
     if (status !== undefined) {
-      if (!['backlog', 'active', 'on_hold', 'completed', 'canceled'].includes(status)) {
+      if (!VALID_EPIC_STATUSES.includes(status as (typeof VALID_EPIC_STATUSES)[number])) {
         return fail(400, { error: 'Invalid status' });
       }
       updates.status = status;
@@ -428,191 +424,12 @@ export const actions: Actions = {
 
   createIssue: async ({ request, locals: { supabase, session } }) => {
     if (!session) return fail(401, { error: 'Unauthorized' });
-
-    const formData = await request.formData();
-    const title = formData.get('title')?.toString().trim();
-    const epicId = formData.get('epicId')?.toString();
-    const projectId = formData.get('projectId')?.toString();
-    const parentIssueId = formData.get('parentIssueId')?.toString() || null;
-
-    if (!title || title.length === 0) {
-      return fail(400, { error: 'Issue title is required' });
-    }
-    if (!epicId) {
-      return fail(400, { error: 'Epic ID is required' });
-    }
-    if (!projectId) {
-      return fail(400, { error: 'Project ID is required' });
-    }
-
-    // Get max sort_order for this epic
-    const { data: maxOrderIssue } = await supabase
-      .from('issues')
-      .select('sort_order')
-      .eq('epic_id', epicId)
-      .order('sort_order', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const nextSortOrder = (maxOrderIssue?.sort_order ?? -1) + 1;
-
-    // Insert issue
-    const { data, error } = await supabase
-      .from('issues')
-      .insert({
-        title,
-        epic_id: epicId,
-        project_id: projectId,
-        ...(parentIssueId ? { parent_issue_id: parentIssueId } : {}),
-        status: 'todo',
-        priority: 3, // Default P3
-        sort_order: nextSortOrder,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Create issue error:', error);
-      return fail(500, { error: 'Failed to create issue' });
-    }
-
-    return { success: true, action: 'createIssue', issue: data };
+    return handleCreateIssue(supabase, await request.formData());
   },
 
   updateIssue: async ({ request, locals: { supabase, session } }) => {
-    // 1. Auth check
-    if (!session) {
-      return fail(401, { error: 'Unauthorized' });
-    }
-
-    // 2. Parse form data
-    const formData = await request.formData();
-    const id = formData.get('id')?.toString();
-
-    if (!id) {
-      return fail(400, { error: 'Issue ID is required' });
-    }
-
-    // 3. Build update object from form data
-    const updates: Record<string, string | number | null> = {};
-
-    // Title
-    const title = formData.get('title')?.toString();
-    if (title !== undefined) {
-      if (title.trim().length === 0) {
-        return fail(400, { error: 'Issue title cannot be empty' });
-      }
-      updates.title = title.trim();
-    }
-
-    // Status
-    const status = formData.get('status')?.toString();
-    if (status !== undefined) {
-      const validStatuses = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
-      if (!validStatuses.includes(status)) {
-        return fail(400, { error: 'Invalid status value' });
-      }
-      updates.status = status;
-    }
-
-    // Priority
-    const priority = formData.get('priority')?.toString();
-    if (priority !== undefined) {
-      const priorityNum = parseInt(priority);
-      if (isNaN(priorityNum) || priorityNum < 0 || priorityNum > 3) {
-        return fail(400, { error: 'Priority must be between 0 and 3' });
-      }
-      updates.priority = priorityNum;
-    }
-
-    // Story points
-    const storyPointsStr = formData.get('story_points')?.toString();
-    if (storyPointsStr !== undefined) {
-      if (storyPointsStr === '' || storyPointsStr === 'null') {
-        updates.story_points = null;
-      } else {
-        const storyPoints = parseInt(storyPointsStr);
-        if (isNaN(storyPoints)) {
-          return fail(400, { error: 'Invalid story points value' });
-        }
-        const validStoryPoints = [1, 2, 3, 5, 8, 13, 21];
-        if (!validStoryPoints.includes(storyPoints)) {
-          return fail(400, { error: 'Story points must be one of: 1, 2, 3, 5, 8, 13, 21' });
-        }
-        updates.story_points = storyPoints;
-      }
-    }
-
-    // Epic ID
-    const epicId = formData.get('epic_id')?.toString();
-    if (epicId !== undefined && epicId !== '') {
-      // Fetch issue to verify project ownership
-      const { data: issue } = await supabase
-        .from('issues')
-        .select('project_id')
-        .eq('id', id)
-        .single();
-
-      if (!issue) {
-        return fail(404, { error: 'Issue not found' });
-      }
-
-      // Verify epic exists and belongs to same project as issue
-      const { data: epic, error: epicError } = await supabase
-        .from('epics')
-        .select('id, project_id')
-        .eq('id', epicId)
-        .eq('project_id', issue.project_id)
-        .single();
-
-      if (epicError || !epic) {
-        return fail(400, { error: 'Epic not found or does not belong to same project' });
-      }
-
-      updates.epic_id = epicId;
-    }
-
-    // Milestone ID
-    const milestoneId = formData.get('milestone_id')?.toString();
-    if (milestoneId !== undefined) {
-      if (milestoneId === '' || milestoneId === 'null') {
-        updates.milestone_id = null;
-      } else {
-        // Verify milestone exists
-        const { data: milestone, error: milestoneError } = await supabase
-          .from('milestones')
-          .select('id')
-          .eq('id', milestoneId)
-          .single();
-
-        if (milestoneError || !milestone) {
-          return fail(400, { error: 'Milestone not found' });
-        }
-
-        updates.milestone_id = milestoneId;
-      }
-    }
-
-    // Description (rich text HTML)
-    const description = formData.get('description');
-    if (description !== null) {
-      updates.description = description.toString() === '' ? null : description.toString();
-    }
-
-    // 4. Update issue in database
-    const { data, error: updateError } = await supabase
-      .from('issues')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error('Failed to update issue:', updateError);
-      return fail(500, { error: 'Failed to update issue' });
-    }
-
-    return { success: true, action: 'updateIssue', issue: data };
+    if (!session) return fail(401, { error: 'Unauthorized' });
+    return handleUpdateIssue(supabase, await request.formData());
   },
 
   updateCell: async ({ request, locals: { supabase, session } }) => {
@@ -785,8 +602,7 @@ export const actions: Actions = {
       return fail(400, { error: 'Missing required attachment fields' });
     }
 
-    const validEntityTypes = ['project', 'epic', 'issue'];
-    if (!validEntityTypes.includes(entityType)) {
+    if (!VALID_ENTITY_TYPES.includes(entityType as (typeof VALID_ENTITY_TYPES)[number])) {
       return fail(400, { error: 'Invalid entity type' });
     }
 

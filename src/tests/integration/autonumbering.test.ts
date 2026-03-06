@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 
-import type { Database } from '$lib/database.types';
+import type { Database } from '$lib/types/database.types';
 
 describe('Autonumbering', () => {
   let supabase: SupabaseClient<Database>;
