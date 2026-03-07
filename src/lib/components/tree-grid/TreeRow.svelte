@@ -209,38 +209,4 @@
   <td class="py-4 px-4 hidden md:table-cell">
     <ProgressCell {node} />
   </td>
-
-  <!-- Row Actions (hover/focus reveal) -->
-  <td class="py-2 px-2 hidden md:table-cell">
-    <div
-      class="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-100"
-    >
-      <button
-        type="button"
-        class="p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground"
-        title="Open detail"
-        onclick={handleOpenClick}
-      >
-        <ArrowUpRight class="h-3.5 w-3.5" />
-      </button>
-      {#if node.type !== 'issue'}
-        <button
-          type="button"
-          class="p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground"
-          title={node.type === 'project' ? 'Add epic' : 'Add issue'}
-          onclick={handleAddChildClick}
-        >
-          <Plus class="h-3.5 w-3.5" />
-        </button>
-      {/if}
-      <button
-        type="button"
-        class="p-1 rounded hover:bg-surface-subtle text-muted-foreground hover:text-foreground"
-        title="More actions"
-        onclick={handleMoreClick}
-      >
-        <Ellipsis class="h-3.5 w-3.5" />
-      </button>
-    </div>
-  </td>
 </tr>
