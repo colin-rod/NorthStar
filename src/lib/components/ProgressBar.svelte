@@ -8,6 +8,17 @@
   let { percentage, label = true, ariaLabel = 'Completion progress' }: Props = $props();
 
   let clamped = $derived(Math.max(0, Math.min(100, Number(percentage) || 0)));
+  let fillClass = $derived(
+    clamped === 100
+      ? 'bg-green-500'
+      : clamped >= 75
+        ? 'bg-emerald-500'
+        : clamped >= 50
+          ? 'bg-blue-500'
+          : clamped >= 25
+            ? 'bg-amber-500'
+            : 'bg-red-500',
+  );
 </script>
 
 <div class="flex items-center gap-2">
@@ -20,7 +31,7 @@
     aria-label={ariaLabel}
   >
     <div
-      class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+      class="h-full {fillClass} rounded-full transition-all duration-300"
       style="width: {clamped}%"
     ></div>
   </div>

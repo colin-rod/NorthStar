@@ -19,6 +19,17 @@
   let clampedCompletionPercent = $derived(
     Math.max(0, Math.min(100, Number(completionPercent) || 0)),
   );
+  let fillClass = $derived(
+    clampedCompletionPercent === 100
+      ? 'bg-green-500'
+      : clampedCompletionPercent >= 75
+        ? 'bg-emerald-500'
+        : clampedCompletionPercent >= 50
+          ? 'bg-blue-500'
+          : clampedCompletionPercent >= 25
+            ? 'bg-amber-500'
+            : 'bg-red-500',
+  );
 
   let totalPoints = $derived(nonCanceled.reduce((sum, i) => sum + (i.story_points || 0), 0));
   let donePoints = $derived(
@@ -59,7 +70,7 @@
     aria-label="Completion progress"
   >
     <div
-      class="h-2 rounded-full bg-primary transition-all duration-300"
+      class="h-2 rounded-full {fillClass} transition-all duration-300"
       style="width: {completionPercent}%"
     ></div>
   </div>
