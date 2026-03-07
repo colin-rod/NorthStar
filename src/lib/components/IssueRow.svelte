@@ -22,6 +22,7 @@
    */
 
   import type { Issue } from '$lib/types';
+  import { focusedIssue } from '$lib/stores/keyboard';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import DependencyChip from '$lib/components/DependencyChip.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
@@ -62,6 +63,9 @@
   class="relative w-full flex items-center px-4 py-4 border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group {blocked
     ? 'bg-bg-blocked/50 border-l-[3px] border-l-status-blocked'
     : ''}"
+  role="listitem"
+  onmouseenter={() => focusedIssue.set(issue)}
+  onmouseleave={() => focusedIssue.set(null)}
 >
   <!-- Main Content Area (non-interactive container) -->
   <div class="flex-1 flex items-start gap-3 min-w-0">

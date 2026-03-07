@@ -121,6 +121,16 @@ export function isValidStoryPoints(points: number | null): boolean {
 export const ALLOWED_STORY_POINTS = VALID_STORY_POINTS;
 
 /**
+ * Cycle to the next status in linear order.
+ * Order: backlog → todo → in_progress → in_review → done → canceled → backlog
+ */
+export function cycleStatus(current: string): string {
+  const order = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
+  const idx = order.indexOf(current);
+  return order[(idx + 1) % order.length];
+}
+
+/**
  * Get status transitions allowed from current status
  */
 export function getAllowedStatusTransitions(currentStatus: string): string[] {

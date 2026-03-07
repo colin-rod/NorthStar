@@ -36,12 +36,14 @@
   import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
   import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
   import CheckIcon from '@lucide/svelte/icons/check';
+  import Link2Icon from '@lucide/svelte/icons/link-2';
   import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll, goto } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
+  import { copyDeepLink } from '$lib/utils/url-helpers';
   import {
     getStatusBadgeVariant,
     formatStatus,
@@ -155,6 +157,15 @@
 
   // Expand to center peek mode (desktop only)
   let expanded = $state(false);
+
+  // Copy link feedback
+  let copied = $state(false);
+  async function handleCopyLink() {
+    if (!issue) return;
+    await copyDeepLink({ projectId: issue.project_id, epicId: issue.epic_id, issueId: issue.id });
+    copied = true;
+    setTimeout(() => (copied = false), 1500);
+  }
 
   // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -690,6 +701,21 @@
               Edit Issue
             {/if}
           </SheetTitle>
+          {#if internalMode === 'edit'}
+            <button
+              onclick={handleCopyLink}
+              aria-label="Copy link to issue"
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-1 {isDesktop()
+                ? ''
+                : 'mr-8'}"
+            >
+              {#if copied}
+                <CheckIcon class="size-4" />
+              {:else}
+                <Link2Icon class="size-4" />
+              {/if}
+            </button>
+          {/if}
           {#if isDesktop()}
             <button
               onclick={() => (expanded = !expanded)}

@@ -29,6 +29,7 @@
   import { buildBreadcrumb } from '$lib/utils/breadcrumb';
   import { groupIssues } from '$lib/utils/group-issues';
   import { dismissReorderHint } from '$lib/stores/ui-hints';
+  import { isIssueSheetOpen, closeIssueSheet } from '$lib/stores/issues';
 
   interface Props {
     projects: (Project & {
@@ -45,6 +46,8 @@
     onCellEdit: (nodeId: string, field: string, value: any) => void;
     onCreateChild: (parentId: string, parentType: string, data: { title: string }) => void;
     onBulkAction?: (action: string) => void;
+    onBulkEdit?: (field: string, value: string) => void;
+    milestones?: { id: string; name: string }[];
     onShowToast?: (message: string, type: 'success' | 'error') => void;
     onIssueClick?: (issue: Issue) => void;
     onProjectClick?: (
@@ -70,6 +73,8 @@
     onCellEdit,
     onCreateChild,
     onBulkAction,
+    onBulkEdit,
+    milestones = [],
     onShowToast,
     onIssueClick,
     onProjectClick,
@@ -399,11 +404,75 @@
       onBulkAction(action);
     }
   }
+
+  function handleGridKeydown(e: KeyboardEvent) {
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape'].includes(e.key))
+      return;
+
+    const focusedRow = (e.target as HTMLElement).closest('tr[data-node-id]') as HTMLElement | null;
+    if (!focusedRow) return;
+
+    const nodeId = focusedRow.dataset.nodeId!;
+    const focusableNodes = displayNodes.filter((n) => n.type !== 'group-header') as TreeNode[];
+    const currentIndex = focusableNodes.findIndex((n) => n.id === nodeId);
+    if (currentIndex === -1) return;
+
+    const currentNode = focusableNodes[currentIndex];
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = focusableNodes[currentIndex + 1];
+      if (next) document.querySelector<HTMLElement>(`tr[data-node-id="${next.id}"]`)?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = focusableNodes[currentIndex - 1];
+      if (prev) document.querySelector<HTMLElement>(`tr[data-node-id="${prev.id}"]`)?.focus();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (!currentNode.hasChildren) return;
+      if (!expandedIds.has(currentNode.id)) {
+        onToggleExpand(currentNode.id);
+      } else {
+        const firstChild = focusableNodes[currentIndex + 1];
+        if (firstChild?.parentId === currentNode.id) {
+          document.querySelector<HTMLElement>(`tr[data-node-id="${firstChild.id}"]`)?.focus();
+        }
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentNode.hasChildren && expandedIds.has(currentNode.id)) {
+        onToggleExpand(currentNode.id);
+      } else if (currentNode.parentId) {
+        document.querySelector<HTMLElement>(`tr[data-node-id="${currentNode.parentId}"]`)?.focus();
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (currentNode.type === 'issue') {
+        onIssueClick?.(currentNode.data as Issue);
+      } else {
+        onToggleExpand(currentNode.id);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      if ($isIssueSheetOpen) {
+        closeIssueSheet();
+        setTimeout(() => focusedRow.focus(), 310);
+      } else {
+        focusedRow.blur();
+      }
+    }
+  }
 </script>
 
 <div class="space-y-4">
   <!-- Toolbar -->
-  <TreeToolbar {breadcrumb} selectedCount={selectedIds.size} onBulkAction={handleBulkAction} />
+  <TreeToolbar
+    {breadcrumb}
+    selectedCount={selectedIds.size}
+    onBulkAction={handleBulkAction}
+    onBulkEdit={(field, value) => onBulkEdit?.(field, value)}
+    {milestones}
+  />
 
   <!-- Tree Grid Table -->
   <div class="border border-border-divider rounded-lg overflow-hidden bg-surface">
@@ -436,6 +505,7 @@
         ondragend={handleDragEnd}
         onconsider={handleDndConsider}
         onfinalize={handleDndFinalize}
+        onkeydown={handleGridKeydown}
       >
         {#each nodesWithDragState as node, index (node.id)}
           {#if node.type === 'group-header'}

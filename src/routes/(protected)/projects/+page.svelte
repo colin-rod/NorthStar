@@ -21,6 +21,11 @@
   import IssueSortBySelector from '$lib/components/IssueSortBySelector.svelte';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
+  import {
+    VALID_ISSUE_STATUSES,
+    VALID_EPIC_STATUSES,
+    VALID_PROJECT_STATUSES,
+  } from '$lib/constants/validation';
   import { computeIssueCounts } from '$lib/utils/issue-counts';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
@@ -217,13 +222,7 @@
   }
 
   async function handleCellEdit(nodeId: string, field: string, value: any) {
-    // Determine node type
-    let nodeType = 'issue'; // default
-    if (data.projects.some((p) => p.id === nodeId)) {
-      nodeType = 'project';
-    } else if (data.projects.some((p) => p.epics?.some((e: Epic) => e.id === nodeId))) {
-      nodeType = 'epic';
-    }
+    const nodeType = resolveNodeType(nodeId);
 
     // Submit form
     const formData = new FormData();
@@ -314,9 +313,65 @@
     }
   }
 
+  function resolveNodeType(id: string): 'project' | 'epic' | 'issue' {
+    if (data.projects.some((p) => p.id === id)) return 'project';
+    if (data.projects.some((p) => p.epics?.some((e: Epic) => e.id === id))) return 'epic';
+    return 'issue';
+  }
+
   function handleBulkAction(action: string) {
     if (action === 'delete') {
       bulkDeleteDialogOpen = true;
+    }
+  }
+
+  async function handleBulkEdit(field: string, value: string) {
+    const issueStatuses = VALID_ISSUE_STATUSES as readonly string[];
+    const epicStatuses = VALID_EPIC_STATUSES as readonly string[];
+    const projectStatuses = VALID_PROJECT_STATUSES as readonly string[];
+
+    const eligible = Array.from(selectedIds)
+      .map((id) => ({ id, type: resolveNodeType(id) }))
+      .filter(({ type }) => {
+        if (field === 'status') {
+          return type === 'issue'
+            ? issueStatuses.includes(value)
+            : type === 'epic'
+              ? epicStatuses.includes(value)
+              : projectStatuses.includes(value);
+        }
+        // priority, story_points, milestone_id only apply to issues
+        return type === 'issue';
+      });
+
+    if (eligible.length === 0) {
+      showToast('No compatible items to update', 'error');
+      return;
+    }
+
+    const fetches = eligible.map(({ id, type }) => {
+      const formData = new FormData();
+      formData.append('nodeId', id);
+      formData.append('nodeType', type);
+      formData.append('field', field);
+      formData.append('value', value);
+      return fetch('?/updateCell', { method: 'POST', body: formData });
+    });
+
+    try {
+      const results = await Promise.all(fetches);
+      const failed = results.filter((r) => !r.ok).length;
+      const skipped = selectedIds.size - eligible.length;
+      selectedIds = new Set();
+      await invalidateAll();
+      const skippedMsg = skipped > 0 ? `, ${skipped} skipped` : '';
+      if (failed > 0) {
+        showToast(`${failed} item(s) failed to update`, 'error');
+      } else {
+        showToast(`${eligible.length} updated${skippedMsg}`, 'success');
+      }
+    } catch {
+      showToast('Failed to update', 'error');
     }
   }
 
@@ -329,12 +384,7 @@
     };
 
     const deletes = Array.from(selectedIds).map((id) => {
-      let type = 'issue';
-      if (data.projects.some((p) => p.id === id)) {
-        type = 'project';
-      } else if (data.projects.some((p) => p.epics?.some((e: Epic) => e.id === id))) {
-        type = 'epic';
-      }
+      const type = resolveNodeType(id);
       const formData = new FormData();
       formData.append('id', id);
       return fetch(actionMap[type], { method: 'POST', body: formData });
@@ -640,6 +690,8 @@
       onCellEdit={handleCellEdit}
       onCreateChild={handleCreateChild}
       onBulkAction={handleBulkAction}
+      onBulkEdit={handleBulkEdit}
+      milestones={data.milestones ?? []}
       onShowToast={showToast}
       onIssueClick={handleIssueClick}
       onProjectClick={handleProjectDoubleClick}

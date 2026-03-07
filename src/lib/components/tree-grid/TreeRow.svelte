@@ -169,9 +169,6 @@
   tabindex="0"
   oncontextmenu={handleContextMenuEvent}
   ondblclick={handleDoubleClick}
-  onkeydown={(e) => {
-    if (e.key === 'Enter') handleDoubleClick();
-  }}
 >
   <!-- Drag Handle -->
   <td class="py-4 px-4 hidden md:table-cell">

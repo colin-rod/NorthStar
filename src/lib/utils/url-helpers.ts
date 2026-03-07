@@ -104,3 +104,22 @@ export function parseStoryPoints(param: string | null): string[] {
     .map((p) => p.trim())
     .filter((p) => validPoints.includes(p));
 }
+
+/**
+ * Build a deep link URL for an issue, project, or epic and copy it to the clipboard.
+ * - Issue: /projects?project=<id>&epic=<id>&issue=<id> (auto-opens IssueSheet)
+ * - Project: /projects?project=<id> (expands project in tree)
+ * - Epic: /projects?project=<id>&epic=<id> (expands project + epic in tree)
+ */
+export async function copyDeepLink(ids: {
+  projectId: string;
+  epicId?: string;
+  issueId?: string;
+}): Promise<void> {
+  const params = new URLSearchParams();
+  params.set('project', ids.projectId);
+  if (ids.epicId) params.set('epic', ids.epicId);
+  if (ids.issueId) params.set('issue', ids.issueId);
+  const url = `${window.location.origin}/projects?${params.toString()}`;
+  await navigator.clipboard.writeText(url);
+}
