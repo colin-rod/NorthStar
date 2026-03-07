@@ -6,6 +6,8 @@
  * across the application.
  */
 
+import { VALID_STORY_POINTS } from '$lib/constants/validation';
+
 /**
  * Status Colors
  * Maps issue status to corresponding status color classes
@@ -172,7 +174,7 @@ export const shadows = {
  * Story Points
  * Valid story point values per North/CLAUDE.md spec
  */
-export const validStoryPoints = [1, 2, 3, 5, 8, 13, 21] as const;
+export const validStoryPoints = VALID_STORY_POINTS;
 export type StoryPoints = (typeof validStoryPoints)[number];
 
 /**
