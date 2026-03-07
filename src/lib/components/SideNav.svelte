@@ -9,7 +9,7 @@
    * - Serif font for app wordmark
    * - Minimal, clean appearance
    */
-  import { Home, Folder } from '@lucide/svelte';
+  import { Home, Folder, Upload } from '@lucide/svelte';
 
   import { page } from '$app/stores';
   import { cn } from '$lib/utils';
@@ -18,6 +18,7 @@
   const pathname = $derived($page.url.pathname);
   const isHome = $derived(pathname === '/');
   const isProjects = $derived(pathname.startsWith('/projects'));
+  const isImport = $derived(pathname.startsWith('/import'));
 </script>
 
 <!-- North Design: Clean sidebar with subtle styling -->
@@ -61,6 +62,21 @@
       >
         <Folder class="w-5 h-5" />
         <span class="text-body">Projects</span>
+      </a>
+
+      <a
+        href="/import"
+        aria-label="Import"
+        aria-current={isImport ? 'page' : undefined}
+        class={cn(
+          'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
+          isImport
+            ? 'bg-primary-tint text-primary font-medium'
+            : 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground',
+        )}
+      >
+        <Upload class="w-5 h-5" />
+        <span class="text-body">Import</span>
       </a>
     </div>
   </div>
