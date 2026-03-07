@@ -317,7 +317,7 @@ export const actions: Actions = {
       .select('id')
       .eq('id', projectId)
       .eq('user_id', session.user.id)
-      .single();
+      .maybeSingle();
 
     if (!project) {
       return fail(404, { error: 'Project not found' });
@@ -330,7 +330,7 @@ export const actions: Actions = {
       .eq('project_id', projectId)
       .order('sort_order', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     const nextSortOrder = (maxOrderEpic?.sort_order ?? -1) + 1;
 
@@ -659,7 +659,11 @@ export const actions: Actions = {
     if (!id) return fail(400, { error: 'Epic ID is required' });
 
     // Get the epic's project_id
-    const { data: epic } = await supabase.from('epics').select('project_id').eq('id', id).single();
+    const { data: epic } = await supabase
+      .from('epics')
+      .select('project_id')
+      .eq('id', id)
+      .maybeSingle();
     if (!epic) return fail(404, { error: 'Epic not found' });
 
     // Find the project's default (Unassigned) epic
@@ -668,7 +672,7 @@ export const actions: Actions = {
       .select('id')
       .eq('project_id', epic.project_id)
       .eq('is_default', true)
-      .single();
+      .maybeSingle();
     if (!defaultEpic) return fail(500, { error: 'Default epic not found' });
 
     // Reassign all issues from deleted epic to Unassigned

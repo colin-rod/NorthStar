@@ -69,7 +69,7 @@ export async function handleUpdateIssue(supabase: SupabaseClient, formData: Form
       .from('issues')
       .select('project_id')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (!issue) {
       return fail(404, { error: 'Issue not found' });
@@ -80,7 +80,7 @@ export async function handleUpdateIssue(supabase: SupabaseClient, formData: Form
       .select('id, project_id')
       .eq('id', epicId)
       .eq('project_id', issue.project_id)
-      .single();
+      .maybeSingle();
 
     if (epicError || !epic) {
       return fail(400, { error: 'Epic not found or does not belong to same project' });
@@ -99,7 +99,7 @@ export async function handleUpdateIssue(supabase: SupabaseClient, formData: Form
         .from('milestones')
         .select('id')
         .eq('id', milestoneId)
-        .single();
+        .maybeSingle();
 
       if (milestoneError || !milestone) {
         return fail(400, { error: 'Milestone not found' });
@@ -120,7 +120,7 @@ export async function handleUpdateIssue(supabase: SupabaseClient, formData: Form
     .update(updates)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (updateError) {
     console.error('Failed to update issue:', updateError);
@@ -151,7 +151,7 @@ export async function handleCreateIssue(supabase: SupabaseClient, formData: Form
     .select('id, project_id')
     .eq('id', epicId)
     .eq('project_id', projectId)
-    .single();
+    .maybeSingle();
 
   if (epicError || !epic) {
     return fail(400, { error: 'Epic not found or does not belong to selected project' });

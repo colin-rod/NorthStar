@@ -130,7 +130,7 @@ export const actions: Actions = {
       .select('id')
       .eq('id', projectId)
       .eq('user_id', session.user.id)
-      .single();
+      .maybeSingle();
 
     if (!project) {
       return fail(404, { error: 'Project not found' });
@@ -143,7 +143,7 @@ export const actions: Actions = {
       .eq('project_id', projectId)
       .order('sort_order', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     const nextSortOrder = (maxOrderEpic?.sort_order ?? -1) + 1;
 
