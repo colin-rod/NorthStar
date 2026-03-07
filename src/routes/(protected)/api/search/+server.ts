@@ -45,7 +45,10 @@ export const GET: RequestHandler = async ({ request, locals: { supabase, session
 
   const [issuesResult, epicsResult, milestonesResult] = await Promise.all([
     issuesQuery,
-    supabase.from('epics').select('*').order('sort_order', { ascending: true }),
+    supabase
+      .from('epics')
+      .select('id, number, name, description, project_id, status, priority, sort_order, is_default')
+      .order('sort_order', { ascending: true }),
     supabase.from('milestones').select('*').order('name', { ascending: true }),
   ]);
 

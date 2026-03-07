@@ -147,17 +147,39 @@ function createIssueNode(issue: Issue, epicId: string, _projectId: string): Tree
 }
 
 /**
+ * Build an index mapping parentId → children for O(1) child lookup.
+ *
+ * @param allNodes - All tree nodes
+ * @returns Map from parentId to array of child nodes
+ */
+export function buildChildrenIndex(allNodes: TreeNode[]): Map<string | null, TreeNode[]> {
+  const index = new Map<string | null, TreeNode[]>();
+  for (const node of allNodes) {
+    const key = node.parentId;
+    if (!index.has(key)) index.set(key, []);
+    index.get(key)!.push(node);
+  }
+  return index;
+}
+
+/**
  * Get all descendant nodes of a given node
  *
  * @param node - Parent node
- * @param allNodes - All tree nodes
+ * @param allNodes - All tree nodes (used to build index if not provided)
+ * @param childrenIndex - Optional pre-built children index for O(1) lookups
  * @returns Array of descendant nodes
  */
-export function getDescendantNodes(node: TreeNode, allNodes: TreeNode[]): TreeNode[] {
+export function getDescendantNodes(
+  node: TreeNode,
+  allNodes: TreeNode[],
+  childrenIndex?: Map<string | null, TreeNode[]>,
+): TreeNode[] {
+  const index = childrenIndex ?? buildChildrenIndex(allNodes);
   const descendants: TreeNode[] = [];
 
   function collectDescendants(parentId: string) {
-    const children = allNodes.filter((n) => n.parentId === parentId);
+    const children = index.get(parentId) ?? [];
     for (const child of children) {
       descendants.push(child);
       collectDescendants(child.id);
@@ -172,11 +194,16 @@ export function getDescendantNodes(node: TreeNode, allNodes: TreeNode[]): TreeNo
  * Get all descendant issue nodes (level 2) for calculating progress
  *
  * @param node - Parent node
- * @param allNodes - All tree nodes
+ * @param allNodes - All tree nodes (used to build index if not provided)
+ * @param childrenIndex - Optional pre-built children index for O(1) lookups
  * @returns Array of issue nodes
  */
-export function getDescendantIssues(node: TreeNode, allNodes: TreeNode[]): TreeNode[] {
-  const descendants = getDescendantNodes(node, allNodes);
+export function getDescendantIssues(
+  node: TreeNode,
+  allNodes: TreeNode[],
+  childrenIndex?: Map<string | null, TreeNode[]>,
+): TreeNode[] {
+  const descendants = getDescendantNodes(node, allNodes, childrenIndex);
   return descendants.filter((n) => n.type === 'issue');
 }
 

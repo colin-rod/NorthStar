@@ -50,10 +50,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       project:projects(*),
       epic:epics(*),
       milestone:milestones(*),
-      dependencies!dependencies_issue_id_fkey(
-        depends_on_issue_id,
-        depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(id, status)
-      ),
       blocked_by:dependencies!dependencies_issue_id_fkey(
         depends_on_issue_id,
         depends_on_issue:issues!dependencies_depends_on_issue_id_fkey(
