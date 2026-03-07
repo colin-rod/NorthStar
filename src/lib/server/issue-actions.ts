@@ -134,7 +134,6 @@ export async function handleCreateIssue(supabase: SupabaseClient, formData: Form
   const titleRaw = formData.get('title')?.toString().trim();
   const epicId = formData.get('epicId')?.toString();
   const projectId = formData.get('projectId')?.toString();
-  const parentIssueId = formData.get('parentIssueId')?.toString() || null;
 
   if (!titleRaw || titleRaw.length === 0) {
     return fail(400, { error: 'Issue title is required' });
@@ -175,7 +174,6 @@ export async function handleCreateIssue(supabase: SupabaseClient, formData: Form
       title: titleRaw,
       epic_id: epicId,
       project_id: projectId,
-      ...(parentIssueId ? { parent_issue_id: parentIssueId } : {}),
       status: 'todo',
       priority: DEFAULT_ISSUE_PRIORITY,
       sort_order: nextSortOrder,

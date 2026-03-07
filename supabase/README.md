@@ -17,8 +17,8 @@ This directory contains the database schema, migrations, and seed data for North
 ### What's Deployed
 
 - **5 tables**: `projects`, `epics`, `milestones`, `issues`, `dependencies`
-- **6 functions**: Cycle detection, auto-create epic, updated_at trigger, constraint validations
-- **5 triggers**: Cycle prevention, auto-epic creation, sub-issue validation, default epic enforcement
+- **5 functions**: Cycle detection, auto-create epic, updated_at trigger, constraint validations
+- **4 triggers**: Cycle prevention, auto-epic creation, default epic enforcement
 - **RLS policies**: User-scoped access for all tables
 - **15+ indexes**: Performance optimization for common queries
 
@@ -80,15 +80,13 @@ The seed script creates:
 2. **Blocked Issues**: Issues with incomplete dependencies
 3. **Ready Issues**: Issues with no blockers and status = "todo"
 4. **Constraint Violations**: Invalid story points, invalid status, self-dependencies (all should fail)
-5. **Sub-issue Validation**: Sub-issues must be in same project as parent
 
 ## Schema Features Validated
 
 ✅ **Auto-create "Unassigned" epic** - Trigger creates default epic for new projects
 ✅ **Dependency cycle prevention** - Recursive CTE prevents circular dependencies
 ✅ **Story points constraint** - Only allows: 1, 2, 3, 5, 8, 13, 21, or NULL
-✅ **Status enum constraint** - Only allows: todo, doing, in_review, done, canceled
-✅ **Sub-issue project validation** - Sub-issues must be in same project as parent
+✅ **Status enum constraint** - Only allows: backlog, todo, in_progress, in_review, done, canceled
 ✅ **No self-dependencies** - CHECK constraint prevents issue depending on itself
 ✅ **RLS policies** - Users can only access their own data
 

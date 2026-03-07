@@ -66,7 +66,6 @@ SELECT
 FROM issues i
 LEFT JOIN dependencies d ON d.issue_id = i.id
 LEFT JOIN issues dep_issue ON dep_issue.id = d.depends_on_issue_id
-WHERE i.parent_issue_id IS NULL  -- Only show parent issues
 GROUP BY i.id, i.title, i.status
 ORDER BY i.sort_order;
 
@@ -100,7 +99,7 @@ FROM issues
 GROUP BY status
 ORDER BY status;
 
--- Expected: Only values from {todo, doing, in_review, done, canceled}
+-- Expected: Only values from {backlog, todo, in_progress, in_review, done, canceled}
 
 -- Check no self-dependencies
 SELECT
@@ -140,12 +139,11 @@ AND routine_name IN (
     'update_updated_at_column',
     'prevent_dependency_cycle',
     'create_default_epic',
-    'ensure_one_default_epic',
-    'validate_sub_issue_project'
+    'ensure_one_default_epic'
 )
 ORDER BY routine_name;
 
--- Expected: 6 functions
+-- Expected: 5 functions (validate_sub_issue_project was removed)
 
 -- ============================================================================
 -- 8. Summary Stats

@@ -4,7 +4,7 @@ A single-user project management application designed to manage multiple persona
 
 ## Features
 
-- **Hierarchical Work Breakdown**: Projects → Epics → Issues → Sub-issues
+- **Hierarchical Work Breakdown**: Projects → Epics → Issues
 - **Dependency Tracking**: Explicit dependencies with blocking states and cycle prevention
 - **Mobile-First UI**: Optimized for fast, responsive mobile usage
 - **Story Points & Milestones**: Track effort and organize work into phases
@@ -60,18 +60,13 @@ PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 ### 3. Verify Supabase Connection
 
-Test that your Supabase connection is working:
+Start the dev server and navigate to the login page:
 
 ```bash
 pnpm dev
 ```
 
-Navigate to [http://localhost:5173/test](http://localhost:5173/test)
-
-You should see:
-
-- ✅ Server-side timestamp (proving server connection works)
-- ✅ Client-side timestamp (proving browser connection works)
+Open [http://localhost:5173](http://localhost:5173) — you should see the login page.
 
 If you see errors:
 
@@ -131,9 +126,6 @@ src/
 │   ├── utils/               # Utility functions
 │   └── assets/              # Static assets
 ├── routes/                  # SvelteKit routes (pages)
-│   ├── test/                # Supabase connection test page
-│   │   ├── +page.server.ts
-│   │   └── +page.svelte
 │   ├── +layout.svelte       # Root layout
 │   └── +page.svelte         # Home page
 ├── hooks.server.ts          # SvelteKit server hooks (auth state)

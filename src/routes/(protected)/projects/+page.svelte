@@ -311,49 +311,6 @@
         console.error('Create issue error:', error);
         showToast('Failed to create issue', 'error');
       }
-    } else if (parentType === 'issue') {
-      // Creating sub-issue - need to find epic and project IDs
-      let epicId = '';
-      let projectId = '';
-
-      for (const project of data.projects) {
-        const issue = project.epics?.flatMap((e) => e.issues || []).find((i) => i.id === parentId);
-        if (issue) {
-          epicId = issue.epic_id;
-          projectId = project.id;
-          break;
-        }
-      }
-
-      if (!epicId || !projectId) {
-        showToast('Epic or project not found', 'error');
-        return;
-      }
-
-      formData.append('parentIssueId', parentId);
-      formData.append('epicId', epicId);
-      formData.append('projectId', projectId);
-
-      try {
-        const response = await fetch('?/createIssue', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const result = deserialize(await response.text());
-
-        if (result.type === 'success') {
-          const newIssue = (result.data as any).issue;
-          await invalidateAll();
-          openIssueSheet({ ...newIssue, blocked_by: [], blocking: [] });
-          showToast('Sub-issue created', 'success');
-        } else {
-          showToast('Failed to create sub-issue', 'error');
-        }
-      } catch (error) {
-        console.error('Create sub-issue error:', error);
-        showToast('Failed to create sub-issue', 'error');
-      }
     }
   }
 
