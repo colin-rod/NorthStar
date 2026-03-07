@@ -170,11 +170,6 @@
   oncontextmenu={handleContextMenuEvent}
   ondblclick={handleDoubleClick}
 >
-  <!-- Drag Handle -->
-  <td class="py-4 px-4 hidden md:table-cell">
-    <DragHandleCell />
-  </td>
-
   <!-- Selection Checkbox -->
   <td class="py-4 px-4 hidden md:table-cell">
     <SelectionCell checked={isSelected} onToggle={() => onToggleSelect(node.id)} />

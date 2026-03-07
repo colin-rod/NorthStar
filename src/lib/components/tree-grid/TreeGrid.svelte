@@ -274,12 +274,11 @@
 
   // Column definitions (per spec)
   const columns = [
-    { key: 'drag', header: '', width: '40px', hideOnMobile: true },
     { key: 'select', header: '', width: '40px', hideOnMobile: true },
     { key: 'title', header: 'Title', width: 'flex min-w-[340px]', hideOnMobile: false },
     { key: 'status', header: 'Status', width: '140px', hideOnMobile: false },
     { key: 'total_sp', header: 'Total pts', width: '96px', hideOnMobile: true },
-    { key: 'progress', header: 'Progress', width: '140px', hideOnMobile: true },
+    { key: 'progress', header: 'Progress', width: '200px', hideOnMobile: true },
     { key: 'actions', header: '', width: '80px', hideOnMobile: true },
   ];
 
