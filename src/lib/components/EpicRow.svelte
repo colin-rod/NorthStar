@@ -69,7 +69,7 @@
 
       <div class="flex-1 min-w-0">
         <!-- Epic Name: 16px, weight 500 (medium bold-ish) -->
-        <h3 class="text-section-header truncate">{epic.name}</h3>
+        <h3 class="text-section-header font-accent truncate">{epic.name}</h3>
 
         <!-- Counts Row with Badges -->
         <div class="flex gap-3 mt-2">

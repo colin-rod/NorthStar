@@ -65,7 +65,7 @@
   <!-- Header with epic name and close button -->
   <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-3">
-      <h2 class="text-section-header">{epic.name}</h2>
+      <h2 class="text-section-header font-accent">{epic.name}</h2>
       <Badge variant={epic.status === 'active' ? 'default' : 'secondary'}>
         {epic.status}
       </Badge>

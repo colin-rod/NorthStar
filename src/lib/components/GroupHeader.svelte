@@ -27,7 +27,7 @@
   {/if}
 
   <!-- Group Name -->
-  <span class="font-medium text-body">{groupName}</span>
+  <span class="font-accent font-medium text-body">{groupName}</span>
 
   <!-- Separator -->
   <span aria-hidden="true" class="text-foreground-muted">—</span>

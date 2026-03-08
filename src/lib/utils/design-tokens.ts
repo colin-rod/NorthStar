@@ -145,7 +145,7 @@ export const borderRadius = {
  */
 export const typography = {
   pageTitle: 'text-page-title font-accent',
-  sectionHeader: 'text-section-header font-ui',
+  sectionHeader: 'text-section-header font-accent',
   issueTitle: 'text-issue-title font-ui',
   body: 'text-body font-ui',
   metadata: 'text-metadata',

@@ -78,7 +78,7 @@
     <CardHeader class="pb-4">
       <div class="flex items-center justify-between">
         <!-- Project name: section header weight -->
-        <h3 class="text-section-header font-ui">{project.name}</h3>
+        <h3 class="text-section-header font-accent">{project.name}</h3>
 
         <!-- Action buttons - visible on hover, above overlay -->
         <div

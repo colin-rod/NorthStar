@@ -50,7 +50,7 @@
   <CardHeader class="pb-4">
     <div class="flex items-center justify-between gap-3">
       <!-- Epic name: section header weight -->
-      <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
+      <h3 class="text-section-header font-accent flex-1 min-w-0 truncate">{epic.name}</h3>
       <!-- Summary pill, priority, milestone, and status badge -->
       <div class="flex items-center gap-2 shrink-0">
         {#if headerProgress.total > 0}
