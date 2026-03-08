@@ -95,6 +95,9 @@
   let localEpicId = $state('');
   let localMilestoneId = $state<string | null>(null);
 
+  // Guard: prevent auto-save effects from firing before init effect has run
+  let isEditInitialized = $state(false);
+
   // Loading state
   let loading = $state(false);
   let activeSaveCount = $state(0);
@@ -205,6 +208,7 @@
       descriptionInFlightNormalized = null;
       saveState = 'idle';
       clearSaveStateResetTimeout();
+      isEditInitialized = true;
 
       // Load attachments and links for this issue
       if (internalMode === 'edit') {
@@ -267,6 +271,7 @@
       expanded = false;
       selectedProjectId = '';
       localEpicId = '';
+      isEditInitialized = false;
       createLoading = false;
       // Reset internal mode back to parent's mode after close animation
       setTimeout(() => {
@@ -603,9 +608,10 @@
     localEpicId = select.value;
   }
 
-  // Watch for changes and auto-save
+  // Watch for changes and auto-save (guarded by isEditInitialized to prevent race conditions)
   $effect(() => {
     if (
+      isEditInitialized &&
       internalMode === 'edit' &&
       open &&
       issue &&
@@ -619,6 +625,7 @@
 
   $effect(() => {
     if (
+      isEditInitialized &&
       internalMode === 'edit' &&
       open &&
       issue &&
@@ -632,6 +639,7 @@
 
   $effect(() => {
     if (
+      isEditInitialized &&
       internalMode === 'edit' &&
       open &&
       issue &&
@@ -645,6 +653,7 @@
 
   $effect(() => {
     if (
+      isEditInitialized &&
       internalMode === 'edit' &&
       open &&
       issue &&
