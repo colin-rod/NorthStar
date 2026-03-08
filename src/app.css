@@ -138,6 +138,18 @@
   }
 }
 
+/* North Design System Keyframes */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* North Design System Component Classes */
 @layer components {
   /* Reusable native <select> styling (full-width, form fields) */
@@ -148,6 +160,13 @@
   /* Compact variant for inline edit fields */
   .select-input-sm {
     @apply flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+  }
+
+  /* Button press feedback — subtle scale-down on active for all interactive buttons */
+  button:not([disabled]):active,
+  [role="button"]:not([disabled]):active {
+    transform: scale(0.97);
+    transition: transform 0.08s ease-out;
   }
 
   /* Section header inside sheets/panels (e.g. "Basic Info", "Progress", "Epics") */

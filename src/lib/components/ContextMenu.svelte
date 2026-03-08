@@ -450,7 +450,7 @@
 <Dialog.Root bind:open={deleteDialogOpen}>
   <Dialog.Content>
     <Dialog.Header>
-      <Dialog.Title>Are you sure?</Dialog.Title>
+      <Dialog.Title>Delete {nodeToDelete?.type ?? node?.type}?</Dialog.Title>
       <Dialog.Description>
         This will permanently delete the {nodeToDelete?.type ?? node?.type}. This action cannot be
         undone.
@@ -458,7 +458,7 @@
     </Dialog.Header>
     <Dialog.Footer>
       <Button variant="outline" onclick={() => (deleteDialogOpen = false)}>Cancel</Button>
-      <Button variant="destructive" onclick={handleDelete}>Confirm</Button>
+      <Button variant="destructive" onclick={handleDelete}>Delete</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

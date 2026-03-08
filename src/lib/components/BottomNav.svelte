@@ -32,7 +32,7 @@
       aria-label="Home"
       aria-current={isHome ? 'page' : undefined}
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         isHome ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
@@ -45,7 +45,7 @@
       aria-label="Projects"
       aria-current={isProjects ? 'page' : undefined}
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         isProjects ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
@@ -57,7 +57,7 @@
       onclick={() => navSearchOpen.set(true)}
       aria-label="Search"
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         $navSearchOpen ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
@@ -70,7 +70,7 @@
       aria-label="Account"
       aria-current={isSettings ? 'page' : undefined}
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         isSettings ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >

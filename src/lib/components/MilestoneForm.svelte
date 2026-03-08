@@ -131,6 +131,4 @@
       Cancel
     </Button>
   </div>
-
-  <p class="text-xs text-foreground-muted">Press Escape to cancel</p>
 </form>

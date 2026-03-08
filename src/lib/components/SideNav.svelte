@@ -39,7 +39,7 @@
         aria-label="Home"
         aria-current={isHome ? 'page' : undefined}
         class={cn(
-          'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
+          'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
           isHome
             ? 'bg-primary-tint text-primary font-medium'
             : 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground',
@@ -54,7 +54,7 @@
         aria-label="Projects"
         aria-current={isProjects ? 'page' : undefined}
         class={cn(
-          'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
+          'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
           isProjects
             ? 'bg-primary-tint text-primary font-medium'
             : 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground',
@@ -69,7 +69,7 @@
         aria-label="Import"
         aria-current={isImport ? 'page' : undefined}
         class={cn(
-          'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors',
+          'flex items-center gap-3 px-4 py-3 rounded-[8px] transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
           isImport
             ? 'bg-primary-tint text-primary font-medium'
             : 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground',

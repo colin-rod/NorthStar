@@ -134,7 +134,7 @@
               type="button"
               onclick={handleAdd}
               disabled={adding || !inputUrl.trim()}
-              class="text-xs text-primary hover:text-primary/80 disabled:opacity-40"
+              class="text-xs text-primary hover:text-primary/80 disabled:opacity-50"
             >
               {adding ? 'Adding...' : 'Add'}
             </button>

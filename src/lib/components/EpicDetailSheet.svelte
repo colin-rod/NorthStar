@@ -505,7 +505,7 @@
           {#if isDesktop()}
             <button
               onclick={() => (expanded = !expanded)}
-              aria-label={expanded ? 'Collapse to sidebar' : 'Expand to full page'}
+              aria-label={expanded ? 'Collapse' : 'Expand to full page'}
               class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mr-8"
             >
               {#if expanded}

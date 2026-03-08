@@ -160,7 +160,7 @@
     <div class="flex items-center gap-2">
       <button
         type="button"
-        title={viewMode === 'sectioned' ? 'Switch to flat list' : 'Switch to focus view'}
+        title={viewMode === 'sectioned' ? 'View all issues' : 'View by status'}
         onclick={() =>
           goto(viewMode === 'sectioned' ? '?view=all' : '/', {
             replaceState: false,

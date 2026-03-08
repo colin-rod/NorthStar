@@ -50,10 +50,11 @@
         <!-- User menu dropdown -->
         <Popover bind:open={menuOpen}>
           <PopoverTrigger
-            class="hidden sm:inline-flex items-center gap-1 text-metadata text-foreground-muted hover:text-foreground transition-colors"
+            class="inline-flex items-center gap-1 text-foreground-muted hover:text-foreground transition-colors"
           >
-            {session.user.email}
-            <ChevronDown aria-hidden="true" class="w-3 h-3" />
+            <Settings aria-hidden="true" class="w-5 h-5 sm:hidden" />
+            <span class="hidden sm:inline text-metadata">{session.user.email}</span>
+            <ChevronDown aria-hidden="true" class="hidden sm:inline w-3 h-3" />
           </PopoverTrigger>
           <PopoverContent align="end" class="w-44 p-1">
             <a

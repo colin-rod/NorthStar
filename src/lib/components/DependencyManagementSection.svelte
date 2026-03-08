@@ -61,8 +61,8 @@
     {#if blockingDeps.length > 0}
       <div class="flex items-center gap-1 text-sm text-destructive font-medium mb-2">
         <Lock class="h-4 w-4" aria-hidden="true" />
-        Blocked by {blockingDeps.length}
-        {blockingDeps.length === 1 ? 'dependency' : 'dependencies'}
+        Waiting on {blockingDeps.length}
+        {blockingDeps.length === 1 ? 'issue' : 'issues'}
       </div>
     {/if}
 
@@ -83,7 +83,7 @@
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
-                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                class="shrink-0 text-foreground-muted hover:text-destructive transition duration-150 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                 aria-label="Remove dependency"
               >
                 <X class="h-4 w-4" />
@@ -97,7 +97,7 @@
     <!-- Satisfied Dependencies -->
     {#if satisfiedDeps.length > 0}
       <div>
-        <p class="text-metadata text-foreground-muted mb-2">Satisfied dependencies</p>
+        <p class="text-metadata text-foreground-muted mb-2">Completed dependencies</p>
         <ul class="space-y-2">
           {#each satisfiedDeps as dep (dep.id)}
             <li class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
@@ -111,7 +111,7 @@
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
-                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                class="shrink-0 text-foreground-muted hover:text-destructive transition duration-150 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                 aria-label="Remove dependency"
               >
                 <X class="h-4 w-4" />

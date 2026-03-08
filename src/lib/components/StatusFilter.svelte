@@ -29,10 +29,20 @@
 
   // Computed statuses (virtual) + raw database statuses
   const allOptions: StatusOption[] = [
-    { value: 'ready', label: 'Ready', description: 'Todo + no blockers', section: 'computed' },
-    { value: 'blocked', label: 'Blocked', description: 'Has unresolved deps', section: 'computed' },
+    {
+      value: 'ready',
+      label: 'Ready',
+      description: 'Todo with nothing blocking',
+      section: 'computed',
+    },
+    {
+      value: 'blocked',
+      label: 'Blocked',
+      description: 'Waiting on other issues',
+      section: 'computed',
+    },
     { value: 'backlog', label: ISSUE_STATUS_LABELS.backlog, section: 'raw' },
-    { value: 'todo', label: 'Todo (all)', description: 'Includes blocked', section: 'raw' },
+    { value: 'todo', label: 'Todo', description: 'Including blocked issues', section: 'raw' },
     { value: 'in_progress', label: ISSUE_STATUS_LABELS.in_progress, section: 'raw' },
     { value: 'in_review', label: ISSUE_STATUS_LABELS.in_review, section: 'raw' },
     { value: 'done', label: ISSUE_STATUS_LABELS.done, section: 'raw' },

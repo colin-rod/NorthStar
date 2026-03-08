@@ -82,7 +82,7 @@
 
         <!-- Action buttons - visible on hover, above overlay -->
         <div
-          class="relative z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity"
+          class="relative z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity duration-150"
         >
           {#if onEdit}
             <Button

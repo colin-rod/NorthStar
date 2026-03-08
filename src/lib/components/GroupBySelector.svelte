@@ -4,6 +4,7 @@
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
   import { Command, CommandList, CommandItem } from '$lib/components/ui/command';
   import type { GroupByMode } from '$lib/types';
+  import Layers from '@lucide/svelte/icons/layers';
 
   interface Props {
     selected: GroupByMode;
@@ -46,7 +47,8 @@
   <PopoverTrigger
     class="inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
   >
-    {buttonText}
+    <Layers class="h-4 w-4 shrink-0" />
+    <span class="hidden md:inline ml-2">{buttonText}</span>
   </PopoverTrigger>
   <PopoverContent class="w-[200px] p-0" align="start">
     <Command>

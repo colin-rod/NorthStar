@@ -707,18 +707,21 @@
           </SheetTitle>
           {#if internalMode === 'edit'}
             {#if saveState === 'saving'}
-              <span class="shrink-0 mt-0.5 text-muted-foreground" aria-label="Saving">
+              <span class="shrink-0 mt-0.5 text-foreground-muted" aria-label="Saving">
                 <LoaderIcon class="size-4 animate-spin" />
               </span>
             {:else if saveState === 'saved'}
               <span
-                class="shrink-0 mt-0.5 text-green-600 dark:text-green-400 transition-opacity duration-300"
+                class="shrink-0 mt-0.5 text-status-done animate-[scale-in_0.15s_ease-out]"
                 aria-label="Saved"
               >
                 <CheckIcon class="size-4" />
               </span>
             {:else if saveState === 'error'}
-              <span class="shrink-0 mt-0.5 text-destructive" aria-label="Save failed">
+              <span
+                class="shrink-0 mt-0.5 text-destructive animate-[scale-in_0.15s_ease-out]"
+                aria-label="Save failed"
+              >
                 <AlertCircleIcon class="size-4" />
               </span>
             {/if}
@@ -739,7 +742,7 @@
           {#if isDesktop()}
             <button
               onclick={() => (expanded = !expanded)}
-              aria-label={expanded ? 'Collapse to sidebar' : 'Expand to full page'}
+              aria-label={expanded ? 'Collapse' : 'Expand to full page'}
               class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5 mr-8"
             >
               {#if expanded}

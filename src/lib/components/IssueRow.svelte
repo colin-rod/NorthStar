@@ -132,7 +132,7 @@
             e.stopPropagation();
             onMoveUp();
           }}
-          class="p-1 hover:bg-surface-subtle rounded"
+          class="p-2 hover:bg-surface-subtle rounded"
           aria-label="Move up"
         >
           <ChevronUp aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
@@ -144,7 +144,7 @@
             e.stopPropagation();
             onMoveDown();
           }}
-          class="p-1 hover:bg-surface-subtle rounded"
+          class="p-2 hover:bg-surface-subtle rounded"
           aria-label="Move down"
         >
           <ChevronDown aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
@@ -154,7 +154,7 @@
     <button
       type="button"
       aria-label="Drag to reorder"
-      class="p-1 cursor-grab active:cursor-grabbing touch-none"
+      class="p-2 cursor-grab active:cursor-grabbing touch-none"
       onkeydown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
       }}
