@@ -138,7 +138,7 @@
     if (!openIssueId) return;
     const allIssues = data.projects.flatMap((p) => p.epics?.flatMap((e) => e.issues || []) || []);
     const issue = allIssues.find((i) => i.id === openIssueId);
-    if (issue && !$isIssueSheetOpen) {
+    if (issue && !untrack(() => $isIssueSheetOpen)) {
       openIssueSheet({
         ...issue,
         blocked_by: issue.blocked_by || [],
