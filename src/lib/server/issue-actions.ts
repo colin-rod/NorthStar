@@ -119,15 +119,18 @@ export async function handleUpdateIssue(supabase: SupabaseClient, formData: Form
     .from('issues')
     .update(updates)
     .eq('id', id)
-    .select()
-    .maybeSingle();
+    .select();
 
   if (updateError) {
     console.error('Failed to update issue:', updateError);
     return fail(500, { error: 'Failed to update issue' });
   }
 
-  return { success: true, action: 'updateIssue', issue: data };
+  if (!data || data.length === 0) {
+    return fail(404, { error: 'Issue not found' });
+  }
+
+  return { success: true, action: 'updateIssue', issue: data[0] };
 }
 
 export async function handleCreateIssue(supabase: SupabaseClient, formData: FormData) {
