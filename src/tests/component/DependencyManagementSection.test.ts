@@ -65,7 +65,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
       },
     });
 
-    expect(screen.getByText('Blocked by 2 dependencies')).toBeInTheDocument();
+    expect(screen.getByText('Waiting on 2 issues')).toBeInTheDocument();
   });
 
   it('should display "Blocked by 1 dependency" (singular) when issue has 1 blocking dep', () => {
@@ -81,7 +81,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
       },
     });
 
-    expect(screen.getByText('Blocked by 1 dependency')).toBeInTheDocument();
+    expect(screen.getByText('Waiting on 1 issue')).toBeInTheDocument();
   });
 
   it('should NOT display blocking summary when no blocking dependencies', () => {
@@ -96,7 +96,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
       },
     });
 
-    expect(screen.queryByText(/Blocked by/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Waiting on/)).not.toBeInTheDocument();
   });
 
   it('should display "Satisfied dependencies" section when deps are done/canceled', () => {
@@ -115,7 +115,7 @@ describe('DependencyManagementSection - Blocking Summary', () => {
       },
     });
 
-    expect(screen.getByText('Satisfied dependencies')).toBeInTheDocument();
+    expect(screen.getByText('Completed dependencies')).toBeInTheDocument();
     expect(screen.getByText('Dependency 1')).toBeInTheDocument();
     expect(screen.getByText('Dependency 2')).toBeInTheDocument();
   });
@@ -139,10 +139,10 @@ describe('DependencyManagementSection - Blocking Summary', () => {
     });
 
     // Should show blocking summary
-    expect(screen.getByText('Blocked by 2 dependencies')).toBeInTheDocument();
+    expect(screen.getByText('Waiting on 2 issues')).toBeInTheDocument();
 
     // Should show satisfied section
-    expect(screen.getByText('Satisfied dependencies')).toBeInTheDocument();
+    expect(screen.getByText('Completed dependencies')).toBeInTheDocument();
 
     // Should display all dependencies
     expect(screen.getByText('Blocking Dep 1')).toBeInTheDocument();

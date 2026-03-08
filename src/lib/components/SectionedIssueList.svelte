@@ -30,16 +30,16 @@
   let blocked = $derived(issues.filter((i) => isBlocked(i) && i.status === 'todo'));
 </script>
 
-{#snippet sectionHeader(label: string, count: number, isOpen: boolean)}
+{#snippet sectionHeader(label: string, count: number, isOpen: boolean, accentClass: string)}
   <div
-    class="flex items-center gap-2 px-4 py-3 hover:bg-surface-subtle transition-colors cursor-pointer"
+    class="flex items-center gap-2 px-4 py-3 hover:bg-surface-subtle transition-colors cursor-pointer border-l-[3px] {accentClass}"
   >
     {#if isOpen}
       <ChevronDown class="h-4 w-4 text-foreground-muted" />
     {:else}
       <ChevronRight class="h-4 w-4 text-foreground-muted" />
     {/if}
-    <span class="font-medium text-body">{label}</span>
+    <span class="font-semibold text-body">{label}</span>
     <span class="text-foreground-muted">—</span>
     <span class="text-metadata text-foreground-muted"
       >{count} {count === 1 ? 'issue' : 'issues'}</span
@@ -51,7 +51,7 @@
   {#if urgent.length > 0}
     <Collapsible bind:open={urgentOpen}>
       <CollapsibleTrigger class="w-full">
-        {@render sectionHeader('Urgent', urgent.length, urgentOpen)}
+        {@render sectionHeader('Urgent', urgent.length, urgentOpen, 'border-l-destructive')}
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div class="pl-6">
@@ -64,7 +64,7 @@
   {#if ready.length > 0}
     <Collapsible bind:open={readyOpen}>
       <CollapsibleTrigger class="w-full">
-        {@render sectionHeader('Ready', ready.length, readyOpen)}
+        {@render sectionHeader('Ready', ready.length, readyOpen, 'border-l-status-done')}
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div class="pl-6">
@@ -77,7 +77,12 @@
   {#if inProgress.length > 0}
     <Collapsible bind:open={inProgressOpen}>
       <CollapsibleTrigger class="w-full">
-        {@render sectionHeader('In Progress', inProgress.length, inProgressOpen)}
+        {@render sectionHeader(
+          'In Progress',
+          inProgress.length,
+          inProgressOpen,
+          'border-l-status-doing',
+        )}
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div class="pl-6">
@@ -90,7 +95,7 @@
   {#if blocked.length > 0}
     <Collapsible bind:open={blockedOpen}>
       <CollapsibleTrigger class="w-full">
-        {@render sectionHeader('Blocked', blocked.length, blockedOpen)}
+        {@render sectionHeader('Blocked', blocked.length, blockedOpen, 'border-l-status-blocked')}
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div class="pl-6">

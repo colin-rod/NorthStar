@@ -122,10 +122,14 @@ describe('EpicDetailSheet create-to-edit transition', () => {
     const submitButton = screen.getByText('Create Epic');
     await fireEvent.click(submitButton);
 
+    // Flush pending promises/timers so async handlers complete
+    await vi.runAllTimersAsync();
+
     // Wait for transition
     await waitFor(() => {
       expect(screen.queryByText('Create Epic')).not.toBeInTheDocument();
-      expect(screen.getByText('E-5 · Epic')).toBeInTheDocument();
+      expect(screen.getByText('E-5')).toBeInTheDocument();
+      expect(screen.getByText('New Epic')).toBeInTheDocument();
     });
 
     expect(toastSuccessMock).toHaveBeenCalledWith('Epic created', expect.any(Object));
