@@ -60,9 +60,9 @@
 <!-- North Design: No heavy cards, light divider, minimal hover -->
 <div
   data-testid="issue-row"
-  class="relative w-full flex items-center px-4 py-4 border-b border-border-divider hover:bg-surface-subtle transition-colors duration-150 group {blocked
+  class="relative w-full flex items-center px-4 py-4 border-b border-border-divider hover:bg-surface-subtle transition-all duration-200 group {blocked
     ? 'bg-bg-blocked/50 border-l-[3px] border-l-status-blocked'
-    : ''}"
+    : ''} {issue.status === 'done' || issue.status === 'canceled' ? 'opacity-55' : 'opacity-100'}"
   role="listitem"
   onmouseenter={() => focusedIssue.set(issue)}
   onmouseleave={() => focusedIssue.set(null)}
@@ -74,7 +74,7 @@
       <!-- Status indicator: small colored dot per North spec -->
       <div class="flex items-center gap-1 pt-1 shrink-0">
         <div
-          class={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getStatusDotClass(issue.status)}`}
+          class={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors duration-300 ${getStatusDotClass(issue.status)}`}
           aria-hidden="true"
         ></div>
         <span class="sr-only">{statusLabel}</span>
@@ -95,7 +95,11 @@
             >I-{issue.number}</span
           >
           <span aria-hidden="true" class="mx-1 text-muted-foreground">·</span>
-          <span class="flex-1 truncate">{issue.title}</span>
+          <span
+            class="flex-1 truncate {issue.status === 'done' || issue.status === 'canceled'
+              ? 'line-through decoration-foreground-muted'
+              : ''}">{issue.title}</span
+          >
           <!-- Ready indicator: green checkmark for todo status when not blocked -->
           {#if issue.status === 'todo' && !blocked}
             <CheckCircle2 aria-hidden="true" class="h-4 w-4 text-status-done shrink-0" />
@@ -120,7 +124,7 @@
   <div class="flex items-center gap-2 shrink-0">
     <!-- Move Up/Down Buttons (hover-visible) -->
     <div
-      class="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity"
+      class="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity duration-150"
     >
       {#if onMoveUp}
         <button
@@ -147,13 +151,15 @@
         </button>
       {/if}
     </div>
-    <div
+    <button
+      type="button"
       aria-label="Drag to reorder"
-      role="button"
-      tabindex="0"
       class="p-1 cursor-grab active:cursor-grabbing touch-none"
+      onkeydown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+      }}
     >
       <GripVertical aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
-    </div>
+    </button>
   </div>
 </div>

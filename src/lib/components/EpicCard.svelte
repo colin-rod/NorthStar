@@ -22,6 +22,7 @@
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
+  import IssueCountsBadges from '$lib/components/IssueCountsBadges.svelte';
 
   interface Props {
     epic: Epic;
@@ -45,6 +46,52 @@
   let headerProgress = $derived(computeProgress(counts));
 </script>
 
+{#snippet cardBody()}
+  <CardHeader class="pb-4">
+    <div class="flex items-center justify-between gap-3">
+      <!-- Epic name: section header weight -->
+      <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
+      <!-- Summary pill, priority, milestone, and status badge -->
+      <div class="flex items-center gap-2 shrink-0">
+        {#if headerProgress.total > 0}
+          <Badge variant="outline" class="text-xs"
+            >{headerProgress.completed}/{headerProgress.total}</Badge
+          >
+        {/if}
+        {#if epic.priority !== null && epic.priority !== undefined}
+          <PriorityBadge priority={epic.priority} />
+        {/if}
+        {#if epic.milestone}
+          <Badge variant="outline" class="text-xs text-foreground-secondary">
+            {epic.milestone.name}
+          </Badge>
+        {/if}
+        <Badge variant={getStatusVariant(epic.status)} class="text-xs">
+          {epic.status}
+        </Badge>
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    <!-- Counts with subtle badges in 3x2 grid -->
+    <IssueCountsBadges {counts} />
+    <!-- Progress bar -->
+    {#if headerProgress.total > 0}
+      <div class="mt-3 flex items-center gap-2">
+        <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
+          <div
+            class="h-full bg-foreground/40 rounded-full transition-all duration-300"
+            style="width: {headerProgress.percentage}%"
+          ></div>
+        </div>
+        <span class="text-metadata text-foreground-secondary shrink-0">
+          {headerProgress.percentage}%
+        </span>
+      </div>
+    {/if}
+  </CardContent>
+{/snippet}
+
 <!-- North Design: Card with 10px radius, subtle border, minimal hover -->
 {#if onToggle}
   <!-- Drill-down mode: clickable button to expand inline -->
@@ -52,77 +99,7 @@
     <Card
       class="hover:shadow-level-1 transition-shadow duration-150 cursor-pointer border-border rounded-md"
     >
-      <CardHeader class="pb-4">
-        <div class="flex items-center justify-between gap-3">
-          <!-- Epic name: section header weight -->
-          <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
-          <!-- Summary pill, priority, milestone, and status badge -->
-          <div class="flex items-center gap-2 shrink-0">
-            {#if headerProgress.total > 0}
-              <Badge variant="outline" class="text-xs"
-                >{headerProgress.completed}/{headerProgress.total}</Badge
-              >
-            {/if}
-            {#if epic.priority !== null && epic.priority !== undefined}
-              <PriorityBadge priority={epic.priority} />
-            {/if}
-            {#if epic.milestone}
-              <Badge variant="outline" class="text-xs text-foreground-secondary">
-                {epic.milestone.name}
-              </Badge>
-            {/if}
-            <Badge variant={getStatusVariant(epic.status)} class="text-xs">
-              {epic.status}
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <!-- Counts with subtle badges in 3x2 grid -->
-        <div class="grid grid-cols-3 gap-3 text-metadata">
-          <!-- Row 1: Active work states -->
-          <div class="flex items-center gap-2">
-            <Badge variant="default" class="text-xs">{counts.ready}</Badge>
-            <span class="text-foreground-secondary">Ready</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
-            <span class="text-foreground-secondary">In Progress</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
-            <span class="text-foreground-secondary">In Review</span>
-          </div>
-
-          <!-- Row 2: Problem/terminal states -->
-          <div class="flex items-center gap-2">
-            <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
-            <span class="text-foreground-secondary">Blocked</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Badge variant="status-done" class="text-xs">{counts.done}</Badge>
-            <span class="text-foreground-secondary">Done</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Badge variant="status-canceled" class="text-xs">{counts.canceled}</Badge>
-            <span class="text-foreground-secondary">Canceled</span>
-          </div>
-        </div>
-        <!-- Progress bar -->
-        {#if headerProgress.total > 0}
-          <div class="mt-3 flex items-center gap-2">
-            <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-              <div
-                class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                style="width: {headerProgress.percentage}%"
-              ></div>
-            </div>
-            <span class="text-metadata text-foreground-secondary shrink-0">
-              {headerProgress.percentage}%
-            </span>
-          </div>
-        {/if}
-      </CardContent>
+      {@render cardBody()}
     </Card>
   </button>
 {:else}
@@ -131,77 +108,7 @@
     <Card
       class="hover:shadow-level-1 transition-shadow duration-150 cursor-pointer border-border rounded-md"
     >
-      <CardHeader class="pb-4">
-        <div class="flex items-center justify-between gap-3">
-          <!-- Epic name: section header weight -->
-          <h3 class="text-section-header font-ui flex-1 min-w-0 truncate">{epic.name}</h3>
-          <!-- Summary pill, priority, milestone, and status badge -->
-          <div class="flex items-center gap-2 shrink-0">
-            {#if headerProgress.total > 0}
-              <Badge variant="outline" class="text-xs"
-                >{headerProgress.completed}/{headerProgress.total}</Badge
-              >
-            {/if}
-            {#if epic.priority !== null && epic.priority !== undefined}
-              <PriorityBadge priority={epic.priority} />
-            {/if}
-            {#if epic.milestone}
-              <Badge variant="outline" class="text-xs text-foreground-secondary">
-                {epic.milestone.name}
-              </Badge>
-            {/if}
-            <Badge variant={getStatusVariant(epic.status)} class="text-xs">
-              {epic.status}
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <!-- Counts with subtle badges in 3x2 grid -->
-        <div class="grid grid-cols-3 gap-3 text-metadata">
-          <!-- Row 1: Active work states -->
-          <div class="flex items-center gap-2">
-            <Badge variant="default" class="text-xs">{counts.ready}</Badge>
-            <span class="text-foreground-secondary">Ready</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
-            <span class="text-foreground-secondary">In Progress</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Badge variant="status-in-review" class="text-xs">{counts.inReview}</Badge>
-            <span class="text-foreground-secondary">In Review</span>
-          </div>
-
-          <!-- Row 2: Problem/terminal states -->
-          <div class="flex items-center gap-2">
-            <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>
-            <span class="text-foreground-secondary">Blocked</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Badge variant="status-done" class="text-xs">{counts.done}</Badge>
-            <span class="text-foreground-secondary">Done</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Badge variant="status-canceled" class="text-xs">{counts.canceled}</Badge>
-            <span class="text-foreground-secondary">Canceled</span>
-          </div>
-        </div>
-        <!-- Progress bar -->
-        {#if headerProgress.total > 0}
-          <div class="mt-3 flex items-center gap-2">
-            <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-              <div
-                class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-                style="width: {headerProgress.percentage}%"
-              ></div>
-            </div>
-            <span class="text-metadata text-foreground-secondary shrink-0">
-              {headerProgress.percentage}%
-            </span>
-          </div>
-        {/if}
-      </CardContent>
+      {@render cardBody()}
     </Card>
   </a>
 {/if}

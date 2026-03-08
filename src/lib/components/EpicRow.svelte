@@ -18,6 +18,7 @@
   import { computeProgress } from '$lib/utils/issue-counts';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import StatusDot from '$lib/components/StatusDot.svelte';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
 
@@ -33,18 +34,6 @@
 
   // Compute progress percentage
   let progress = $derived(computeProgress(counts));
-
-  // Status dot color mapping
-  const getStatusColor = (status: string) => {
-    if (status === 'active') return 'bg-primary';
-    if (status === 'done') return 'bg-status-done';
-    return 'bg-muted-foreground'; // canceled
-  };
-
-  const formatStatusLabel = (status: string) =>
-    status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-
-  let statusLabel = $derived(formatStatusLabel(epic.status));
 </script>
 
 <!-- North Design: No heavy cards, light divider, minimal hover -->
@@ -75,11 +64,7 @@
     <button onclick={onOpenSheet} class="flex-1 text-left min-w-0 flex items-start gap-3">
       <!-- Status Dot -->
       <div class="flex items-center pt-1.5 shrink-0">
-        <div
-          class="w-2 h-2 md:w-3 md:h-3 rounded-full {getStatusColor(epic.status)}"
-          aria-hidden="true"
-        ></div>
-        <span class="sr-only">{statusLabel}</span>
+        <StatusDot status={epic.status} />
       </div>
 
       <div class="flex-1 min-w-0">
