@@ -38,6 +38,7 @@
   import CheckIcon from '@lucide/svelte/icons/check';
   import Link2Icon from '@lucide/svelte/icons/link-2';
   import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
+  import LoaderIcon from '@lucide/svelte/icons/loader';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll, goto } from '$app/navigation';
   import { deserialize } from '$app/forms';
@@ -693,13 +694,11 @@
           <p class="text-xs text-muted-foreground mb-1 truncate">{issueBreadcrumb}</p>
         {/if}
         <div class="flex items-start justify-between gap-2">
-          <SheetTitle class="font-accent text-page-title flex-1 min-w-0 flex items-baseline gap-0">
+          <SheetTitle class="flex-1 min-w-0 flex items-baseline gap-0 text-base font-semibold">
             {#if internalMode === 'create'}
               New Issue
             {:else if issue}
-              <span class="text-muted-foreground font-mono text-base shrink-0"
-                >I-{issue.number}</span
-              >
+              <span class="text-muted-foreground font-mono text-sm shrink-0">I-{issue.number}</span>
               <span class="mx-2 text-muted-foreground shrink-0">·</span>
               <span>{issue.title}</span>
             {:else}
@@ -707,10 +706,26 @@
             {/if}
           </SheetTitle>
           {#if internalMode === 'edit'}
+            {#if saveState === 'saving'}
+              <span class="shrink-0 mt-0.5 text-muted-foreground" aria-label="Saving">
+                <LoaderIcon class="size-4 animate-spin" />
+              </span>
+            {:else if saveState === 'saved'}
+              <span
+                class="shrink-0 mt-0.5 text-green-600 dark:text-green-400 transition-opacity duration-300"
+                aria-label="Saved"
+              >
+                <CheckIcon class="size-4" />
+              </span>
+            {:else if saveState === 'error'}
+              <span class="shrink-0 mt-0.5 text-destructive" aria-label="Save failed">
+                <AlertCircleIcon class="size-4" />
+              </span>
+            {/if}
             <button
               onclick={handleCopyLink}
               aria-label="Copy link to issue"
-              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-1 {isDesktop()
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5 {isDesktop()
                 ? ''
                 : 'mr-8'}"
             >
@@ -725,7 +740,7 @@
             <button
               onclick={() => (expanded = !expanded)}
               aria-label={expanded ? 'Collapse to sidebar' : 'Expand to full page'}
-              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-1 mr-8"
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5 mr-8"
             >
               {#if expanded}
                 <Minimize2Icon class="size-4" />
@@ -736,27 +751,6 @@
           {/if}
         </div>
       </SheetHeader>
-
-      {#if internalMode === 'edit' && saveState !== 'idle'}
-        <div class="flex items-center mb-3 text-xs">
-          {#if saveState === 'saving'}
-            <span class="inline-flex items-center gap-1.5 text-muted-foreground">
-              <span class="size-1.5 rounded-full bg-muted-foreground animate-pulse"></span>
-              Saving
-            </span>
-          {:else if saveState === 'saved'}
-            <span class="inline-flex items-center gap-1.5 text-green-600 dark:text-green-400">
-              <CheckIcon class="size-3" />
-              Saved
-            </span>
-          {:else if saveState === 'error'}
-            <span class="inline-flex items-center gap-1.5 text-destructive">
-              <AlertCircleIcon class="size-3" />
-              Save failed
-            </span>
-          {/if}
-        </div>
-      {/if}
 
       {#if internalMode === 'create'}
         <!-- Create mode: form with submit button -->

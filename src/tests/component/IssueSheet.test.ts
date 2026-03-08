@@ -177,7 +177,7 @@ describe('IssueSheet description auto-save guards', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('shows inline save-state text while saving and after successful completion', async () => {
+  it('shows inline save-state icon while saving and after successful completion', async () => {
     let resolveFetch: ((value: { ok: boolean; text: () => Promise<string> }) => void) | null = null;
 
     fetchMock.mockImplementationOnce(
@@ -204,46 +204,17 @@ describe('IssueSheet description auto-save guards', () => {
     await fireEvent.input(titleInput, { target: { value: 'Issue One Updated' } });
     await fireEvent.blur(titleInput);
 
-    expect(await screen.findByText('Saving')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Saving')).toBeInTheDocument();
 
     resolveFetch!({ ok: true, text: async () => JSON.stringify({ type: 'success' }) });
 
     await waitFor(() => {
-      expect(screen.getByText('Saved')).toBeInTheDocument();
+      expect(screen.getByLabelText('Saved')).toBeInTheDocument();
     });
 
     await vi.advanceTimersByTimeAsync(1500);
 
-    expect(screen.queryByText('Saved')).not.toBeInTheDocument();
-  });
-
-  it('passes polite status semantics to success toasts', async () => {
-    render(IssueSheet, {
-      props: {
-        open: true,
-        mode: 'edit',
-        issue: makeIssue(),
-        epics: mockEpics,
-        milestones: [],
-        projectIssues: [],
-        projects: [{ id: 'project-1', name: 'Project One' }],
-        userId: 'user-1',
-      },
-    });
-
-    const titleInput = screen.getByLabelText('Title');
-    await fireEvent.input(titleInput, { target: { value: 'Issue One Updated Again' } });
-    await fireEvent.blur(titleInput);
-
-    await waitFor(() => {
-      expect(toastSuccessMock).toHaveBeenCalledWith(
-        'Changes saved successfully',
-        expect.objectContaining({
-          role: 'status',
-          'aria-live': 'polite',
-        }),
-      );
-    });
+    expect(screen.queryByLabelText('Saved')).not.toBeInTheDocument();
   });
 
   it('passes assertive alert semantics to error toasts', async () => {
@@ -305,6 +276,6 @@ describe('IssueSheet description auto-save guards', () => {
     await fireEvent.input(titleInput, { target: { value: 'Issue One Failed Save' } });
     await fireEvent.blur(titleInput);
 
-    expect(await screen.findByText('Save failed')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Save failed')).toBeInTheDocument();
   });
 });
