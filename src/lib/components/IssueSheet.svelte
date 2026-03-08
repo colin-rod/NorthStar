@@ -357,10 +357,6 @@
           saveState = 'saved';
           queueSaveStateIdleReset();
         }
-        toast.success('Changes saved successfully', {
-          duration: 2000,
-          ...successToastA11y,
-        });
         options.onSuccess?.();
         await invalidateAll();
       } else {
@@ -687,7 +683,7 @@
       </div>
     {:else if internalMode === 'create' || issue}
       <!-- Loading overlay -->
-      {#if loading || createLoading}
+      {#if createLoading}
         <LoadingOverlay />
       {/if}
 
@@ -844,7 +840,6 @@
                   oninput={handleTitleChange}
                   onblur={handleTitleBlur}
                   required
-                  disabled={loading}
                   class="text-body h-8 flex-1"
                 />
               </div>
@@ -858,7 +853,6 @@
                   id="status"
                   bind:value={localStatus}
                   onchange={handleStatusChange}
-                  disabled={loading}
                   class="select-input-sm"
                 >
                   <option value="backlog">Backlog</option>
@@ -879,7 +873,6 @@
                   id="priority"
                   bind:value={localPriority}
                   onchange={handlePriorityChange}
-                  disabled={loading}
                   class="select-input-sm"
                 >
                   <option value={0}>P0 (Critical)</option>
@@ -899,7 +892,6 @@
                     selectedMilestoneId={localMilestoneId}
                     {milestones}
                     issues={projectIssues}
-                    disabled={loading}
                     onChange={(id) => {
                       localMilestoneId = id;
                       autoSave('milestone_id', id);
@@ -917,7 +909,6 @@
                   id="story_points"
                   value={localStoryPoints?.toString() ?? 'null'}
                   onchange={handleStoryPointsChange}
-                  disabled={loading}
                   class="select-input-sm"
                 >
                   <option value="null">Not set</option>
@@ -937,7 +928,6 @@
               onchange={handleDescriptionChange}
               onblur={handleDescriptionBlur}
               {uploadImage}
-              disabled={loading}
             />
           </section>
 
@@ -948,19 +938,13 @@
               {attachments}
               onUpload={handleAttachmentUpload}
               onDelete={handleAttachmentDelete}
-              disabled={loading}
             />
           </section>
 
           <!-- Links Section -->
           <section>
             <h3 class="section-header">Links</h3>
-            <LinkList
-              {links}
-              onAdd={handleLinkAdd}
-              onDelete={handleLinkDelete}
-              disabled={loading}
-            />
+            <LinkList {links} onAdd={handleLinkAdd} onDelete={handleLinkDelete} />
           </section>
 
           <!-- Dependencies Section -->
