@@ -1,4 +1,11 @@
 // src/lib/utils/tree-filter-params.ts
+import {
+  VALID_PROJECT_STATUSES,
+  VALID_EPIC_STATUSES,
+  VALID_ISSUE_STATUSES,
+  VALID_PRIORITIES,
+  VALID_STORY_POINTS,
+} from '$lib/constants/validation';
 import type {
   ProjectStatus,
   EpicStatus,
@@ -18,25 +25,6 @@ export interface TreeFilterParams {
   sortDir: SortDirection;
 }
 
-const VALID_PROJECT_STATUSES: ProjectStatus[] = [
-  'backlog',
-  'planned',
-  'active',
-  'on_hold',
-  'completed',
-  'canceled',
-];
-const VALID_EPIC_STATUSES: EpicStatus[] = ['backlog', 'active', 'on_hold', 'completed', 'canceled'];
-const VALID_ISSUE_STATUSES: IssueStatus[] = [
-  'backlog',
-  'todo',
-  'in_progress',
-  'in_review',
-  'done',
-  'canceled',
-];
-const VALID_PRIORITIES = [0, 1, 2, 3];
-const VALID_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
 const VALID_GROUP_BY = ['none', 'priority', 'status', 'milestone', 'story_points'];
 const VALID_SORT_BY: SortByColumn[] = [
   'priority',
@@ -171,7 +159,7 @@ function parseEnumArray<T extends string>(value: string | null, validValues: rea
     .map((v) => v as T);
 }
 
-function parseNumberArray(value: string | null, validValues: number[]): number[] {
+function parseNumberArray(value: string | null, validValues: readonly number[]): number[] {
   if (!value) return [];
   return value
     .split(',')
@@ -181,14 +169,15 @@ function parseNumberArray(value: string | null, validValues: number[]): number[]
 
 function parseStoryPoints(value: string | null): (number | null)[] {
   if (!value) return [];
-  return value
-    .split(',')
+  const tokens = value.split(',');
+  const hasNone = tokens.includes('none');
+  return tokens
     .map((v) => {
       if (v === 'none') return null;
       const num = parseInt(v, 10);
-      return !isNaN(num) && VALID_STORY_POINTS.includes(num) ? num : null;
+      return !isNaN(num) && (VALID_STORY_POINTS as readonly number[]).includes(num) ? num : null;
     })
-    .filter((v) => v !== null || value.includes('none'));
+    .filter((v) => v !== null || hasNone);
 }
 
 function parseEnum<T extends string>(

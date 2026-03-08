@@ -27,7 +27,7 @@
     openIssueSheet,
     openCreateIssueSheet,
   } from '$lib/stores/issues';
-  import { isBlocked } from '$lib/utils/issue-helpers';
+  import { bucketIssues } from '$lib/utils/bucket-issues';
   import { calculateNewSortOrders, moveIssueUp, moveIssueDown } from '$lib/utils/reorder';
   import { dndzone } from 'svelte-dnd-action';
   import type { Issue } from '$lib/types';
@@ -50,13 +50,15 @@
 
   // Issue filtering
   let allIssues = $derived(data.issues || []);
-  let readyIssues = $derived(allIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
   let totalTodoCount = $derived(allIssues.filter((i) => i.status === 'todo').length);
-  let doingIssues = $derived(allIssues.filter((i) => i.status === 'in_progress'));
-  let inReviewIssues = $derived(allIssues.filter((i) => i.status === 'in_review'));
-  let blockedIssues = $derived(allIssues.filter((i) => isBlocked(i)));
-  let doneIssues = $derived(allIssues.filter((i) => i.status === 'done'));
-  let canceledIssues = $derived(allIssues.filter((i) => i.status === 'canceled'));
+  let {
+    todoIssues: readyIssues,
+    doingIssues,
+    inReviewIssues,
+    blockedIssues,
+    doneIssues,
+    canceledIssues,
+  } = $derived(bucketIssues(allIssues));
 
   // Get filtered issues based on active tab
   let filteredIssues = $derived.by(() => {

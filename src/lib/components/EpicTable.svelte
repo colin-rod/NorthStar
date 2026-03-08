@@ -18,7 +18,7 @@
   import EpicRow from '$lib/components/EpicRow.svelte';
   import IssueRow from '$lib/components/IssueRow.svelte';
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
-  import { isBlocked } from '$lib/utils/issue-helpers';
+  import { bucketIssues } from '$lib/utils/bucket-issues';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import Layers from '@lucide/svelte/icons/layers';
   import ListTodo from '@lucide/svelte/icons/list-todo';
@@ -55,13 +55,8 @@
     expandedEpicId ? allIssues.filter((i) => i.epic_id === expandedEpicId) : [],
   );
 
-  // Compute filtered views (same logic as ExpandedEpicView)
-  let todoIssues = $derived(epicIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
-  let doingIssues = $derived(epicIssues.filter((i) => i.status === 'in_progress'));
-  let inReviewIssues = $derived(epicIssues.filter((i) => i.status === 'in_review'));
-  let blockedIssues = $derived(epicIssues.filter((i) => isBlocked(i)));
-  let doneIssues = $derived(epicIssues.filter((i) => i.status === 'done'));
-  let canceledIssues = $derived(epicIssues.filter((i) => i.status === 'canceled'));
+  let { todoIssues, doingIssues, inReviewIssues, blockedIssues, doneIssues, canceledIssues } =
+    $derived(bucketIssues(epicIssues));
 
   // Visible issues based on tab + expansion state
   let visibleIssues = $derived.by(() => {

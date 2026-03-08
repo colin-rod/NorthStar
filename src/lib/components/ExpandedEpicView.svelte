@@ -4,7 +4,7 @@
   import { Button } from '$lib/components/ui/button';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import IssueRow from '$lib/components/IssueRow.svelte';
-  import { isBlocked } from '$lib/utils/issue-helpers';
+  import { bucketIssues } from '$lib/utils/bucket-issues';
   import X from '@lucide/svelte/icons/x';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import ListTodo from '@lucide/svelte/icons/list-todo';
@@ -25,13 +25,8 @@
   // Filter issues for this epic only
   let epicIssues = $derived(allIssues.filter((i) => i.epic_id === epic.id));
 
-  // Compute filtered views (same logic as epic detail page)
-  let todoIssues = $derived(epicIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
-  let doingIssues = $derived(epicIssues.filter((i) => i.status === 'in_progress'));
-  let inReviewIssues = $derived(epicIssues.filter((i) => i.status === 'in_review'));
-  let blockedIssues = $derived(epicIssues.filter((i) => isBlocked(i)));
-  let doneIssues = $derived(epicIssues.filter((i) => i.status === 'done'));
-  let canceledIssues = $derived(epicIssues.filter((i) => i.status === 'canceled'));
+  let { todoIssues, doingIssues, inReviewIssues, blockedIssues, doneIssues, canceledIssues } =
+    $derived(bucketIssues(epicIssues));
 
   // Tab state (local, not persisted)
   let activeTab = $state('all');
