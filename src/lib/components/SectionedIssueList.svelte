@@ -37,9 +37,7 @@
   accentClass: string,
   labelClass: string,
 )}
-  <div
-    class="flex items-center gap-2 px-4 py-3 hover:bg-surface-subtle transition-colors cursor-pointer border-l-[3px] {accentClass}"
-  >
+  <div class="flex items-center gap-2 px-4 py-3 transition-colors border-l-[3px] {accentClass}">
     {#if isOpen}
       <ChevronDown class="h-4 w-4 text-foreground-muted" />
     {:else}
@@ -56,7 +54,7 @@
 <div class="space-y-2">
   {#if urgent.length > 0}
     <Collapsible bind:open={urgentOpen}>
-      <CollapsibleTrigger class="w-full">
+      <CollapsibleTrigger class="w-full cursor-pointer hover:bg-surface-subtle">
         {@render sectionHeader(
           'Urgent',
           urgent.length,
@@ -73,7 +71,7 @@
 
   {#if ready.length > 0}
     <Collapsible bind:open={readyOpen}>
-      <CollapsibleTrigger class="w-full">
+      <CollapsibleTrigger class="w-full cursor-pointer hover:bg-surface-subtle">
         {@render sectionHeader(
           'Ready',
           ready.length,
@@ -90,7 +88,7 @@
 
   {#if inProgress.length > 0}
     <Collapsible bind:open={inProgressOpen}>
-      <CollapsibleTrigger class="w-full">
+      <CollapsibleTrigger class="w-full cursor-pointer hover:bg-surface-subtle">
         {@render sectionHeader(
           'In Progress',
           inProgress.length,
@@ -107,7 +105,7 @@
 
   {#if blocked.length > 0}
     <Collapsible bind:open={blockedOpen}>
-      <CollapsibleTrigger class="w-full">
+      <CollapsibleTrigger class="w-full cursor-pointer hover:bg-surface-subtle">
         {@render sectionHeader(
           'Blocked',
           blocked.length,

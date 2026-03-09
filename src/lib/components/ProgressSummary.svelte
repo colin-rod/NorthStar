@@ -3,6 +3,7 @@
   import { isBlocked } from '$lib/utils/issue-helpers';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import Lock from '@lucide/svelte/icons/lock';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
 
   interface Props {
     issues: Issue[];
@@ -16,21 +17,6 @@
   let doneCount = $derived(nonCanceled.filter((i) => i.status === 'done').length);
   let totalCount = $derived(nonCanceled.length);
   let completionPercent = $derived(totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0);
-  let clampedCompletionPercent = $derived(
-    Math.max(0, Math.min(100, Number(completionPercent) || 0)),
-  );
-  let fillClass = $derived(
-    clampedCompletionPercent === 100
-      ? 'bg-progress-done'
-      : clampedCompletionPercent >= 75
-        ? 'bg-progress-high'
-        : clampedCompletionPercent >= 50
-          ? 'bg-progress-mid'
-          : clampedCompletionPercent >= 25
-            ? 'bg-progress-low'
-            : 'bg-progress-critical',
-  );
-
   let totalPoints = $derived(nonCanceled.reduce((sum, i) => sum + (i.story_points || 0), 0));
   let donePoints = $derived(
     nonCanceled
@@ -61,19 +47,12 @@
     </div>
   </div>
 
-  <div
-    class="h-2 w-full rounded-full bg-muted"
-    role="progressbar"
-    aria-valuemin="0"
-    aria-valuemax="100"
-    aria-valuenow={clampedCompletionPercent}
-    aria-label="Completion progress"
-  >
-    <div
-      class="h-2 rounded-full {fillClass} transition-all duration-300"
-      style="width: {completionPercent}%"
-    ></div>
-  </div>
+  <ProgressBar
+    percentage={completionPercent}
+    size="md"
+    label={false}
+    ariaLabel="Completion progress"
+  />
 
   <div class="flex gap-4 text-xs text-muted-foreground">
     <span>{doneCount} / {totalCount} issues complete</span>

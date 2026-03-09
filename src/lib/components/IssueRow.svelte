@@ -90,7 +90,7 @@
 
       <div class="flex-1 min-w-0">
         <!-- Title: 16px, weight 500 (medium bold-ish) -->
-        <h3 class="text-issue-title truncate flex items-center gap-2">
+        <h3 class="text-issue-title flex items-center gap-2">
           <span aria-label="Issue {issue.number}" class="text-muted-foreground/40 font-mono text-sm"
             >I-{issue.number}</span
           >

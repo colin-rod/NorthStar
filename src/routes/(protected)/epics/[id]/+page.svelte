@@ -32,6 +32,7 @@
   import { dndzone } from 'svelte-dnd-action';
   import type { Issue } from '$lib/types';
   import EmptyState from '$lib/components/EmptyState.svelte';
+  import { toast } from 'svelte-sonner';
   import Inbox from '@lucide/svelte/icons/inbox';
   import ListTodo from '@lucide/svelte/icons/list-todo';
   import PartyPopper from '@lucide/svelte/icons/party-popper';
@@ -125,11 +126,11 @@
 
       if (!response.ok) {
         console.error('Reorder failed:', response);
-        showToast('Failed to reorder issues', 'error');
+        toast.error('Failed to reorder issues');
       }
     } catch (error) {
       console.error('Reorder error:', error);
-      showToast('Failed to reorder issues', 'error');
+      toast.error('Failed to reorder issues');
     } finally {
       isReordering = false;
     }
@@ -171,20 +172,6 @@
     }
   }
 
-  // Success feedback
-  let feedbackMessage = $state('');
-  let feedbackType: 'success' | 'error' = $state('success');
-  let showFeedback = $state(false);
-
-  function showToast(message: string, type: 'success' | 'error') {
-    feedbackMessage = message;
-    feedbackType = type;
-    showFeedback = true;
-    setTimeout(() => {
-      showFeedback = false;
-    }, 3000);
-  }
-
   $effect(() => {
     const form = $page.form;
     if (form?.success) {
@@ -193,9 +180,9 @@
         reorderIssues: 'Issues reordered',
       };
       const message = messages[form.action as keyof typeof messages] || 'Success';
-      showToast(message, 'success');
+      toast.success(message);
     } else if (form?.error) {
-      showToast(form.error, 'error');
+      toast.error(form.error);
     }
   });
 
@@ -360,14 +347,3 @@
   projects={[{ id: data.epic?.project_id || '', name: data.epic?.project?.name || '' }]}
   userId={data.session?.user?.id ?? ''}
 />
-
-<!-- Toast Feedback -->
-{#if showFeedback}
-  <div
-    class="fixed bottom-4 right-4 px-4 py-3 rounded-md shadow-lg {feedbackType === 'success'
-      ? 'bg-primary text-white'
-      : 'bg-destructive text-white'}"
-  >
-    {feedbackMessage}
-  </div>
-{/if}

@@ -46,6 +46,7 @@
   import type { TreeNode } from '$lib/types/tree-grid';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Button } from '$lib/components/ui/button';
+  import { toast } from 'svelte-sonner';
 
   let { data }: { data: PageData } = $props();
 
@@ -92,11 +93,6 @@
 
   // Inline rename state
   let editingNodeId = $state<string | null>(null);
-
-  // Feedback state
-  let feedbackMessage = $state('');
-  let feedbackType: 'success' | 'error' = $state('success');
-  let showFeedback = $state(false);
 
   // Filter panel state
   let filterPanelOpen = $state(false);
@@ -239,13 +235,13 @@
 
       if (response.ok) {
         await invalidateAll();
-        showToast('Updated successfully', 'success');
+        toast.success('Updated successfully');
       } else {
-        showToast('Failed to update', 'error');
+        toast.error('Failed to update');
       }
     } catch (error) {
       console.error('Cell edit error:', error);
-      showToast('Failed to update', 'error');
+      toast.error('Failed to update');
     }
   }
 
@@ -271,19 +267,19 @@
 
         if (response.ok) {
           await invalidateAll();
-          showToast('Epic created', 'success');
+          toast.success('Epic created');
         } else {
-          showToast('Failed to create epic', 'error');
+          toast.error('Failed to create epic');
         }
       } catch (error) {
         console.error('Create epic error:', error);
-        showToast('Failed to create epic', 'error');
+        toast.error('Failed to create epic');
       }
     } else if (parentType === 'epic') {
       // Creating issue - need to find project ID
       const project = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === parentId));
       if (!project) {
-        showToast('Project not found', 'error');
+        toast.error('Project not found');
         return;
       }
 
@@ -302,13 +298,13 @@
           const newIssue = (result.data as any).issue;
           await invalidateAll();
           openIssueSheet({ ...newIssue, blocked_by: [], blocking: [] });
-          showToast('Issue created', 'success');
+          toast.success('Issue created');
         } else {
-          showToast('Failed to create issue', 'error');
+          toast.error('Failed to create issue');
         }
       } catch (error) {
         console.error('Create issue error:', error);
-        showToast('Failed to create issue', 'error');
+        toast.error('Failed to create issue');
       }
     }
   }
@@ -345,7 +341,7 @@
       });
 
     if (eligible.length === 0) {
-      showToast('No compatible items to update', 'error');
+      toast.error('No compatible items to update');
       return;
     }
 
@@ -366,12 +362,12 @@
       await invalidateAll();
       const skippedMsg = skipped > 0 ? `, ${skipped} skipped` : '';
       if (failed > 0) {
-        showToast(`${failed} item(s) failed to update`, 'error');
+        toast.error(`${failed} item(s) failed to update`);
       } else {
-        showToast(`${eligible.length} updated${skippedMsg}`, 'success');
+        toast.success(`${eligible.length} updated${skippedMsg}`);
       }
     } catch {
-      showToast('Failed to update', 'error');
+      toast.error('Failed to update');
     }
   }
 
@@ -396,12 +392,12 @@
       selectedIds = new Set();
       await invalidateAll();
       if (failed > 0) {
-        showToast(`${failed} item(s) failed to delete`, 'error');
+        toast.error(`${failed} item(s) failed to delete`);
       } else {
-        showToast(`${deletes.length} item(s) deleted`, 'success');
+        toast.success(`${deletes.length} item(s) deleted`);
       }
     } catch {
-      showToast('Failed to delete items', 'error');
+      toast.error('Failed to delete items');
     }
   }
 
@@ -488,12 +484,12 @@
       const response = await fetch('?/updateEpic', { method: 'POST', body: formData });
       if (response.ok) {
         await invalidateAll();
-        showToast('Milestone updated', 'success');
+        toast.success('Milestone updated');
       } else {
-        showToast('Failed to update milestone', 'error');
+        toast.error('Failed to update milestone');
       }
     } catch {
-      showToast('Failed to update milestone', 'error');
+      toast.error('Failed to update milestone');
     }
   }
 
@@ -528,12 +524,12 @@
       const response = await fetch('?/archiveProject', { method: 'POST', body: formData });
       if (response.ok) {
         await invalidateAll();
-        showToast('Project archived', 'success');
+        toast.success('Project archived');
       } else {
-        showToast('Failed to archive project', 'error');
+        toast.error('Failed to archive project');
       }
     } catch {
-      showToast('Failed to archive project', 'error');
+      toast.error('Failed to archive project');
     }
   }
 
@@ -553,12 +549,12 @@
       const response = await fetch(action, { method: 'POST', body: formData });
       if (response.ok) {
         await invalidateAll();
-        showToast(`${node.type} deleted`, 'success');
+        toast.success(`${node.type} deleted`);
       } else {
-        showToast(`Failed to delete ${node.type}`, 'error');
+        toast.error(`Failed to delete ${node.type}`);
       }
     } catch {
-      showToast(`Failed to delete ${node.type}`, 'error');
+      toast.error(`Failed to delete ${node.type}`);
     }
   }
 
@@ -571,15 +567,6 @@
       blocked_by: issue.blocked_by || [],
       blocking: issue.blocking || [],
     });
-  }
-
-  function showToast(message: string, type: 'success' | 'error') {
-    feedbackMessage = message;
-    feedbackType = type;
-    showFeedback = true;
-    setTimeout(() => {
-      showFeedback = false;
-    }, 3000);
   }
 
   // Handle form responses with feedback notifications
@@ -597,9 +584,9 @@
         updateCell: 'Updated',
       };
       const message = messages[form.action as keyof typeof messages] || 'Success';
-      showToast(message, 'success');
+      toast.success(message);
     } else if (form?.error) {
-      showToast(form.error, 'error');
+      toast.error(form.error);
     }
   });
 </script>
@@ -622,6 +609,7 @@
         onclick={toggleFilterPanel}
         aria-expanded={filterPanelOpen}
         aria-controls="filter-panel"
+        aria-label="Filters"
         class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-surface-subtle hover:text-foreground"
       >
         <SlidersHorizontal class="h-4 w-4 shrink-0" />
@@ -692,7 +680,6 @@
       onBulkAction={handleBulkAction}
       onBulkEdit={handleBulkEdit}
       milestones={data.milestones ?? []}
-      onShowToast={showToast}
       onIssueClick={handleIssueClick}
       onProjectClick={handleProjectDoubleClick}
       onEpicClick={handleEpicDoubleClick}
@@ -780,17 +767,3 @@
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
-
-<!-- Simple toast-style feedback -->
-{#if showFeedback}
-  <div
-    role={feedbackType === 'success' ? 'status' : 'alert'}
-    aria-live={feedbackType === 'success' ? 'polite' : 'assertive'}
-    class="fixed bottom-4 right-4 px-4 py-3 rounded-md shadow-lg transition-opacity z-50 {feedbackType ===
-    'success'
-      ? 'bg-primary text-white'
-      : 'bg-destructive text-white'}"
-  >
-    {feedbackMessage}
-  </div>
-{/if}

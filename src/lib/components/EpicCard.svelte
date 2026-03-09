@@ -19,6 +19,7 @@
 
   import type { Epic } from '$lib/types';
   import { computeProgress, type IssueCounts } from '$lib/utils/issue-counts';
+  import { formatStatus } from '$lib/utils/design-tokens';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
@@ -68,7 +69,7 @@
           </Badge>
         {/if}
         <Badge variant={getStatusVariant(epic.status)} class="text-xs">
-          {epic.status}
+          {formatStatus(epic.status)}
         </Badge>
       </div>
     </div>

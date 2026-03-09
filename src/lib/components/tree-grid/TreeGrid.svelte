@@ -30,6 +30,7 @@
   import { groupIssues } from '$lib/utils/group-issues';
   import { dismissReorderHint } from '$lib/stores/ui-hints';
   import { isIssueSheetOpen, closeIssueSheet } from '$lib/stores/issues';
+  import { toast } from 'svelte-sonner';
 
   interface Props {
     projects: (Project & {
@@ -48,7 +49,6 @@
     onBulkAction?: (action: string) => void;
     onBulkEdit?: (field: string, value: string) => void;
     milestones?: { id: string; name: string }[];
-    onShowToast?: (message: string, type: 'success' | 'error') => void;
     onIssueClick?: (issue: Issue) => void;
     onProjectClick?: (
       project: Project,
@@ -75,7 +75,6 @@
     onBulkAction,
     onBulkEdit,
     milestones = [],
-    onShowToast,
     onIssueClick,
     onProjectClick,
     onEpicClick,
@@ -366,13 +365,13 @@
 
       if (response.ok) {
         await invalidateAll();
-        if (onShowToast) onShowToast('Reordered successfully', 'success');
+        toast.success('Reordered successfully');
       } else {
-        if (onShowToast) onShowToast('Failed to reorder', 'error');
+        toast.error('Failed to reorder');
       }
     } catch (error) {
       console.error('Reorder error:', error);
-      if (onShowToast) onShowToast('Failed to reorder', 'error');
+      toast.error('Failed to reorder');
     }
   }
 
@@ -388,13 +387,13 @@
 
       if (response.ok) {
         await invalidateAll();
-        if (onShowToast) onShowToast('Moved successfully', 'success');
+        toast.success('Moved successfully');
       } else {
-        if (onShowToast) onShowToast('Failed to move', 'error');
+        toast.error('Failed to move');
       }
     } catch (error) {
       console.error('Reparent error:', error);
-      if (onShowToast) onShowToast('Failed to move', 'error');
+      toast.error('Failed to move');
     }
   }
 
