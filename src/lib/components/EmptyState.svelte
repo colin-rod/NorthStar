@@ -26,14 +26,15 @@
     <div
       class="rounded-full p-3 {variant === 'positive'
         ? 'bg-bg-done text-status-done'
-        : 'bg-muted text-muted-foreground'}"
+        : 'bg-primary-tint text-primary'}"
     >
       <Icon class="h-6 w-6" />
     </div>
     <div class="space-y-1">
       <p
-        class="{variant === 'subtle' ? 'text-metadata' : 'text-base'} font-medium {variant ===
-        'positive'
+        class="font-accent {variant === 'subtle'
+          ? 'text-metadata'
+          : 'text-base'} font-medium {variant === 'positive'
           ? 'text-status-done'
           : 'text-foreground'}"
       >

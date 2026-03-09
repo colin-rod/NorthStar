@@ -56,11 +56,12 @@
       }}
       class="flex items-center shrink-0 pt-1 cursor-pointer"
       aria-label={isExpanded ? 'Collapse project' : 'Expand project'}
+      aria-expanded={isExpanded}
     >
       {#if isExpanded}
-        <ChevronDown class="h-5 w-5 text-muted-foreground" />
+        <ChevronDown aria-hidden="true" class="h-5 w-5 text-muted-foreground" />
       {:else}
-        <ChevronRight class="h-5 w-5 text-muted-foreground" />
+        <ChevronRight aria-hidden="true" class="h-5 w-5 text-muted-foreground" />
       {/if}
     </button>
 
@@ -68,7 +69,9 @@
     <div
       class="h-6 w-6 rounded-md flex items-center justify-center shrink-0 mt-1 {projectColor.bg}"
     >
-      <ProjectIcon size={13} class="text-white" />
+      {#key project.icon}
+        <ProjectIcon aria-hidden="true" size={13} class="text-white" />
+      {/key}
     </div>
 
     <!-- Clickable Content Area -->
@@ -97,7 +100,7 @@
         </div>
         <div class="flex items-center gap-1.5">
           <Badge variant="status-doing" class="text-xs">{counts.in_progress}</Badge>
-          <span class="text-metadata text-foreground-secondary">Doing</span>
+          <span class="text-metadata text-foreground-secondary">In Progress</span>
         </div>
         <div class="flex items-center gap-1.5">
           <Badge variant="status-blocked" class="text-xs">{counts.blocked}</Badge>

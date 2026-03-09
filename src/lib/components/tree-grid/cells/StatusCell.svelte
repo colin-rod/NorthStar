@@ -10,15 +10,19 @@
 
   import type { TreeNode } from '$lib/types/tree-grid';
   import type { Project, Epic, Issue } from '$lib/types';
+  import {
+    ISSUE_STATUS_LABELS,
+    EPIC_STATUS_LABELS,
+    PROJECT_STATUS_LABELS,
+  } from '$lib/utils/status-labels';
 
   interface Props {
     node: TreeNode;
-    editMode: boolean;
     compact?: boolean; // For mobile view
     onEdit: (value: string) => void;
   }
 
-  let { node, editMode, compact = false, onEdit }: Props = $props();
+  let { node, compact = false, onEdit }: Props = $props();
 
   // Get status from node data
   const status = $derived.by(() => {
@@ -29,29 +33,29 @@
   });
 
   const projectStatusOptions = [
-    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
-    { value: 'planned', label: 'Planned', color: 'bg-status-todo' },
-    { value: 'active', label: 'Active', color: 'bg-status-doing' },
-    { value: 'on_hold', label: 'On Hold', color: 'bg-status-in-review' },
-    { value: 'completed', label: 'Completed', color: 'bg-status-done' },
-    { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
+    { value: 'backlog', label: PROJECT_STATUS_LABELS.backlog, color: 'bg-status-todo' },
+    { value: 'planned', label: PROJECT_STATUS_LABELS.planned, color: 'bg-status-todo' },
+    { value: 'active', label: PROJECT_STATUS_LABELS.active, color: 'bg-status-doing' },
+    { value: 'on_hold', label: PROJECT_STATUS_LABELS.on_hold, color: 'bg-status-in-review' },
+    { value: 'completed', label: PROJECT_STATUS_LABELS.completed, color: 'bg-status-done' },
+    { value: 'canceled', label: PROJECT_STATUS_LABELS.canceled, color: 'bg-status-canceled' },
   ];
 
   const epicStatusOptions = [
-    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
-    { value: 'active', label: 'Active', color: 'bg-status-doing' },
-    { value: 'on_hold', label: 'On Hold', color: 'bg-status-in-review' },
-    { value: 'completed', label: 'Completed', color: 'bg-status-done' },
-    { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
+    { value: 'backlog', label: EPIC_STATUS_LABELS.backlog, color: 'bg-status-todo' },
+    { value: 'active', label: EPIC_STATUS_LABELS.active, color: 'bg-status-doing' },
+    { value: 'on_hold', label: EPIC_STATUS_LABELS.on_hold, color: 'bg-status-in-review' },
+    { value: 'completed', label: EPIC_STATUS_LABELS.completed, color: 'bg-status-done' },
+    { value: 'canceled', label: EPIC_STATUS_LABELS.canceled, color: 'bg-status-canceled' },
   ];
 
   const issueStatusOptions = [
-    { value: 'backlog', label: 'Backlog', color: 'bg-status-todo' },
-    { value: 'todo', label: 'Todo', color: 'bg-status-todo' },
-    { value: 'in_progress', label: 'In Progress', color: 'bg-status-doing' },
-    { value: 'in_review', label: 'In Review', color: 'bg-status-in-review' },
-    { value: 'done', label: 'Done', color: 'bg-status-done' },
-    { value: 'canceled', label: 'Canceled', color: 'bg-status-canceled' },
+    { value: 'backlog', label: ISSUE_STATUS_LABELS.backlog, color: 'bg-status-todo' },
+    { value: 'todo', label: ISSUE_STATUS_LABELS.todo, color: 'bg-status-todo' },
+    { value: 'in_progress', label: ISSUE_STATUS_LABELS.in_progress, color: 'bg-status-doing' },
+    { value: 'in_review', label: ISSUE_STATUS_LABELS.in_review, color: 'bg-status-in-review' },
+    { value: 'done', label: ISSUE_STATUS_LABELS.done, color: 'bg-status-done' },
+    { value: 'canceled', label: ISSUE_STATUS_LABELS.canceled, color: 'bg-status-canceled' },
     // Note: 'blocked' is computed, not a stored status
   ];
 
@@ -66,21 +70,8 @@
   const currentOption = $derived(statusOptions.find((o) => o.value === status));
 </script>
 
-{#if editMode && !compact}
-  <!-- Edit Mode: Dropdown -->
-  <select
-    value={status}
-    onchange={(e) => onEdit(e.currentTarget.value)}
-    class="h-8 px-2 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent bg-surface"
-  >
-    {#each statusOptions as option}
-      <option value={option.value}>{option.label}</option>
-    {/each}
-  </select>
-{:else}
-  <!-- Display Mode: Dot + Label -->
-  <div class="flex items-center gap-2">
-    <div class="w-2 h-2 md:w-3 md:h-3 rounded-full {currentOption?.color || 'bg-gray-400'}"></div>
-    <span class="text-foreground {compact ? 'text-xs' : ''}">{currentOption?.label || status}</span>
-  </div>
-{/if}
+<!-- Display Mode: Dot + Label -->
+<div class="flex items-center gap-2">
+  <div class="w-2 h-2 md:w-3 md:h-3 rounded-full {currentOption?.color || 'bg-gray-400'}"></div>
+  <span class="text-foreground {compact ? 'text-xs' : ''}">{currentOption?.label || status}</span>
+</div>

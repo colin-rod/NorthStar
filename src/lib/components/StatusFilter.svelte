@@ -7,6 +7,7 @@
   import { Separator } from '$lib/components/ui/separator';
   import type { Issue, IssueStatus } from '$lib/types';
   import { isReady, isBlocked } from '$lib/utils/issue-helpers';
+  import { ISSUE_STATUS_LABELS } from '$lib/utils/status-labels';
   import SearchX from '@lucide/svelte/icons/search-x';
 
   interface Props {
@@ -28,14 +29,24 @@
 
   // Computed statuses (virtual) + raw database statuses
   const allOptions: StatusOption[] = [
-    { value: 'ready', label: 'Ready', description: 'Todo + no blockers', section: 'computed' },
-    { value: 'blocked', label: 'Blocked', description: 'Has unresolved deps', section: 'computed' },
-    { value: 'backlog', label: 'Backlog', section: 'raw' },
-    { value: 'todo', label: 'Todo (all)', description: 'Includes blocked', section: 'raw' },
-    { value: 'in_progress', label: 'In Progress', section: 'raw' },
-    { value: 'in_review', label: 'In Review', section: 'raw' },
-    { value: 'done', label: 'Done', section: 'raw' },
-    { value: 'canceled', label: 'Canceled', section: 'raw' },
+    {
+      value: 'ready',
+      label: 'Ready',
+      description: 'Todo with nothing blocking',
+      section: 'computed',
+    },
+    {
+      value: 'blocked',
+      label: 'Blocked',
+      description: 'Waiting on other issues',
+      section: 'computed',
+    },
+    { value: 'backlog', label: ISSUE_STATUS_LABELS.backlog, section: 'raw' },
+    { value: 'todo', label: 'Todo (all)', description: 'Including blocked issues', section: 'raw' },
+    { value: 'in_progress', label: ISSUE_STATUS_LABELS.in_progress, section: 'raw' },
+    { value: 'in_review', label: ISSUE_STATUS_LABELS.in_review, section: 'raw' },
+    { value: 'done', label: ISSUE_STATUS_LABELS.done, section: 'raw' },
+    { value: 'canceled', label: ISSUE_STATUS_LABELS.canceled, section: 'raw' },
   ];
 
   // Calculate counts for each option
@@ -59,6 +70,8 @@
 
   let filteredComputed = $derived(filteredOptions.filter((s) => s.section === 'computed'));
   let filteredRaw = $derived(filteredOptions.filter((s) => s.section === 'raw'));
+
+  let isActive = $derived(selectedStatuses.length > 0);
 
   // Display text for trigger button
   let buttonText = $derived.by(() => {
@@ -101,7 +114,12 @@
 
 <Popover bind:open>
   <PopoverTrigger
-    class="inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+    class={[
+      'inline-flex items-center justify-start rounded-md border px-4 py-2 text-sm font-medium',
+      isActive
+        ? 'bg-primary/10 border-primary text-primary hover:bg-primary/20'
+        : 'border-input bg-background hover:bg-accent hover:text-accent-foreground',
+    ].join(' ')}
   >
     {buttonText}
   </PopoverTrigger>

@@ -14,7 +14,7 @@
  * - If Non-Canceled SP = 0, progress = 100% if all non-canceled done, else 0%
  */
 
-import { getDescendantIssues } from './tree-grid-helpers';
+import { buildChildrenIndex, getDescendantIssues } from './tree-grid-helpers';
 
 import type { Issue } from '$lib/types';
 import type { TreeNode, Progress } from '$lib/types/tree-grid';
@@ -26,22 +26,33 @@ import type { TreeNode, Progress } from '$lib/types/tree-grid';
  * @param allNodes - All tree nodes (needed to find children)
  * @returns Total story points or null if not applicable
  */
-export function calculateTotalPoints(node: TreeNode, allNodes: TreeNode[]): number | null {
+export function calculateTotalPoints(
+  node: TreeNode,
+  allNodes: TreeNode[],
+  childrenIndex?: Map<string | null, TreeNode[]>,
+): number | null {
   // Issue: own SP
   if (node.type === 'issue') {
     return (node.data as Issue).story_points || 0;
   }
 
+  const index = childrenIndex ?? buildChildrenIndex(allNodes);
+  const children = index.get(node.id) ?? [];
+
   // Epic: sum of all child issue totals
   if (node.type === 'epic') {
-    const issues = allNodes.filter((n) => n.type === 'issue' && n.parentId === node.id);
-    return issues.reduce((sum, issue) => sum + (calculateTotalPoints(issue, allNodes) || 0), 0);
+    return children.reduce(
+      (sum, issue) => sum + (calculateTotalPoints(issue, allNodes, index) || 0),
+      0,
+    );
   }
 
   // Project: sum of all child epic totals
   if (node.type === 'project') {
-    const epics = allNodes.filter((n) => n.type === 'epic' && n.parentId === node.id);
-    return epics.reduce((sum, epic) => sum + (calculateTotalPoints(epic, allNodes) || 0), 0);
+    return children.reduce(
+      (sum, epic) => sum + (calculateTotalPoints(epic, allNodes, index) || 0),
+      0,
+    );
   }
 
   return null;
@@ -59,9 +70,23 @@ export function calculateTotalPoints(node: TreeNode, allNodes: TreeNode[]): numb
  * @param allNodes - All tree nodes (needed to find descendants)
  * @returns Progress object or null if not applicable
  */
-export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progress | null {
+export function calculateProgress(
+  node: TreeNode,
+  allNodes: TreeNode[],
+  childrenIndex?: Map<string | null, TreeNode[]>,
+): Progress | null {
+  // Issue: progress is based on its own status
+  if (node.type === 'issue') {
+    const issue = node.data as Issue;
+    if (issue.status === 'canceled') return null;
+    const done = issue.status === 'done';
+    return { completed: done ? 1 : 0, total: 1, percentage: done ? 100 : 0 };
+  }
+
+  const index = childrenIndex ?? buildChildrenIndex(allNodes);
+
   // Get all descendant issues (recursive)
-  const descendantIssues = getDescendantIssues(node, allNodes);
+  const descendantIssues = getDescendantIssues(node, allNodes, index);
 
   // No descendants = 0% progress
   if (descendantIssues.length === 0) {
@@ -110,20 +135,26 @@ export function calculateProgress(node: TreeNode, allNodes: TreeNode[]): Progres
  * @param node - Tree node to update
  * @param allNodes - All tree nodes
  */
-export function updateNodeRollups(node: TreeNode, allNodes: TreeNode[]): void {
-  node.totalPoints = calculateTotalPoints(node, allNodes);
-  node.progress = calculateProgress(node, allNodes);
+export function updateNodeRollups(
+  node: TreeNode,
+  allNodes: TreeNode[],
+  childrenIndex?: Map<string | null, TreeNode[]>,
+): void {
+  node.totalPoints = calculateTotalPoints(node, allNodes, childrenIndex);
+  node.progress = calculateProgress(node, allNodes, childrenIndex);
 }
 
 /**
  * Update all nodes with calculated rollups
  *
- * Mutates all nodes to set totalPoints and progress
+ * Builds a children index once (O(N)) then updates each node in a single pass,
+ * reducing overall complexity from O(N³) to O(N).
  *
  * @param nodes - All tree nodes
  */
 export function updateAllNodeRollups(nodes: TreeNode[]): void {
+  const childrenIndex = buildChildrenIndex(nodes);
   for (const node of nodes) {
-    updateNodeRollups(node, nodes);
+    updateNodeRollups(node, nodes, childrenIndex);
   }
 }

@@ -1,4 +1,11 @@
 // src/lib/utils/tree-filter-params.ts
+import {
+  VALID_PROJECT_STATUSES,
+  VALID_EPIC_STATUSES,
+  VALID_ISSUE_STATUSES,
+  VALID_PRIORITIES,
+  VALID_STORY_POINTS,
+} from '$lib/constants/validation';
 import type {
   ProjectStatus,
   EpicStatus,
@@ -18,25 +25,6 @@ export interface TreeFilterParams {
   sortDir: SortDirection;
 }
 
-const VALID_PROJECT_STATUSES: ProjectStatus[] = [
-  'backlog',
-  'planned',
-  'active',
-  'on_hold',
-  'completed',
-  'canceled',
-];
-const VALID_EPIC_STATUSES: EpicStatus[] = ['backlog', 'active', 'on_hold', 'completed', 'canceled'];
-const VALID_ISSUE_STATUSES: IssueStatus[] = [
-  'backlog',
-  'todo',
-  'in_progress',
-  'in_review',
-  'done',
-  'canceled',
-];
-const VALID_PRIORITIES = [0, 1, 2, 3];
-const VALID_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21];
 const VALID_GROUP_BY = ['none', 'priority', 'status', 'milestone', 'story_points'];
 const VALID_SORT_BY: SortByColumn[] = [
   'priority',
@@ -96,6 +84,72 @@ export function buildTreeFilterUrl(filters: TreeFilterParams, basePath: string):
   return parts.length > 0 ? `${basePath}?${parts.join('&')}` : basePath;
 }
 
+export interface FilterChip {
+  label: string;
+  param: string;
+  value: string;
+}
+
+const PROJECT_STATUS_LABELS: Record<string, string> = {
+  backlog: 'Backlog',
+  planned: 'Planned',
+  active: 'Active',
+  on_hold: 'On Hold',
+  completed: 'Completed',
+  canceled: 'Canceled',
+};
+
+const EPIC_STATUS_LABELS: Record<string, string> = {
+  backlog: 'Backlog',
+  active: 'Active',
+  on_hold: 'On Hold',
+  completed: 'Completed',
+  canceled: 'Canceled',
+};
+
+const ISSUE_STATUS_LABELS: Record<string, string> = {
+  backlog: 'Backlog',
+  todo: 'Todo',
+  in_progress: 'In Progress',
+  in_review: 'In Review',
+  done: 'Done',
+  canceled: 'Canceled',
+  ready: 'Ready',
+  blocked: 'Blocked',
+};
+
+const PRIORITY_LABELS: Record<number, string> = { 0: 'P0', 1: 'P1', 2: 'P2', 3: 'P3' };
+
+export function getFilterChips(f: TreeFilterParams): FilterChip[] {
+  const chips: FilterChip[] = [];
+
+  for (const s of f.projectStatus) {
+    chips.push({
+      label: `Project: ${PROJECT_STATUS_LABELS[s] ?? s}`,
+      param: 'project_status',
+      value: s,
+    });
+  }
+  for (const s of f.epicStatus) {
+    chips.push({ label: `Epic: ${EPIC_STATUS_LABELS[s] ?? s}`, param: 'epic_status', value: s });
+  }
+  for (const p of f.issuePriority) {
+    chips.push({ label: PRIORITY_LABELS[p] ?? `P${p}`, param: 'priority', value: String(p) });
+  }
+  for (const s of f.issueStatus) {
+    chips.push({ label: ISSUE_STATUS_LABELS[s] ?? s, param: 'status', value: s });
+  }
+  for (const sp of f.issueStoryPoints) {
+    chips.push({
+      label: sp === null ? 'SP: None' : `SP: ${sp}`,
+      param: 'story_points',
+      value: sp === null ? 'none' : String(sp),
+    });
+  }
+
+  return chips;
+}
+
 // Helper functions
 function parseEnumArray<T extends string>(value: string | null, validValues: readonly T[]): T[] {
   if (!value) return [];
@@ -105,7 +159,7 @@ function parseEnumArray<T extends string>(value: string | null, validValues: rea
     .map((v) => v as T);
 }
 
-function parseNumberArray(value: string | null, validValues: number[]): number[] {
+function parseNumberArray(value: string | null, validValues: readonly number[]): number[] {
   if (!value) return [];
   return value
     .split(',')
@@ -115,14 +169,18 @@ function parseNumberArray(value: string | null, validValues: number[]): number[]
 
 function parseStoryPoints(value: string | null): (number | null)[] {
   if (!value) return [];
-  return value
-    .split(',')
-    .map((v) => {
-      if (v === 'none') return null;
+  const result: (number | null)[] = [];
+  for (const v of value.split(',')) {
+    if (v === 'none') {
+      result.push(null);
+    } else {
       const num = parseInt(v, 10);
-      return !isNaN(num) && VALID_STORY_POINTS.includes(num) ? num : null;
-    })
-    .filter((v) => v !== null || value.includes('none'));
+      if (!isNaN(num) && (VALID_STORY_POINTS as readonly number[]).includes(num)) {
+        result.push(num);
+      }
+    }
+  }
+  return result;
 }
 
 function parseEnum<T extends string>(

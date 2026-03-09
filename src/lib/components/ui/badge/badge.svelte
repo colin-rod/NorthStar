@@ -29,6 +29,14 @@
         'priority-p1': 'bg-primary text-primary-foreground border-transparent font-semibold',
         'priority-p2': 'bg-amber-50 text-amber-700 border-amber-200',
         'priority-p3': 'bg-surface-subtle text-foreground-muted border-transparent',
+        /* Story point variants - color intensity ramp by effort size */
+        'sp-1': 'bg-slate-100 text-slate-500 border-transparent',
+        'sp-2': 'bg-blue-50 text-blue-500 border-transparent',
+        'sp-3': 'bg-blue-100 text-blue-600 border-transparent',
+        'sp-5': 'bg-teal-50 text-teal-600 border-transparent',
+        'sp-8': 'bg-amber-50 text-amber-600 border-transparent',
+        'sp-13': 'bg-orange-50 text-orange-600 border-transparent',
+        'sp-21': 'bg-red-50 text-red-600 border-transparent',
       },
     },
     defaultVariants: {

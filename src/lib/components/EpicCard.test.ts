@@ -112,7 +112,7 @@ describe('EpicCard', () => {
         },
       });
 
-      expect(screen.getByText('active')).toBeTruthy();
+      expect(screen.getByText('Active')).toBeTruthy();
     });
 
     it('should display issue counts', () => {
@@ -178,7 +178,7 @@ describe('EpicCard', () => {
         },
       });
 
-      expect(screen.getByText('completed')).toBeTruthy();
+      expect(screen.getByText('Completed')).toBeTruthy();
     });
 
     it('should show canceled status variant', () => {
@@ -194,7 +194,7 @@ describe('EpicCard', () => {
         },
       });
 
-      expect(screen.getByText('canceled')).toBeTruthy();
+      expect(screen.getAllByText('Canceled').length).toBeGreaterThan(0);
     });
   });
 

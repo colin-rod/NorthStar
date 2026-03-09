@@ -21,16 +21,16 @@
 {#snippet content()}
   <!-- Chevron -->
   {#if isExpanded}
-    <ChevronDown class="h-4 w-4 text-foreground-muted" />
+    <ChevronDown aria-hidden="true" class="h-4 w-4 text-foreground-muted" />
   {:else}
-    <ChevronRight class="h-4 w-4 text-foreground-muted" />
+    <ChevronRight aria-hidden="true" class="h-4 w-4 text-foreground-muted" />
   {/if}
 
   <!-- Group Name -->
-  <span class="font-medium text-body">{groupName}</span>
+  <span class="font-accent font-medium text-body">{groupName}</span>
 
   <!-- Separator -->
-  <span class="text-foreground-muted">—</span>
+  <span aria-hidden="true" class="text-foreground-muted">—</span>
 
   <!-- Issue Count -->
   <span class="text-metadata text-foreground-muted">

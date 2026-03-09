@@ -27,6 +27,8 @@
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Pencil, Archive } from '@lucide/svelte';
+  import { getProjectColor } from '$lib/utils/project-colors';
+  import { getProjectIcon } from '$lib/utils/project-icons';
 
   interface Props {
     project: Project;
@@ -51,6 +53,8 @@
     canceled: 0,
   };
   let effectiveCounts = $derived(counts ?? defaultCounts);
+  let projectColor = $derived(getProjectColor(project.color));
+  let ProjectIcon = $derived(getProjectIcon(project.icon));
 
   function handleEdit(e: MouseEvent) {
     e.preventDefault();
@@ -77,12 +81,21 @@
   >
     <CardHeader class="pb-4">
       <div class="flex items-center justify-between">
-        <!-- Project name: section header weight -->
-        <h3 class="text-section-header font-ui">{project.name}</h3>
+        <!-- Project identity: colored icon badge + name -->
+        <div class="flex items-center gap-3">
+          <div
+            class="h-6 w-6 rounded-md flex items-center justify-center shrink-0 {projectColor.bg}"
+          >
+            {#key project.icon}
+              <ProjectIcon aria-hidden="true" size={13} class="text-white" />
+            {/key}
+          </div>
+          <h3 class="text-section-header font-accent truncate">{project.name}</h3>
+        </div>
 
         <!-- Action buttons - visible on hover, above overlay -->
         <div
-          class="relative z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity"
+          class="relative z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity duration-150"
         >
           {#if onEdit}
             <Button
@@ -92,7 +105,7 @@
               onclick={handleEdit}
               aria-label="Edit project"
             >
-              <Pencil class="h-4 w-4" />
+              <Pencil aria-hidden="true" class="h-4 w-4" />
             </Button>
           {/if}
           {#if onArchive}
@@ -112,7 +125,7 @@
                 onclick={handleArchiveClick}
                 aria-label="Archive project"
               >
-                <Archive class="h-4 w-4" />
+                <Archive aria-hidden="true" class="h-4 w-4" />
               </Button>
             </form>
           {/if}
@@ -122,18 +135,26 @@
     <CardContent>
       <!-- Counts with subtle badges -->
       <div class="flex gap-4 text-metadata">
-        <div class="flex items-center gap-2">
-          <Badge variant="default" class="text-xs">{effectiveCounts.ready}</Badge>
-          <span class="text-foreground-secondary">Ready</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge variant="status-doing" class="text-xs">{effectiveCounts.in_progress}</Badge>
-          <span class="text-foreground-secondary">In Progress</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge variant="status-blocked" class="text-xs">{effectiveCounts.blocked}</Badge>
-          <span class="text-foreground-secondary">Blocked</span>
-        </div>
+        <span aria-label="{effectiveCounts.ready} ready issues" class="flex items-center gap-2">
+          <Badge aria-hidden="true" variant="default" class="text-xs">{effectiveCounts.ready}</Badge
+          >
+          <span aria-hidden="true" class="text-foreground-secondary">Ready</span>
+        </span>
+        <span
+          aria-label="{effectiveCounts.in_progress} in progress issues"
+          class="flex items-center gap-2"
+        >
+          <Badge aria-hidden="true" variant="status-doing" class="text-xs"
+            >{effectiveCounts.in_progress}</Badge
+          >
+          <span aria-hidden="true" class="text-foreground-secondary">In Progress</span>
+        </span>
+        <span aria-label="{effectiveCounts.blocked} blocked issues" class="flex items-center gap-2">
+          <Badge aria-hidden="true" variant="status-blocked" class="text-xs"
+            >{effectiveCounts.blocked}</Badge
+          >
+          <span aria-hidden="true" class="text-foreground-secondary">Blocked</span>
+        </span>
       </div>
       <!-- Progress bar -->
       {@const progress = computeProgress(effectiveCounts)}

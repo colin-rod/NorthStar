@@ -13,11 +13,10 @@
 
   interface Props {
     node: TreeNode;
-    editMode: boolean;
     onEdit: (value: number | null) => void;
   }
 
-  let { node, editMode, onEdit }: Props = $props();
+  let { node, onEdit }: Props = $props();
 
   // Only applicable for issues
   const isApplicable = $derived(node.type === 'issue');
@@ -34,21 +33,6 @@
 {#if !isApplicable}
   <!-- Project/Epic: Blank -->
   <span></span>
-{:else if editMode}
-  <!-- Edit Mode: Dropdown -->
-  <select
-    value={storyPoints || ''}
-    onchange={(e) => {
-      const val = e.currentTarget.value;
-      onEdit(val ? parseInt(val, 10) : null);
-    }}
-    class="h-8 px-2 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent bg-surface"
-  >
-    <option value="">—</option>
-    {#each allowedValues as val}
-      <option value={val}>{val}</option>
-    {/each}
-  </select>
 {:else}
   <!-- Display Mode: Number or blank -->
   <span class="text-foreground {storyPoints ? '' : 'text-muted-foreground'}">

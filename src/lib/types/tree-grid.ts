@@ -75,12 +75,6 @@ export interface TreeGridState {
 
   /** Set of selected node IDs (for bulk actions) */
   selectedIds: Set<string>;
-
-  /** Whether edit mode is enabled */
-  editMode: boolean;
-
-  /** Whether drag-and-drop is disabled */
-  dragDisabled: boolean;
 }
 
 /**

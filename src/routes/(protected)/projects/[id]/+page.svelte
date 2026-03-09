@@ -13,14 +13,18 @@
 
   import type { PageData } from './$types';
   import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import EpicCard from '$lib/components/EpicCard.svelte';
   import ExpandedEpicView from '$lib/components/ExpandedEpicView.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
+  import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
   import { Button } from '$lib/components/ui/button';
   import { openIssueSheet, isIssueSheetOpen, selectedIssue } from '$lib/stores/issues';
   import type { Issue } from '$lib/types';
   import { Badge } from '$lib/components/ui/badge';
+  import { computeIssueCounts } from '$lib/utils/issue-counts';
+  import { computeProjectMetrics } from '$lib/utils/project-helpers';
+  import SettingsIcon from '@lucide/svelte/icons/settings';
 
   let { data }: { data: PageData } = $props();
 
@@ -33,6 +37,18 @@
   let doneEpics = $derived(
     (data.epics || []).filter((e) => e.status === 'completed' || e.status === 'canceled').length,
   );
+
+  // Project settings sheet state
+  let projectSheetOpen = $state(false);
+
+  // Create epic inline form state
+  let showNewEpicForm = $state(false);
+  let newEpicName = $state('');
+  let newEpicLoading = $state(false);
+
+  // Computed counts and metrics for ProjectDetailSheet
+  let projectCounts = $derived(computeIssueCounts(data.issues || []));
+  let projectMetrics = $derived(computeProjectMetrics(data.issues || []));
 
   function toggleEpic(epicId: string) {
     const url = new URL($page.url);
@@ -57,6 +73,33 @@
   function handleIssueClick(issue: Issue) {
     openIssueSheet(issue);
   }
+
+  function handleNewEpicKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      showNewEpicForm = false;
+      newEpicName = '';
+    }
+  }
+
+  async function handleNewEpicSubmit(e: Event) {
+    e.preventDefault();
+    if (!newEpicName.trim()) return;
+
+    newEpicLoading = true;
+    const formData = new FormData();
+    formData.append('name', newEpicName.trim());
+
+    try {
+      const response = await fetch('?/createEpic', { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        showNewEpicForm = false;
+        newEpicName = '';
+      }
+    } finally {
+      newEpicLoading = false;
+    }
+  }
 </script>
 
 <div class="space-y-6">
@@ -68,8 +111,62 @@
         <Badge variant="outline" class="text-xs">{doneEpics}/{data.epics?.length || 0}</Badge>
       </div>
     </div>
-    <Button>New Epic</Button>
+    <div class="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="icon"
+        onclick={() => (projectSheetOpen = true)}
+        aria-label="Project settings"
+      >
+        <SettingsIcon class="size-4" />
+      </Button>
+      <Button
+        onclick={() => {
+          showNewEpicForm = true;
+          newEpicName = '';
+        }}>New Epic</Button
+      >
+    </div>
   </div>
+
+  <!-- Inline create epic form -->
+  {#if showNewEpicForm}
+    <form onsubmit={handleNewEpicSubmit} class="border rounded-md p-4 bg-surface-subtle">
+      <div class="flex gap-2">
+        <div class="flex-1">
+          <label for="new-epic-name" class="sr-only">Epic name</label>
+          <!-- svelte-ignore a11y_autofocus -->
+          <input
+            id="new-epic-name"
+            autofocus
+            bind:value={newEpicName}
+            placeholder="Epic name..."
+            required
+            maxlength={100}
+            disabled={newEpicLoading}
+            onkeydown={handleNewEpicKeydown}
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          />
+        </div>
+        <Button type="submit" disabled={newEpicLoading || !newEpicName.trim()} size="sm">
+          {newEpicLoading ? 'Creating...' : 'Create'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onclick={() => {
+            showNewEpicForm = false;
+            newEpicName = '';
+          }}
+          disabled={newEpicLoading}
+          size="sm"
+        >
+          Cancel
+        </Button>
+      </div>
+      <p class="text-xs text-foreground-muted mt-2">Press Escape to cancel, Enter to create</p>
+    </form>
+  {/if}
 
   <!-- Epics Grid with conditional layout based on expansion state -->
   <div class="grid gap-4 {expandedEpicId ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}">
@@ -118,6 +215,13 @@
   projects={[data.project]}
 />
 
-<!-- TODO: Add project settings -->
-<!-- TODO: Add project statistics -->
-<!-- TODO: Add create epic form -->
+<!-- Project Settings Sheet (settings + statistics) -->
+<ProjectDetailSheet
+  bind:open={projectSheetOpen}
+  mode="edit"
+  project={data.project}
+  counts={projectCounts}
+  metrics={projectMetrics}
+  epics={data.epics || []}
+  userId={data.session?.user?.id ?? ''}
+/>

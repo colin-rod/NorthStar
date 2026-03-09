@@ -29,6 +29,8 @@
   import { buildBreadcrumb } from '$lib/utils/breadcrumb';
   import { groupIssues } from '$lib/utils/group-issues';
   import { dismissReorderHint } from '$lib/stores/ui-hints';
+  import { isIssueSheetOpen, closeIssueSheet } from '$lib/stores/issues';
+  import { toast } from 'svelte-sonner';
 
   interface Props {
     projects: (Project & {
@@ -39,15 +41,14 @@
     })[];
     expandedIds: Set<string>;
     selectedIds: Set<string>;
-    editMode: boolean;
     groupBy?: string;
     onToggleExpand: (id: string) => void;
     onToggleSelect: (id: string) => void;
-    onEditModeChange: (enabled: boolean) => void;
     onCellEdit: (nodeId: string, field: string, value: any) => void;
     onCreateChild: (parentId: string, parentType: string, data: { title: string }) => void;
     onBulkAction?: (action: string) => void;
-    onShowToast?: (message: string, type: 'success' | 'error') => void;
+    onBulkEdit?: (field: string, value: string) => void;
+    milestones?: { id: string; name: string }[];
     onIssueClick?: (issue: Issue) => void;
     onProjectClick?: (
       project: Project,
@@ -57,25 +58,30 @@
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
     onContextMenu?: (node: import('$lib/types/tree-grid').TreeNode, event: MouseEvent) => void;
+    onAddChildRow?: (node: import('$lib/types/tree-grid').TreeNode) => void;
+    editingNodeId?: string | null;
+    onStopEditNode?: () => void;
   }
 
   let {
     projects,
     expandedIds,
     selectedIds,
-    editMode,
     groupBy = 'none',
     onToggleExpand,
     onToggleSelect,
-    onEditModeChange,
     onCellEdit,
     onCreateChild,
     onBulkAction,
-    onShowToast,
+    onBulkEdit,
+    milestones = [],
     onIssueClick,
     onProjectClick,
     onEpicClick,
     onContextMenu,
+    onAddChildRow,
+    editingNodeId = null,
+    onStopEditNode,
   }: Props = $props();
 
   // Flatten tree into nodes and calculate rollups
@@ -204,8 +210,8 @@
     validDropTargetIds: new Set(),
   });
 
-  // Disable drag when edit mode is OFF
-  let dragDisabled = $derived(!editMode);
+  // Drag is always disabled (edit mode removed)
+  const dragDisabled = true;
 
   // Mark nodes with drag metadata
   let nodesWithDragState = $derived.by(() => {
@@ -267,14 +273,12 @@
 
   // Column definitions (per spec)
   const columns = [
-    { key: 'drag', header: '', width: '40px', hideOnMobile: true },
     { key: 'select', header: '', width: '40px', hideOnMobile: true },
     { key: 'title', header: 'Title', width: 'flex min-w-[340px]', hideOnMobile: false },
     { key: 'status', header: 'Status', width: '140px', hideOnMobile: false },
-    { key: 'milestone', header: 'Milestone', width: '140px', hideOnMobile: true },
-    { key: 'sp', header: 'Pts', width: '72px', hideOnMobile: true },
     { key: 'total_sp', header: 'Total pts', width: '96px', hideOnMobile: true },
-    { key: 'progress', header: 'Progress', width: '140px', hideOnMobile: true },
+    { key: 'progress', header: 'Progress', width: '200px', hideOnMobile: true },
+    { key: 'actions', header: '', width: '80px', hideOnMobile: true },
   ];
 
   // Drag-drop handlers
@@ -361,13 +365,13 @@
 
       if (response.ok) {
         await invalidateAll();
-        if (onShowToast) onShowToast('Reordered successfully', 'success');
+        toast.success('Reordered successfully');
       } else {
-        if (onShowToast) onShowToast('Failed to reorder', 'error');
+        toast.error('Failed to reorder');
       }
     } catch (error) {
       console.error('Reorder error:', error);
-      if (onShowToast) onShowToast('Failed to reorder', 'error');
+      toast.error('Failed to reorder');
     }
   }
 
@@ -383,13 +387,13 @@
 
       if (response.ok) {
         await invalidateAll();
-        if (onShowToast) onShowToast('Moved successfully', 'success');
+        toast.success('Moved successfully');
       } else {
-        if (onShowToast) onShowToast('Failed to move', 'error');
+        toast.error('Failed to move');
       }
     } catch (error) {
       console.error('Reparent error:', error);
-      if (onShowToast) onShowToast('Failed to move', 'error');
+      toast.error('Failed to move');
     }
   }
 
@@ -398,16 +402,74 @@
       onBulkAction(action);
     }
   }
+
+  function handleGridKeydown(e: KeyboardEvent) {
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape'].includes(e.key))
+      return;
+
+    const focusedRow = (e.target as HTMLElement).closest('tr[data-node-id]') as HTMLElement | null;
+    if (!focusedRow) return;
+
+    const nodeId = focusedRow.dataset.nodeId!;
+    const focusableNodes = displayNodes.filter((n) => n.type !== 'group-header') as TreeNode[];
+    const currentIndex = focusableNodes.findIndex((n) => n.id === nodeId);
+    if (currentIndex === -1) return;
+
+    const currentNode = focusableNodes[currentIndex];
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = focusableNodes[currentIndex + 1];
+      if (next) document.querySelector<HTMLElement>(`tr[data-node-id="${next.id}"]`)?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = focusableNodes[currentIndex - 1];
+      if (prev) document.querySelector<HTMLElement>(`tr[data-node-id="${prev.id}"]`)?.focus();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (!currentNode.hasChildren) return;
+      if (!expandedIds.has(currentNode.id)) {
+        onToggleExpand(currentNode.id);
+      } else {
+        const firstChild = focusableNodes[currentIndex + 1];
+        if (firstChild?.parentId === currentNode.id) {
+          document.querySelector<HTMLElement>(`tr[data-node-id="${firstChild.id}"]`)?.focus();
+        }
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentNode.hasChildren && expandedIds.has(currentNode.id)) {
+        onToggleExpand(currentNode.id);
+      } else if (currentNode.parentId) {
+        document.querySelector<HTMLElement>(`tr[data-node-id="${currentNode.parentId}"]`)?.focus();
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (currentNode.type === 'issue') {
+        onIssueClick?.(currentNode.data as Issue);
+      } else {
+        onToggleExpand(currentNode.id);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      if ($isIssueSheetOpen) {
+        closeIssueSheet();
+        setTimeout(() => focusedRow.focus(), 310);
+      } else {
+        focusedRow.blur();
+      }
+    }
+  }
 </script>
 
 <div class="space-y-4">
   <!-- Toolbar -->
   <TreeToolbar
-    {editMode}
     {breadcrumb}
     selectedCount={selectedIds.size}
-    {onEditModeChange}
     onBulkAction={handleBulkAction}
+    onBulkEdit={(field, value) => onBulkEdit?.(field, value)}
+    {milestones}
   />
 
   <!-- Tree Grid Table -->
@@ -441,6 +503,7 @@
         ondragend={handleDragEnd}
         onconsider={handleDndConsider}
         onfinalize={handleDndFinalize}
+        onkeydown={handleGridKeydown}
       >
         {#each nodesWithDragState as node, index (node.id)}
           {#if node.type === 'group-header'}
@@ -464,7 +527,6 @@
               isExpanded={expandedIds.has(node.id)}
               {expandedIds}
               isSelected={selectedIds.has(node.id)}
-              {editMode}
               {dragDropState}
               {onToggleExpand}
               {onToggleSelect}
@@ -473,8 +535,9 @@
               {onProjectClick}
               {onEpicClick}
               {onContextMenu}
-              showReorderHint={nodesWithDragState.filter((n) => n.type !== 'group-header')[0]
-                ?.id === node.id}
+              onAddChild={onAddChildRow}
+              {editingNodeId}
+              onStopEdit={onStopEditNode}
             />
 
             <!-- Check if we should show AddRow after this node -->

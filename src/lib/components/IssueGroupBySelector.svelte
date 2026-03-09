@@ -5,6 +5,7 @@
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
   import { Command, CommandList, CommandItem } from '$lib/components/ui/command';
   import Check from '@lucide/svelte/icons/check';
+  import Layers from '@lucide/svelte/icons/layers';
 
   interface Props {
     selectedGroupBy: string;
@@ -45,9 +46,10 @@
 
 <Popover bind:open>
   <PopoverTrigger
-    class="inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+    class="inline-flex items-center justify-start rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
   >
-    {displayText}
+    <Layers class="h-4 w-4 shrink-0" />
+    <span class="hidden md:inline ml-2">{displayText}</span>
   </PopoverTrigger>
   <PopoverContent class="w-[200px] p-0" align="start">
     <Command>

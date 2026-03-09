@@ -23,12 +23,13 @@
 </script>
 
 <!-- North Design: Minimal header with subtle border -->
-<header class="border-b border-border-divider bg-surface">
+<header aria-label="Site header" class="border-b border-border-divider bg-surface">
   <div class="container mx-auto flex items-center justify-between px-4 py-4">
     <div class="flex items-center gap-4">
       <!-- North wordmark with serif font per design spec -->
       <a
         href="/"
+        aria-label="Home"
         class="font-accent text-page-title text-foreground hover:text-primary transition-colors md:hidden"
       >
         North
@@ -49,10 +50,11 @@
         <!-- User menu dropdown -->
         <Popover bind:open={menuOpen}>
           <PopoverTrigger
-            class="hidden sm:inline-flex items-center gap-1 text-metadata text-foreground-muted hover:text-foreground transition-colors"
+            class="inline-flex items-center gap-1 text-foreground-muted hover:text-foreground transition-colors"
           >
-            {session.user.email}
-            <ChevronDown class="w-3 h-3" />
+            <Settings aria-hidden="true" class="w-5 h-5 sm:hidden" />
+            <span class="hidden sm:inline text-metadata">{session.user.email}</span>
+            <ChevronDown aria-hidden="true" class="hidden sm:inline w-3 h-3" />
           </PopoverTrigger>
           <PopoverContent align="end" class="w-44 p-1">
             <a
@@ -60,7 +62,7 @@
               onclick={() => (menuOpen = false)}
               class="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-sm hover:bg-surface-subtle transition-colors text-foreground"
             >
-              <Settings class="w-4 h-4" />
+              <Settings aria-hidden="true" class="w-4 h-4" />
               Settings
             </a>
             <div class="my-1 border-t border-border-divider"></div>
@@ -81,7 +83,7 @@
                 disabled={loggingOut}
                 class="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-sm hover:bg-surface-subtle transition-colors text-foreground disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               >
-                <LogOut class="w-4 h-4" />
+                <LogOut aria-hidden="true" class="w-4 h-4" />
                 {loggingOut ? 'Logging out...' : 'Logout'}
               </button>
             </form>

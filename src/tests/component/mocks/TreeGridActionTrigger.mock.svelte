@@ -6,7 +6,6 @@
     onCellEdit = (_nodeId: string, _field: string, _value: any) => {},
     onCreateChild = (_parentId: string, _parentType: string, _data: { title: string }) => {},
     onBulkAction = (_action: string) => {},
-    onShowToast = (_message: string, _type: 'success' | 'error') => {},
     onIssueClick = (_issue: any) => {},
     onProjectClick = (_project: any, _counts: any, _metrics: any, _epics: any[]) => {},
     onEpicClick = (_epic: any, _counts: any) => {},
@@ -18,7 +17,6 @@
     onCellEdit?: (nodeId: string, field: string, value: any) => void;
     onCreateChild?: (parentId: string, parentType: string, data: { title: string }) => void;
     onBulkAction?: (action: string) => void;
-    onShowToast?: (message: string, type: 'success' | 'error') => void;
     onIssueClick?: (issue: any) => void;
     onProjectClick?: (project: any, counts: any, metrics: any, epics: any[]) => void;
     onEpicClick?: (epic: any, counts: any) => void;
@@ -47,9 +45,6 @@
 <button type="button" onclick={() => onCreateChild('issue-1', 'issue', { title: 'New Sub-issue' })}
   >Create sub-issue child</button
 >
-<button type="button" onclick={() => onShowToast('Saved from grid', 'success')}>Emit success</button
->
-<button type="button" onclick={() => onShowToast('Failed from grid', 'error')}>Emit error</button>
 <button type="button" onclick={() => onIssueClick({ id: 'issue-1', title: 'Issue 1' })}
   >Issue click</button
 >

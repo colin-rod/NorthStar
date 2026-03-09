@@ -6,18 +6,26 @@
    * Projects → Epics → Issues → Sub-issues
    */
 
+  import { untrack } from 'svelte';
   import { page } from '$app/stores';
   import { goto, invalidateAll } from '$app/navigation';
+  import { deserialize } from '$app/forms';
   import TreeGrid from '$lib/components/tree-grid/TreeGrid.svelte';
   import ProjectDetailSheet from '$lib/components/ProjectDetailSheet.svelte';
   import EpicDetailSheet from '$lib/components/EpicDetailSheet.svelte';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
   import NewButtonDropdown from '$lib/components/NewButtonDropdown.svelte';
   import FilterPanel from '$lib/components/FilterPanel.svelte';
+  import ActiveFilterChips from '$lib/components/ActiveFilterChips.svelte';
   import IssueGroupBySelector from '$lib/components/IssueGroupBySelector.svelte';
   import IssueSortBySelector from '$lib/components/IssueSortBySelector.svelte';
   import type { PageData } from './$types';
   import type { Project, Epic, Issue } from '$lib/types';
+  import {
+    VALID_ISSUE_STATUSES,
+    VALID_EPIC_STATUSES,
+    VALID_PROJECT_STATUSES,
+  } from '$lib/constants/validation';
   import { computeIssueCounts } from '$lib/utils/issue-counts';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import type { ProjectMetrics } from '$lib/utils/project-helpers';
@@ -32,26 +40,31 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import FolderOpen from '@lucide/svelte/icons/folder-open';
   import SearchX from '@lucide/svelte/icons/search-x';
+  import ChevronUp from '@lucide/svelte/icons/chevron-up';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
   import type { TreeNode } from '$lib/types/tree-grid';
+  import * as Dialog from '$lib/components/ui/dialog';
+  import { Button } from '$lib/components/ui/button';
+  import { toast } from 'svelte-sonner';
 
   let { data }: { data: PageData } = $props();
 
   // URL-based state for expanded items (enables deep-linking)
   let expandedProjectId = $derived($page.url.searchParams.get('project') || null);
   let expandedEpicId = $derived($page.url.searchParams.get('epic') || null);
+  let openIssueId = $derived($page.url.searchParams.get('issue') || null);
 
   // Build expandedIds set from URL params
   let expandedIds = $derived.by(() => {
     const ids = new Set<string>();
     if (expandedProjectId) ids.add(expandedProjectId);
     if (expandedEpicId) ids.add(expandedEpicId);
-    // TODO: Add issue expansion from URL if needed
     return ids;
   });
 
   // Component-local state
   let selectedIds = $state<Set<string>>(new Set());
-  let editMode = $state(false);
 
   // Project detail sheet state (handles both create and edit)
   let projectDetailSheetOpen = $state(false);
@@ -69,16 +82,17 @@
   let selectedEpicCounts: IssueCounts | null = $state(null);
   let selectedEpicIssues: Issue[] = $state([]);
 
+  // Bulk delete dialog state
+  let bulkDeleteDialogOpen = $state(false);
+
   // Context menu state
   let contextMenuOpen = $state(false);
   let contextMenuNode = $state<TreeNode | null>(null);
   let contextMenuX = $state(0);
   let contextMenuY = $state(0);
 
-  // Feedback state
-  let feedbackMessage = $state('');
-  let feedbackType: 'success' | 'error' = $state('success');
-  let showFeedback = $state(false);
+  // Inline rename state
+  let editingNodeId = $state<string | null>(null);
 
   // Filter panel state
   let filterPanelOpen = $state(false);
@@ -115,6 +129,45 @@
     }
   });
 
+  // Auto-open IssueSheet when ?issue=<id> is present in URL (deep-link support)
+  $effect(() => {
+    if (!openIssueId) return;
+    const allIssues = data.projects.flatMap((p) => p.epics?.flatMap((e) => e.issues || []) || []);
+    const issue = allIssues.find((i) => i.id === openIssueId);
+    if (issue && !untrack(() => $isIssueSheetOpen)) {
+      openIssueSheet({
+        ...issue,
+        blocked_by: issue.blocked_by || [],
+        blocking: issue.blocking || [],
+      });
+    }
+  });
+
+  // Clear ?issue= param when IssueSheet closes
+  $effect(() => {
+    if (!$isIssueSheetOpen && openIssueId) {
+      const url = new URL($page.url);
+      url.searchParams.delete('issue');
+      goto(url, { replaceState: true, noScroll: true });
+    }
+  });
+
+  // Sync selectedIssue with fresh data after invalidateAll (e.g. after adding a dependency)
+  $effect(() => {
+    const projects = data.projects;
+    const currentIssue = untrack(() => $selectedIssue);
+    const sheetOpen = untrack(() => $isIssueSheetOpen);
+
+    if (currentIssue && sheetOpen) {
+      const freshIssue = projects
+        .flatMap((p) => p.epics?.flatMap((e) => e.issues || []) || [])
+        .find((i) => i.id === currentIssue.id);
+      if (freshIssue) {
+        selectedIssue.set(freshIssue);
+      }
+    }
+  });
+
   function toggleExpand(id: string) {
     const url = new URL($page.url);
 
@@ -146,8 +199,10 @@
         }
         url.searchParams.set('epic', id);
       }
+    } else {
+      // Issues are leaf nodes - opening is handled via handleIssueClick
+      return;
     }
-    // TODO: Handle issue expansion if needed
 
     goto(url, { replaceState: true, noScroll: true });
   }
@@ -162,18 +217,8 @@
     selectedIds = newSelected;
   }
 
-  function handleEditModeChange(enabled: boolean) {
-    editMode = enabled;
-  }
-
   async function handleCellEdit(nodeId: string, field: string, value: any) {
-    // Determine node type
-    let nodeType = 'issue'; // default
-    if (data.projects.some((p) => p.id === nodeId)) {
-      nodeType = 'project';
-    } else if (data.projects.some((p) => p.epics?.some((e: Epic) => e.id === nodeId))) {
-      nodeType = 'epic';
-    }
+    const nodeType = resolveNodeType(nodeId);
 
     // Submit form
     const formData = new FormData();
@@ -190,13 +235,13 @@
 
       if (response.ok) {
         await invalidateAll();
-        showToast('Updated successfully', 'success');
+        toast.success('Updated successfully');
       } else {
-        showToast('Failed to update', 'error');
+        toast.error('Failed to update');
       }
     } catch (error) {
       console.error('Cell edit error:', error);
-      showToast('Failed to update', 'error');
+      toast.error('Failed to update');
     }
   }
 
@@ -222,19 +267,19 @@
 
         if (response.ok) {
           await invalidateAll();
-          showToast('Epic created', 'success');
+          toast.success('Epic created');
         } else {
-          showToast('Failed to create epic', 'error');
+          toast.error('Failed to create epic');
         }
       } catch (error) {
         console.error('Create epic error:', error);
-        showToast('Failed to create epic', 'error');
+        toast.error('Failed to create epic');
       }
     } else if (parentType === 'epic') {
       // Creating issue - need to find project ID
       const project = data.projects.find((p) => p.epics?.some((e: Epic) => e.id === parentId));
       if (!project) {
-        showToast('Project not found', 'error');
+        toast.error('Project not found');
         return;
       }
 
@@ -247,62 +292,112 @@
           body: formData,
         });
 
-        if (response.ok) {
+        const result = deserialize(await response.text());
+
+        if (result.type === 'success') {
+          const newIssue = (result.data as any).issue;
           await invalidateAll();
-          showToast('Issue created', 'success');
+          openIssueSheet({ ...newIssue, blocked_by: [], blocking: [] });
+          toast.success('Issue created');
         } else {
-          showToast('Failed to create issue', 'error');
+          toast.error('Failed to create issue');
         }
       } catch (error) {
         console.error('Create issue error:', error);
-        showToast('Failed to create issue', 'error');
-      }
-    } else if (parentType === 'issue') {
-      // Creating sub-issue - need to find epic and project IDs
-      let epicId = '';
-      let projectId = '';
-
-      for (const project of data.projects) {
-        const issue = project.epics?.flatMap((e) => e.issues || []).find((i) => i.id === parentId);
-        if (issue) {
-          epicId = issue.epic_id;
-          projectId = project.id;
-          break;
-        }
-      }
-
-      if (!epicId || !projectId) {
-        showToast('Epic or project not found', 'error');
-        return;
-      }
-
-      formData.append('parentIssueId', parentId);
-      formData.append('epicId', epicId);
-      formData.append('projectId', projectId);
-
-      try {
-        const response = await fetch('?/createSubIssue', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (response.ok) {
-          await invalidateAll();
-          showToast('Sub-issue created', 'success');
-        } else {
-          showToast('Failed to create sub-issue', 'error');
-        }
-      } catch (error) {
-        console.error('Create sub-issue error:', error);
-        showToast('Failed to create sub-issue', 'error');
+        toast.error('Failed to create issue');
       }
     }
   }
 
+  function resolveNodeType(id: string): 'project' | 'epic' | 'issue' {
+    if (data.projects.some((p) => p.id === id)) return 'project';
+    if (data.projects.some((p) => p.epics?.some((e: Epic) => e.id === id))) return 'epic';
+    return 'issue';
+  }
+
   function handleBulkAction(action: string) {
     if (action === 'delete') {
-      // TODO: Implement bulk delete with confirmation
-      console.log('Bulk delete:', selectedIds);
+      bulkDeleteDialogOpen = true;
+    }
+  }
+
+  async function handleBulkEdit(field: string, value: string) {
+    const issueStatuses = VALID_ISSUE_STATUSES as readonly string[];
+    const epicStatuses = VALID_EPIC_STATUSES as readonly string[];
+    const projectStatuses = VALID_PROJECT_STATUSES as readonly string[];
+
+    const eligible = Array.from(selectedIds)
+      .map((id) => ({ id, type: resolveNodeType(id) }))
+      .filter(({ type }) => {
+        if (field === 'status') {
+          return type === 'issue'
+            ? issueStatuses.includes(value)
+            : type === 'epic'
+              ? epicStatuses.includes(value)
+              : projectStatuses.includes(value);
+        }
+        // priority, story_points, milestone_id only apply to issues
+        return type === 'issue';
+      });
+
+    if (eligible.length === 0) {
+      toast.error('No compatible items to update');
+      return;
+    }
+
+    const fetches = eligible.map(({ id, type }) => {
+      const formData = new FormData();
+      formData.append('nodeId', id);
+      formData.append('nodeType', type);
+      formData.append('field', field);
+      formData.append('value', value);
+      return fetch('?/updateCell', { method: 'POST', body: formData });
+    });
+
+    try {
+      const results = await Promise.all(fetches);
+      const failed = results.filter((r) => !r.ok).length;
+      const skipped = selectedIds.size - eligible.length;
+      selectedIds = new Set();
+      await invalidateAll();
+      const skippedMsg = skipped > 0 ? `, ${skipped} skipped` : '';
+      if (failed > 0) {
+        toast.error(`${failed} item(s) failed to update`);
+      } else {
+        toast.success(`${eligible.length} updated${skippedMsg}`);
+      }
+    } catch {
+      toast.error('Failed to update');
+    }
+  }
+
+  async function confirmBulkDelete() {
+    bulkDeleteDialogOpen = false;
+    const actionMap: Record<string, string> = {
+      project: '?/deleteProject',
+      epic: '?/deleteEpic',
+      issue: '?/deleteIssue',
+    };
+
+    const deletes = Array.from(selectedIds).map((id) => {
+      const type = resolveNodeType(id);
+      const formData = new FormData();
+      formData.append('id', id);
+      return fetch(actionMap[type], { method: 'POST', body: formData });
+    });
+
+    try {
+      const results = await Promise.all(deletes);
+      const failed = results.filter((r) => !r.ok).length;
+      selectedIds = new Set();
+      await invalidateAll();
+      if (failed > 0) {
+        toast.error(`${failed} item(s) failed to delete`);
+      } else {
+        toast.success(`${deletes.length} item(s) deleted`);
+      }
+    } catch {
+      toast.error('Failed to delete items');
     }
   }
 
@@ -389,31 +484,17 @@
       const response = await fetch('?/updateEpic', { method: 'POST', body: formData });
       if (response.ok) {
         await invalidateAll();
-        showToast('Milestone updated', 'success');
+        toast.success('Milestone updated');
       } else {
-        showToast('Failed to update milestone', 'error');
+        toast.error('Failed to update milestone');
       }
     } catch {
-      showToast('Failed to update milestone', 'error');
+      toast.error('Failed to update milestone');
     }
   }
 
   function handleContextRename(node: TreeNode) {
-    if (node.type === 'project') {
-      projectDetailSheetMode = 'edit';
-      selectedProjectForDetail = node.data as Project;
-      // Would need to fetch counts/metrics/epics, but for rename we can use null
-      selectedProjectCounts = null;
-      selectedProjectMetrics = null;
-      selectedProjectEpics = [];
-      projectDetailSheetOpen = true;
-    } else if (node.type === 'epic') {
-      epicDetailSheetMode = 'edit';
-      selectedEpicForDetail = node.data as Epic;
-      selectedEpicCounts = null;
-      selectedEpicIssues = (node.data as Epic).issues ?? [];
-      epicDetailSheetOpen = true;
-    }
+    editingNodeId = node.id;
   }
 
   function handleContextAddChild(node: TreeNode) {
@@ -443,12 +524,12 @@
       const response = await fetch('?/archiveProject', { method: 'POST', body: formData });
       if (response.ok) {
         await invalidateAll();
-        showToast('Project archived', 'success');
+        toast.success('Project archived');
       } else {
-        showToast('Failed to archive project', 'error');
+        toast.error('Failed to archive project');
       }
     } catch {
-      showToast('Failed to archive project', 'error');
+      toast.error('Failed to archive project');
     }
   }
 
@@ -468,22 +549,24 @@
       const response = await fetch(action, { method: 'POST', body: formData });
       if (response.ok) {
         await invalidateAll();
-        showToast(`${node.type} deleted`, 'success');
+        toast.success(`${node.type} deleted`);
       } else {
-        showToast(`Failed to delete ${node.type}`, 'error');
+        toast.error(`Failed to delete ${node.type}`);
       }
     } catch {
-      showToast(`Failed to delete ${node.type}`, 'error');
+      toast.error(`Failed to delete ${node.type}`);
     }
   }
 
-  function showToast(message: string, type: 'success' | 'error') {
-    feedbackMessage = message;
-    feedbackType = type;
-    showFeedback = true;
-    setTimeout(() => {
-      showFeedback = false;
-    }, 3000);
+  function handleIssueClick(issue: Issue) {
+    const url = new URL($page.url);
+    url.searchParams.set('issue', issue.id);
+    goto(url, { replaceState: true, noScroll: true });
+    openIssueSheet({
+      ...issue,
+      blocked_by: issue.blocked_by || [],
+      blocking: issue.blocking || [],
+    });
   }
 
   // Handle form responses with feedback notifications
@@ -501,9 +584,9 @@
         updateCell: 'Updated',
       };
       const message = messages[form.action as keyof typeof messages] || 'Success';
-      showToast(message, 'success');
+      toast.success(message);
     } else if (form?.error) {
-      showToast(form.error, 'error');
+      toast.error(form.error);
     }
   });
 </script>
@@ -511,7 +594,7 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Projects</h1>
-    <div class="flex gap-2 items-center">
+    <div class="flex gap-2 items-center flex-wrap justify-end">
       <!-- Grouping Selector -->
       <IssueGroupBySelector selectedGroupBy={data.filterParams.groupBy} />
 
@@ -524,19 +607,32 @@
       <!-- Filters Button -->
       <button
         onclick={toggleFilterPanel}
-        class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-surface-subtle hover:text-foreground"
+        aria-expanded={filterPanelOpen}
+        aria-controls="filter-panel"
+        aria-label="Filters"
+        class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-surface-subtle hover:text-foreground"
       >
-        Filters
+        <SlidersHorizontal class="h-4 w-4 shrink-0" />
+        <span class="hidden md:inline">Filters</span>
         {#if activeFilterCount > 0}
           <span class="rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs">
             {activeFilterCount}
           </span>
         {/if}
-        <span class="text-muted-foreground">{filterPanelOpen ? '▲' : '▼'}</span>
+        <span class="hidden md:inline">
+          {#if filterPanelOpen}
+            <ChevronUp class="h-4 w-4 text-muted-foreground" />
+          {:else}
+            <ChevronDown class="h-4 w-4 text-muted-foreground" />
+          {/if}
+        </span>
       </button>
       <NewButtonDropdown />
     </div>
   </div>
+
+  <!-- Active Filter Chips (always visible when filters are active) -->
+  <ActiveFilterChips filterParams={data.filterParams} />
 
   <!-- Filter Panel -->
   <FilterPanel filterParams={data.filterParams} open={filterPanelOpen} />
@@ -564,8 +660,8 @@
     {:else}
       <EmptyState
         icon={FolderOpen}
-        title="No projects yet"
-        description="Projects organize your work into epics and issues"
+        title="No projects yet."
+        description="Create a project to start organizing your work."
         ctaLabel="New Project"
         onCtaClick={() => projectSheetOpen.set(true)}
       />
@@ -576,19 +672,21 @@
       projects={data.projects}
       {expandedIds}
       {selectedIds}
-      {editMode}
       groupBy={data.filterParams.groupBy}
       onToggleExpand={toggleExpand}
       onToggleSelect={toggleSelect}
-      onEditModeChange={handleEditModeChange}
       onCellEdit={handleCellEdit}
       onCreateChild={handleCreateChild}
       onBulkAction={handleBulkAction}
-      onShowToast={showToast}
-      onIssueClick={openIssueSheet}
+      onBulkEdit={handleBulkEdit}
+      milestones={data.milestones ?? []}
+      onIssueClick={handleIssueClick}
       onProjectClick={handleProjectDoubleClick}
       onEpicClick={handleEpicDoubleClick}
       onContextMenu={handleContextMenu}
+      onAddChildRow={handleContextAddChild}
+      {editingNodeId}
+      onStopEditNode={() => (editingNodeId = null)}
     />
   {/if}
 </div>
@@ -612,7 +710,9 @@
   mode={epicDetailSheetMode}
   epic={selectedEpicForDetail}
   projectId={epicCreateProjectId ?? undefined}
-  projectName={data.projects.find((p) => p.id === epicCreateProjectId)?.name}
+  projectName={data.projects.find(
+    (p) => p.id === (epicCreateProjectId ?? selectedEpicForDetail?.project_id),
+  )?.name}
   counts={selectedEpicCounts}
   issues={selectedEpicIssues}
   userId={data.session?.user?.id ?? ''}
@@ -649,16 +749,21 @@
   onMilestoneChange={handleContextMilestoneChange}
 />
 
-<!-- Simple toast-style feedback -->
-{#if showFeedback}
-  <div
-    role={feedbackType === 'success' ? 'status' : 'alert'}
-    aria-live={feedbackType === 'success' ? 'polite' : 'assertive'}
-    class="fixed bottom-4 right-4 px-4 py-3 rounded-md shadow-lg transition-opacity z-50 {feedbackType ===
-    'success'
-      ? 'bg-primary text-white'
-      : 'bg-destructive text-white'}"
-  >
-    {feedbackMessage}
-  </div>
-{/if}
+<!-- Bulk delete confirmation dialog -->
+<Dialog.Root bind:open={bulkDeleteDialogOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Delete {selectedIds.size} item{selectedIds.size === 1 ? '' : 's'}?</Dialog.Title
+      >
+      <Dialog.Description>
+        This will permanently delete the selected items. This action cannot be undone.
+      </Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Button variant="outline" onclick={() => (bulkDeleteDialogOpen = false)}>Cancel</Button>
+      <Button variant="destructive" onclick={confirmBulkDelete}>
+        Delete {selectedIds.size} item{selectedIds.size === 1 ? '' : 's'}
+      </Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>

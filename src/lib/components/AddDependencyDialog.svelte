@@ -121,7 +121,9 @@
 
     <!-- Search Input -->
     <div class="mb-3">
+      <label for="dep-search" class="sr-only">Search issues</label>
       <Input
+        id="dep-search"
         value={searchTerm}
         oninput={(e: Event) => (searchTerm = (e.target as HTMLInputElement).value)}
         placeholder="Search issues..."

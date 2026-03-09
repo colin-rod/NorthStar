@@ -129,7 +129,8 @@ describe('ProjectDetailSheet create-to-edit transition', () => {
     // Wait for transition
     await waitFor(() => {
       expect(screen.queryByText('Create Project')).not.toBeInTheDocument();
-      expect(screen.getByText('P-7 · Project')).toBeInTheDocument();
+      expect(screen.getByText('P-7')).toBeInTheDocument();
+      expect(screen.getByText('New Project')).toBeInTheDocument();
     });
 
     expect(toastSuccessMock).toHaveBeenCalledWith('Project created', expect.any(Object));

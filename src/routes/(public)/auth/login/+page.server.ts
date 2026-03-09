@@ -2,6 +2,8 @@ import { fail, redirect } from '@sveltejs/kit';
 
 import type { Actions } from './$types';
 
+import { env } from '$env/dynamic/private';
+
 export const actions: Actions = {
   login: async ({ request, locals: { supabase } }) => {
     const formData = await request.formData();
@@ -29,6 +31,7 @@ export const actions: Actions = {
   },
 
   signup: async ({ request, locals: { supabase }, url }) => {
+    const trustedOrigin = env.ORIGIN ?? url.origin;
     const formData = await request.formData();
     const email = formData.get('email')?.toString();
     const password = formData.get('password')?.toString();
@@ -50,7 +53,7 @@ export const actions: Actions = {
       email,
       password,
       options: {
-        emailRedirectTo: `${url.origin}/auth/confirm`,
+        emailRedirectTo: `${trustedOrigin}/auth/confirm`,
       },
     });
 
@@ -65,6 +68,7 @@ export const actions: Actions = {
   },
 
   magiclink: async ({ request, locals: { supabase }, url }) => {
+    const trustedOrigin = env.ORIGIN ?? url.origin;
     const formData = await request.formData();
     const email = formData.get('email')?.toString();
 
@@ -75,7 +79,7 @@ export const actions: Actions = {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${url.origin}/auth/confirm`,
+        emailRedirectTo: `${trustedOrigin}/auth/confirm`,
       },
     });
 

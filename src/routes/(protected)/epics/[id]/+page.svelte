@@ -27,12 +27,12 @@
     openIssueSheet,
     openCreateIssueSheet,
   } from '$lib/stores/issues';
-  import { isBlocked } from '$lib/utils/issue-helpers';
+  import { bucketIssues } from '$lib/utils/bucket-issues';
   import { calculateNewSortOrders, moveIssueUp, moveIssueDown } from '$lib/utils/reorder';
   import { dndzone } from 'svelte-dnd-action';
   import type { Issue } from '$lib/types';
-  import { dismissReorderHint } from '$lib/stores/ui-hints';
   import EmptyState from '$lib/components/EmptyState.svelte';
+  import { toast } from 'svelte-sonner';
   import Inbox from '@lucide/svelte/icons/inbox';
   import ListTodo from '@lucide/svelte/icons/list-todo';
   import PartyPopper from '@lucide/svelte/icons/party-popper';
@@ -51,13 +51,15 @@
 
   // Issue filtering
   let allIssues = $derived(data.issues || []);
-  let readyIssues = $derived(allIssues.filter((i) => i.status === 'todo' && !isBlocked(i)));
   let totalTodoCount = $derived(allIssues.filter((i) => i.status === 'todo').length);
-  let doingIssues = $derived(allIssues.filter((i) => i.status === 'in_progress'));
-  let inReviewIssues = $derived(allIssues.filter((i) => i.status === 'in_review'));
-  let blockedIssues = $derived(allIssues.filter((i) => isBlocked(i)));
-  let doneIssues = $derived(allIssues.filter((i) => i.status === 'done'));
-  let canceledIssues = $derived(allIssues.filter((i) => i.status === 'canceled'));
+  let {
+    todoIssues: readyIssues,
+    doingIssues,
+    inReviewIssues,
+    blockedIssues,
+    doneIssues,
+    canceledIssues,
+  } = $derived(bucketIssues(allIssues));
 
   // Get filtered issues based on active tab
   let filteredIssues = $derived.by(() => {
@@ -91,11 +93,9 @@
   let showInlineForm = $state(false);
 
   // Drag-and-drop state
-  let dragDisabled = $state(true);
   let isReordering = $state(false);
 
   async function handleDndConsider(e: CustomEvent) {
-    dismissReorderHint();
     visibleIssues = e.detail.items;
   }
 
@@ -126,11 +126,11 @@
 
       if (!response.ok) {
         console.error('Reorder failed:', response);
-        showToast('Failed to reorder issues', 'error');
+        toast.error('Failed to reorder issues');
       }
     } catch (error) {
       console.error('Reorder error:', error);
-      showToast('Failed to reorder issues', 'error');
+      toast.error('Failed to reorder issues');
     } finally {
       isReordering = false;
     }
@@ -172,20 +172,6 @@
     }
   }
 
-  // Success feedback
-  let feedbackMessage = $state('');
-  let feedbackType: 'success' | 'error' = $state('success');
-  let showFeedback = $state(false);
-
-  function showToast(message: string, type: 'success' | 'error') {
-    feedbackMessage = message;
-    feedbackType = type;
-    showFeedback = true;
-    setTimeout(() => {
-      showFeedback = false;
-    }, 3000);
-  }
-
   $effect(() => {
     const form = $page.form;
     if (form?.success) {
@@ -194,9 +180,9 @@
         reorderIssues: 'Issues reordered',
       };
       const message = messages[form.action as keyof typeof messages] || 'Success';
-      showToast(message, 'success');
+      toast.success(message);
     } else if (form?.error) {
-      showToast(form.error, 'error');
+      toast.error(form.error);
     }
   });
 
@@ -280,8 +266,8 @@
           {#if filter === 'all' && allIssues.length === 0}
             <EmptyState
               icon={ListTodo}
-              title="No issues in this epic"
-              description="Add an issue to start tracking work"
+              title="Nothing here yet."
+              description="Add an issue to start tracking work."
               ctaLabel="New Issue"
               onCtaClick={() => (showInlineForm = true)}
             />
@@ -316,7 +302,7 @@
             class="border rounded-lg divide-y"
             use:dndzone={{
               items: visibleIssues,
-              dragDisabled,
+              dragDisabled: true,
               flipDurationMs: 200,
               type: 'issues',
             }}
@@ -326,13 +312,11 @@
             {#each visibleIssues as issue, index (issue.id)}
               <IssueRow
                 {issue}
-                bind:dragDisabled
                 onClick={() => openIssueSheet(issue)}
                 onMoveUp={index > 0 ? () => handleMoveUp(issue.id) : null}
                 onMoveDown={index < visibleIssues.length - 1
                   ? () => handleMoveDown(issue.id)
                   : null}
-                showReorderHint={index === 0}
               />
             {/each}
           </div>
@@ -363,14 +347,3 @@
   projects={[{ id: data.epic?.project_id || '', name: data.epic?.project?.name || '' }]}
   userId={data.session?.user?.id ?? ''}
 />
-
-<!-- Toast Feedback -->
-{#if showFeedback}
-  <div
-    class="fixed bottom-4 right-4 px-4 py-3 rounded-md shadow-lg {feedbackType === 'success'
-      ? 'bg-primary text-white'
-      : 'bg-destructive text-white'}"
-  >
-    {feedbackMessage}
-  </div>
-{/if}

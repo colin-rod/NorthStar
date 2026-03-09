@@ -6,6 +6,8 @@
  * across the application.
  */
 
+import { VALID_STORY_POINTS } from '$lib/constants/validation';
+
 /**
  * Status Colors
  * Maps issue status to corresponding status color classes
@@ -143,7 +145,7 @@ export const borderRadius = {
  */
 export const typography = {
   pageTitle: 'text-page-title font-accent',
-  sectionHeader: 'text-section-header font-ui',
+  sectionHeader: 'text-section-header font-accent',
   issueTitle: 'text-issue-title font-ui',
   body: 'text-body font-ui',
   metadata: 'text-metadata',
@@ -169,28 +171,10 @@ export const shadows = {
 } as const;
 
 /**
- * Check if an issue is blocked
- * TODO: Implement actual dependency checking logic
- */
-export function isIssueBlocked(_issue: { dependencies?: unknown[] }): boolean {
-  // Placeholder implementation
-  // Real implementation should check if any dependency has status NOT in ['done', 'canceled']
-  return false;
-}
-
-/**
- * Check if an issue is ready
- * Ready = status 'todo' AND not blocked
- */
-export function isIssueReady(issue: { status: string; dependencies?: unknown[] }): boolean {
-  return issue.status === 'todo' && !isIssueBlocked(issue);
-}
-
-/**
  * Story Points
  * Valid story point values per North/CLAUDE.md spec
  */
-export const validStoryPoints = [1, 2, 3, 5, 8, 13, 21] as const;
+export const validStoryPoints = VALID_STORY_POINTS;
 export type StoryPoints = (typeof validStoryPoints)[number];
 
 /**

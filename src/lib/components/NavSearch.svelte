@@ -1,142 +1,176 @@
 <script lang="ts">
-  import { Search, X } from '@lucide/svelte';
-  import IssueRow from '$lib/components/IssueRow.svelte';
+  import * as Command from '$lib/components/ui/command';
   import IssueSheet from '$lib/components/IssueSheet.svelte';
+  import PriorityBadge from '$lib/components/PriorityBadge.svelte';
+  import { Search } from '@lucide/svelte';
   import {
     openIssueSheet,
     selectedIssue,
     isIssueSheetOpen,
     navSearchOpen,
   } from '$lib/stores/issues';
+  import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
   import type { Issue, Epic, Milestone } from '$lib/types';
 
-  let open = $derived($navSearchOpen);
+  let open = $state(false);
   let query = $state('');
   let loading = $state(false);
-  let allIssues = $state<Issue[]>([]);
+  let displayedIssues = $state<Issue[]>([]);
   let epics = $state<Epic[]>([]);
   let milestones = $state<Milestone[]>([]);
-  let inputEl = $state<HTMLInputElement | null>(null);
-  let containerEl = $state<HTMLDivElement | null>(null);
+  let epicsLoaded = false;
 
-  let filteredIssues = $derived(
-    query.trim()
-      ? allIssues.filter((issue) => {
-          const q = query.toLowerCase();
-          return (
-            issue.title.toLowerCase().includes(q) ||
-            issue.project?.name?.toLowerCase().includes(q) ||
-            issue.epic?.name?.toLowerCase().includes(q)
-          );
-        })
-      : [],
-  );
+  let abortController: AbortController | null = null;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  async function openSearch() {
-    navSearchOpen.set(true);
-    // Fetch data once
-    if (allIssues.length === 0 && !loading) {
-      loading = true;
-      try {
-        const res = await fetch('/api/search');
-        if (res.ok) {
-          const data = await res.json();
-          allIssues = data.issues ?? [];
+  // Keep local open state in sync with the store (BottomNav sets the store directly)
+  $effect(() => {
+    if ($navSearchOpen && !open) {
+      openSearch();
+    }
+  });
+
+  // Debounce query changes and fetch from server
+  $effect(() => {
+    const q = query;
+    if (!open) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      fetchResults(q);
+    }, 300);
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  });
+
+  async function fetchResults(q: string) {
+    abortController?.abort();
+    const controller = new AbortController();
+    abortController = controller;
+    loading = true;
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
+        signal: controller.signal,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        displayedIssues = data.issues ?? [];
+        if (!epicsLoaded) {
           epics = data.epics ?? [];
           milestones = data.milestones ?? [];
+          epicsLoaded = true;
         }
-      } finally {
-        loading = false;
       }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') console.error('Search error:', err);
+    } finally {
+      if (abortController === controller) loading = false;
     }
-    // Focus input after tick
-    setTimeout(() => inputEl?.focus(), 50);
+  }
+
+  function openSearch() {
+    open = true;
+    navSearchOpen.set(true);
+    fetchResults('');
   }
 
   function closeSearch() {
+    open = false;
     navSearchOpen.set(false);
     query = '';
+    epicsLoaded = false;
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+    abortController?.abort();
+    abortController = null;
   }
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      closeSearch();
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+      e.preventDefault();
+      openSearch();
     }
   }
 
-  function handleResultClick(issue: Issue) {
+  function handleSelect(issue: Issue) {
     openIssueSheet(issue);
     closeSearch();
   }
-
-  function handleClickOutside(e: MouseEvent) {
-    if (open && containerEl && !containerEl.contains(e.target as Node)) {
-      closeSearch();
-    }
-  }
 </script>
 
-<svelte:window onkeydown={handleKeydown} onclick={handleClickOutside} />
+<svelte:window onkeydown={handleGlobalKeydown} />
 
-<div bind:this={containerEl} class="relative">
-  {#if !open}
-    <!-- Collapsed: icon + label -->
-    <button
-      onclick={openSearch}
-      aria-label="Search"
-      class="inline-flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors"
-    >
-      <Search class="w-5 h-5" />
-      <span class="text-body hidden sm:inline">Search</span>
-    </button>
-  {:else}
-    <!-- Expanded: input field -->
-    <div class="flex items-center gap-2">
-      <Search class="w-4 h-4 text-foreground-muted shrink-0" />
-      <input
-        bind:this={inputEl}
-        bind:value={query}
-        type="search"
-        placeholder="Search issues, projects, epics..."
-        class="w-36 sm:w-48 md:w-64 bg-transparent border-b border-border-divider focus:border-primary outline-none text-body text-foreground placeholder:text-foreground-muted pb-0.5 transition-all"
-        aria-label="Search issues"
-        autocomplete="off"
-      />
-      <button
-        onclick={closeSearch}
-        aria-label="Close search"
-        class="text-foreground-muted hover:text-foreground transition-colors"
+<!-- Search trigger button -->
+<button
+  onclick={openSearch}
+  aria-label="Search (⌘K)"
+  class="inline-flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors"
+>
+  <Search class="w-5 h-5" />
+  <span class="text-body hidden sm:inline">Search</span>
+  <kbd
+    class="hidden sm:inline-flex items-center gap-0.5 rounded border border-border-divider px-1.5 py-0.5 text-xs text-foreground-muted font-sans"
+    aria-hidden="true">⌘K</kbd
+  >
+</button>
+
+<!-- Command palette modal -->
+<Command.Dialog
+  bind:open
+  title="Search"
+  description="Search issues, projects, and epics"
+  onOpenChange={(v) => {
+    if (!v) closeSearch();
+  }}
+>
+  <Command.Input bind:value={query} placeholder="Search issues, projects, epics..." />
+  <Command.List>
+    {#if loading}
+      <Command.Loading>Loading…</Command.Loading>
+    {:else}
+      <Command.Empty>No issues found</Command.Empty>
+      <Command.Group
+        heading={query.trim()
+          ? `${displayedIssues.length} result${displayedIssues.length === 1 ? '' : 's'}`
+          : 'Recent issues'}
       >
-        <X class="w-4 h-4" />
-      </button>
-    </div>
-  {/if}
+        {#each displayedIssues as issue (issue.id)}
+          <Command.Item
+            value={issue.id}
+            onSelect={() => handleSelect(issue)}
+            class="flex items-center gap-3 py-2"
+          >
+            <!-- Status dot -->
+            <div
+              class="w-2 h-2 rounded-full shrink-0 {getStatusDotClass(issue.status)}"
+              aria-hidden="true"
+            ></div>
 
-  <!-- Dropdown results -->
-  {#if open && query.trim().length > 0}
-    <div
-      class="absolute right-0 top-full mt-2 w-[480px] max-w-[90vw] bg-surface border border-border-divider rounded-lg shadow-lg z-50 overflow-hidden"
-    >
-      {#if loading}
-        <div class="px-4 py-6 text-center text-foreground-muted text-body">Loading...</div>
-      {:else if filteredIssues.length === 0}
-        <div class="px-4 py-6 text-center text-foreground-muted text-body">
-          No issues match your search
-        </div>
-      {:else}
-        <div class="max-h-96 overflow-y-auto">
-          <p class="px-4 py-2 text-metadata text-foreground-muted border-b border-border-divider">
-            {filteredIssues.length}
-            {filteredIssues.length === 1 ? 'issue' : 'issues'} found
-          </p>
-          {#each filteredIssues as issue (issue.id)}
-            <IssueRow {issue} onClick={() => handleResultClick(issue)} dragDisabled={true} />
-          {/each}
-        </div>
-      {/if}
-    </div>
-  {/if}
-</div>
+            <!-- Priority -->
+            <PriorityBadge priority={issue.priority} />
+
+            <!-- Title + metadata -->
+            <div class="flex-1 min-w-0">
+              <span class="truncate block text-sm">{issue.title}</span>
+              <span class="truncate block text-xs text-muted-foreground">
+                {issue.project?.name} / {issue.epic?.name}
+              </span>
+            </div>
+
+            <!-- Status label -->
+            <span class="text-xs text-muted-foreground shrink-0 hidden sm:block">
+              {formatStatus(issue.status)}
+            </span>
+          </Command.Item>
+        {/each}
+      </Command.Group>
+    {/if}
+  </Command.List>
+</Command.Dialog>
 
 <!-- IssueSheet for editing from search results -->
 <IssueSheet
@@ -144,5 +178,5 @@
   bind:issue={$selectedIssue}
   {epics}
   {milestones}
-  projectIssues={allIssues}
+  projectIssues={displayedIssues}
 />

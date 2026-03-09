@@ -160,7 +160,8 @@
     <div class="flex items-center gap-2">
       <button
         type="button"
-        title={viewMode === 'sectioned' ? 'Switch to flat list' : 'Switch to focus view'}
+        title={viewMode === 'sectioned' ? 'View all issues' : 'View by status'}
+        aria-label={viewMode === 'sectioned' ? 'View all issues' : 'View by status'}
         onclick={() =>
           goto(viewMode === 'sectioned' ? '?view=all' : '/', {
             replaceState: false,
@@ -216,16 +217,16 @@
       {#if hasProjects}
         <EmptyState
           icon={Inbox}
-          title="No issues yet"
-          description="Add your first issue to start tracking work"
+          title="Your slate is clear."
+          description="Add your first issue to get started."
           ctaLabel="New Issue"
           onCtaClick={openCreateIssueSheet}
         />
       {:else}
         <EmptyState
           icon={Inbox}
-          title="No issues yet"
-          description="Create a project to start tracking your work"
+          title="Your slate is clear."
+          description="Start by creating a project."
           ctaLabel="New Project"
           onCtaClick={() => projectSheetOpen.set(true)}
         />
@@ -246,16 +247,16 @@
       {:else if hasProjects}
         <EmptyState
           icon={Inbox}
-          title="No issues yet"
-          description="Add your first issue to start tracking work"
+          title="Your slate is clear."
+          description="Add your first issue to get started."
           ctaLabel="New Issue"
           onCtaClick={openCreateIssueSheet}
         />
       {:else}
         <EmptyState
           icon={Inbox}
-          title="No issues yet"
-          description="Create a project to start tracking your work"
+          title="Your slate is clear."
+          description="Start by creating a project."
           ctaLabel="New Project"
           onCtaClick={() => projectSheetOpen.set(true)}
         />

@@ -1,17 +1,32 @@
 <script lang="ts">
-  import type { Epic, Attachment, Milestone, Issue, IssueStatus, EpicStatus } from '$lib/types';
+  import type {
+    Epic,
+    Attachment,
+    Link,
+    Milestone,
+    Issue,
+    IssueStatus,
+    EpicStatus,
+  } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import { computeProgress } from '$lib/utils/issue-counts';
+  import { copyDeepLink } from '$lib/utils/url-helpers';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
   import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
+  import CheckIcon from '@lucide/svelte/icons/check';
+  import Link2Icon from '@lucide/svelte/icons/link-2';
+  import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
+  import LoaderIcon from '@lucide/svelte/icons/loader';
+  import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import LinkList from '$lib/components/LinkList.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import IssueCountsBadges from '$lib/components/IssueCountsBadges.svelte';
   import LoadingOverlay from '$lib/components/LoadingOverlay.svelte';
@@ -58,6 +73,7 @@
   let localDescription = $state<string | null>(null);
   let localMilestoneId = $state<string | null>(null);
   let attachments = $state<Attachment[]>([]);
+  let links = $state<Link[]>([]);
   let createLoading = $state(false);
   let sheetContentRef = $state<HTMLElement | null>(null);
   let lastPersistedDescriptionNormalized = $state('');
@@ -68,6 +84,15 @@
 
   // Expand to center peek mode (desktop only)
   let expanded = $state(false);
+
+  // Copy link feedback
+  let copied = $state(false);
+  async function handleCopyLink() {
+    if (!effectiveEpic || !projectId) return;
+    await copyDeepLink({ projectId, epicId: effectiveEpic.id });
+    copied = true;
+    setTimeout(() => (copied = false), 1500);
+  }
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
@@ -92,7 +117,7 @@
       lastPersistedDescriptionNormalized = normalizeDescription(effectiveEpic.description);
       saveState = 'idle';
 
-      // Load attachments for this epic
+      // Load attachments and links for this epic
       supabase
         .from('attachments')
         .select('*')
@@ -101,6 +126,15 @@
         .order('created_at', { ascending: true })
         .then(({ data }) => {
           attachments = data ?? [];
+        });
+      supabase
+        .from('links')
+        .select('*')
+        .eq('entity_type', 'epic')
+        .eq('entity_id', effectiveEpic.id)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          links = data ?? [];
         });
     }
   });
@@ -184,9 +218,6 @@
           queueSaveStateIdleReset();
         }
         await invalidateAll();
-        toast.success('Changes saved successfully', {
-          duration: 2000,
-        });
       } else {
         if (requestId === latestSaveRequestId) {
           saveState = 'error';
@@ -308,6 +339,27 @@
     attachments = attachments.filter((a) => a.id !== attachment.id);
   }
 
+  async function handleLinkAdd(url: string, label: string) {
+    if (!effectiveEpic) return;
+    const formData = new FormData();
+    formData.append('entity_type', 'epic');
+    formData.append('entity_id', effectiveEpic.id);
+    formData.append('url', url);
+    formData.append('label', label);
+    const res = await fetch('?/createLink', { method: 'POST', body: formData });
+    const result = deserialize(await res.text());
+    if (result.type === 'success') {
+      links = [...links, (result.data as any).link];
+    }
+  }
+
+  async function handleLinkDelete(link: Link) {
+    const formData = new FormData();
+    formData.append('id', link.id);
+    await fetch('?/deleteLink', { method: 'POST', body: formData });
+    links = links.filter((l) => l.id !== link.id);
+  }
+
   // Create epic form submission
   async function handleCreateSubmit(event: Event) {
     event.preventDefault();
@@ -387,32 +439,73 @@
     class={expanded && isDesktop() ? 'p-6' : sheetClass}
     bind:ref={sheetContentRef}
   >
-    {#if internalMode === 'create' || effectiveEpic}
+    {#if open && internalMode === 'edit' && !effectiveEpic}
+      <!-- Skeleton while epic data populates -->
+      <div class="space-y-5 pb-6">
+        <Skeleton class="h-5 w-2/3" />
+        <Skeleton class="h-8 w-full" />
+        <Skeleton class="h-8 w-3/4" />
+        <Skeleton class="h-24 w-full" />
+      </div>
+    {:else if internalMode === 'create' || effectiveEpic}
       <!-- Loading overlay -->
       {#if createLoading}
         <LoadingOverlay />
       {/if}
 
       <SheetHeader class="mb-6">
+        {#if projectName}
+          <p class="text-xs text-muted-foreground mb-1 truncate">{projectName}</p>
+        {/if}
         <div class="flex items-start justify-between gap-2">
-          <div class="flex-1 min-w-0">
-            <SheetTitle class="text-xs uppercase font-medium text-foreground-muted tracking-wide">
-              {#if internalMode === 'create'}
-                New Epic
-              {:else if effectiveEpic}
-                E-{effectiveEpic.number} · Epic
-              {:else}
-                Epic
-              {/if}
-            </SheetTitle>
-            {#if internalMode === 'create' && projectName}
-              <p class="text-sm text-foreground-muted">{projectName}</p>
+          <SheetTitle class="flex-1 min-w-0 flex items-baseline gap-0 text-base font-semibold">
+            {#if internalMode === 'create'}
+              New Epic
+            {:else if effectiveEpic}
+              <span class="text-muted-foreground font-mono text-sm shrink-0"
+                >E-{effectiveEpic.number}</span
+              >
+              <span class="mx-2 text-muted-foreground shrink-0">·</span>
+              <span class="truncate">{effectiveEpic.name}</span>
+            {:else}
+              Epic
             {/if}
-          </div>
+          </SheetTitle>
+          {#if internalMode === 'edit'}
+            {#if saveState === 'saving'}
+              <span class="shrink-0 mt-0.5 text-muted-foreground" aria-label="Saving">
+                <LoaderIcon class="size-4 animate-spin" />
+              </span>
+            {:else if saveState === 'saved'}
+              <span
+                class="shrink-0 mt-0.5 text-green-600 dark:text-green-400 transition-opacity duration-300"
+                aria-label="Saved"
+              >
+                <CheckIcon class="size-4" />
+              </span>
+            {:else if saveState === 'error'}
+              <span class="shrink-0 mt-0.5 text-destructive" aria-label="Save failed">
+                <AlertCircleIcon class="size-4" />
+              </span>
+            {/if}
+            <button
+              onclick={handleCopyLink}
+              aria-label="Copy link to epic"
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground {isDesktop()
+                ? ''
+                : 'mr-8'}"
+            >
+              {#if copied}
+                <CheckIcon class="size-4" />
+              {:else}
+                <Link2Icon class="size-4" />
+              {/if}
+            </button>
+          {/if}
           {#if isDesktop()}
             <button
               onclick={() => (expanded = !expanded)}
-              aria-label={expanded ? 'Collapse to sidebar' : 'Expand to full page'}
+              aria-label={expanded ? 'Collapse' : 'Expand to full page'}
               class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mr-8"
             >
               {#if expanded}
@@ -458,8 +551,10 @@
                   disabled={createLoading}
                   class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  <option value="backlog">Backlog</option>
                   <option value="active">Active</option>
-                  <option value="done">Done</option>
+                  <option value="on_hold">On Hold</option>
+                  <option value="completed">Completed</option>
                   <option value="canceled">Canceled</option>
                 </select>
               </div>
@@ -525,16 +620,6 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-6 pb-6">
-          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
-            {#if saveState === 'saving'}
-              Saving...
-            {:else if saveState === 'saved'}
-              ✓ Saved
-            {:else if saveState === 'error'}
-              Save failed. Please retry.
-            {/if}
-          </div>
-
           <!-- Name -->
           <section>
             <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
@@ -562,8 +647,10 @@
                   onchange={handleStatusChange}
                   class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  <option value="backlog">Backlog</option>
                   <option value="active">Active</option>
-                  <option value="done">Done</option>
+                  <option value="on_hold">On Hold</option>
+                  <option value="completed">Completed</option>
                   <option value="canceled">Canceled</option>
                 </select>
               </div>
@@ -622,6 +709,14 @@
               onUpload={handleAttachmentUpload}
               onDelete={handleAttachmentDelete}
             />
+          </section>
+
+          <!-- Links -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Links
+            </h3>
+            <LinkList {links} onAdd={handleLinkAdd} onDelete={handleLinkDelete} />
           </section>
 
           <!-- Progress -->

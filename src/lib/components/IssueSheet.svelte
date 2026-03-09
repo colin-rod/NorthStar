@@ -19,7 +19,15 @@
    * - Collapsible sub-issues list
    */
 
-  import type { Issue, Epic, Milestone, IssueStatus, StoryPoints, Attachment } from '$lib/types';
+  import type {
+    Issue,
+    Epic,
+    Milestone,
+    IssueStatus,
+    StoryPoints,
+    Attachment,
+    Link,
+  } from '$lib/types';
   import { Sheet, SheetContent, SheetHeader, SheetTitle } from '$lib/components/ui/sheet';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
@@ -27,10 +35,16 @@
   import { Button } from '$lib/components/ui/button';
   import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
   import Minimize2Icon from '@lucide/svelte/icons/minimize-2';
+  import CheckIcon from '@lucide/svelte/icons/check';
+  import Link2Icon from '@lucide/svelte/icons/link-2';
+  import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
+  import LoaderIcon from '@lucide/svelte/icons/loader';
+  import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll, goto } from '$app/navigation';
   import { deserialize } from '$app/forms';
   import { getBlockingDependencies } from '$lib/utils/issue-helpers';
   import { ALLOWED_STORY_POINTS } from '$lib/utils/issue-helpers';
+  import { copyDeepLink } from '$lib/utils/url-helpers';
   import {
     getStatusBadgeVariant,
     formatStatus,
@@ -43,6 +57,7 @@
   import MilestonePicker from '$lib/components/MilestonePicker.svelte';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import AttachmentList from '$lib/components/AttachmentList.svelte';
+  import LinkList from '$lib/components/LinkList.svelte';
   import { supabase } from '$lib/supabase';
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
   import { normalizeDescription } from '$lib/utils/text-helpers';
@@ -81,13 +96,31 @@
   let localEpicId = $state('');
   let localMilestoneId = $state<string | null>(null);
 
+  // Guard: prevent auto-save effects from firing before init effect has run
+  let isEditInitialized = $state(false);
+
   // Loading state
   let loading = $state(false);
+  let activeSaveCount = $state(0);
+  let latestSaveRequestId = $state(0);
   type SaveState = 'idle' | 'saving' | 'saved' | 'error';
   let saveState = $state<SaveState>('idle');
-  let activeSaveCount = $state(0);
   let saveStateResetTimeout: ReturnType<typeof setTimeout> | null = null;
-  let latestSaveRequestId = $state(0);
+
+  function clearSaveStateResetTimeout() {
+    if (saveStateResetTimeout) {
+      clearTimeout(saveStateResetTimeout);
+      saveStateResetTimeout = null;
+    }
+  }
+
+  function queueSaveStateIdleReset() {
+    clearSaveStateResetTimeout();
+    saveStateResetTimeout = setTimeout(() => {
+      saveState = 'idle';
+      saveStateResetTimeout = null;
+    }, 1500);
+  }
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
   // svelte-ignore state_referenced_locally
@@ -96,6 +129,7 @@
   // Create mode state
   let selectedProjectId = $state('');
   let createLoading = $state(false);
+  let createModeInitialized = $state(false);
 
   // Description state
   let localDescription = $state<string | null>(null);
@@ -105,6 +139,9 @@
 
   // Attachments state
   let attachments = $state<Attachment[]>([]);
+
+  // Links state
+  let links = $state<Link[]>([]);
 
   // Ref for sheet content (keyboard-aware height)
   let sheetContentRef = $state<HTMLElement | null>(null);
@@ -124,6 +161,15 @@
 
   // Expand to center peek mode (desktop only)
   let expanded = $state(false);
+
+  // Copy link feedback
+  let copied = $state(false);
+  async function handleCopyLink() {
+    if (!issue) return;
+    await copyDeepLink({ projectId: issue.project_id, epicId: issue.epic_id, issueId: issue.id });
+    copied = true;
+    setTimeout(() => (copied = false), 1500);
+  }
 
   // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -161,8 +207,11 @@
       lastPersistedDescriptionNormalized = normalizeDescription(issue.description);
       descriptionSaveInFlight = false;
       descriptionInFlightNormalized = null;
+      saveState = 'idle';
+      clearSaveStateResetTimeout();
+      isEditInitialized = true;
 
-      // Load attachments for this issue
+      // Load attachments and links for this issue
       if (internalMode === 'edit') {
         supabase
           .from('attachments')
@@ -173,28 +222,33 @@
           .then(({ data }) => {
             attachments = data ?? [];
           });
+        supabase
+          .from('links')
+          .select('*')
+          .eq('entity_type', 'issue')
+          .eq('entity_id', issue.id)
+          .order('created_at', { ascending: true })
+          .then(({ data }) => {
+            links = data ?? [];
+          });
       }
     }
   });
 
-  // Initialize create mode defaults when sheet opens
+  // Initialize create mode defaults ONCE when sheet opens (guard prevents re-running on prop changes)
   $effect(() => {
-    if (internalMode === 'create' && open) {
+    if (internalMode === 'create' && open && !createModeInitialized) {
+      createModeInitialized = true;
       localTitle = '';
       localStatus = 'todo';
       localPriority = 2;
       localStoryPoints = null;
       localMilestoneId = null;
-      saveState = 'idle';
-      if (saveStateResetTimeout) {
-        clearTimeout(saveStateResetTimeout);
-        saveStateResetTimeout = null;
-      }
       const ctx = get(createIssueContext);
       if (ctx) {
         selectedProjectId = ctx.projectId;
         localEpicId = ctx.epicId;
-      } else if (projects.length > 0 && !selectedProjectId) {
+      } else if (projects.length > 0) {
         selectedProjectId = projects[0].id;
       }
     }
@@ -214,15 +268,12 @@
   // Reset state when sheet closes
   $effect(() => {
     if (!open) {
+      createModeInitialized = false;
       expanded = false;
       selectedProjectId = '';
       localEpicId = '';
+      isEditInitialized = false;
       createLoading = false;
-      saveState = 'idle';
-      if (saveStateResetTimeout) {
-        clearTimeout(saveStateResetTimeout);
-        saveStateResetTimeout = null;
-      }
       // Reset internal mode back to parent's mode after close animation
       setTimeout(() => {
         internalMode = mode;
@@ -230,22 +281,25 @@
     }
   });
 
-  function clearSaveStateResetTimeout() {
-    if (saveStateResetTimeout) {
-      clearTimeout(saveStateResetTimeout);
-      saveStateResetTimeout = null;
+  // Sync internalMode when sheet opens
+  $effect(() => {
+    if (open) {
+      internalMode = mode;
     }
-  }
+  });
 
-  function queueSaveStateIdleReset() {
-    clearSaveStateResetTimeout();
-    saveStateResetTimeout = setTimeout(() => {
-      if (saveState === 'saved') {
-        saveState = 'idle';
-      }
-      saveStateResetTimeout = null;
-    }, 1500);
-  }
+  // Breadcrumb for edit mode header: "ProjectName / E-N EpicName"
+  let issueBreadcrumb = $derived.by(() => {
+    const currentIssue = issue;
+    if (internalMode !== 'edit' || !currentIssue) return null;
+    const project = projects.find((p) => p.id === currentIssue.project_id);
+    const epic = epics.find((e) => e.id === currentIssue.epic_id);
+    if (!project && !epic) return null;
+    const parts = [];
+    if (project) parts.push(project.name);
+    if (epic) parts.push(`E-${epic.number} ${epic.name}`);
+    return parts.join(' / ');
+  });
 
   // Filter epics to only show those from the relevant project
   let projectEpics = $derived(
@@ -304,13 +358,8 @@
           saveState = 'saved';
           queueSaveStateIdleReset();
         }
-        // No need to reload all data for single field update
-        // The UI already shows the updated value via local state
         options.onSuccess?.();
-        toast.success('Changes saved successfully', {
-          duration: 2000,
-          ...successToastA11y,
-        });
+        await invalidateAll();
       } else {
         if (requestId === latestSaveRequestId) {
           saveState = 'error';
@@ -322,10 +371,10 @@
         });
       }
     } catch (error) {
+      console.error('Auto-save error:', error);
       if (requestId === latestSaveRequestId) {
         saveState = 'error';
       }
-      console.error('Auto-save error:', error);
       toast.error('Network error - please try again', {
         duration: 5000,
         ...errorToastA11y,
@@ -417,6 +466,29 @@
     formData.append('id', attachment.id);
     await fetch('?/deleteAttachment', { method: 'POST', body: formData });
     attachments = attachments.filter((a) => a.id !== attachment.id);
+  }
+
+  // Link add
+  async function handleLinkAdd(url: string, label: string) {
+    if (!issue) return;
+    const formData = new FormData();
+    formData.append('entity_type', 'issue');
+    formData.append('entity_id', issue.id);
+    formData.append('url', url);
+    formData.append('label', label);
+    const res = await fetch('?/createLink', { method: 'POST', body: formData });
+    const result = deserialize(await res.text());
+    if (result.type === 'success') {
+      links = [...links, (result.data as any).link];
+    }
+  }
+
+  // Link delete
+  async function handleLinkDelete(link: Link) {
+    const formData = new FormData();
+    formData.append('id', link.id);
+    await fetch('?/deleteLink', { method: 'POST', body: formData });
+    links = links.filter((l) => l.id !== link.id);
   }
 
   // Create issue form submission
@@ -533,9 +605,10 @@
     localEpicId = select.value;
   }
 
-  // Watch for changes and auto-save
+  // Watch for changes and auto-save (guarded by isEditInitialized to prevent race conditions)
   $effect(() => {
     if (
+      isEditInitialized &&
       internalMode === 'edit' &&
       open &&
       issue &&
@@ -549,6 +622,7 @@
 
   $effect(() => {
     if (
+      isEditInitialized &&
       internalMode === 'edit' &&
       open &&
       issue &&
@@ -562,6 +636,7 @@
 
   $effect(() => {
     if (
+      isEditInitialized &&
       internalMode === 'edit' &&
       open &&
       issue &&
@@ -575,6 +650,7 @@
 
   $effect(() => {
     if (
+      isEditInitialized &&
       internalMode === 'edit' &&
       open &&
       issue &&
@@ -597,33 +673,77 @@
       open = isOpen;
     }}
   >
-    {#if internalMode === 'create' || issue}
+    {#if open && internalMode === 'edit' && !issue}
+      <!-- Skeleton while issue data populates -->
+      <div class="space-y-5 pb-6">
+        <Skeleton class="h-5 w-2/3" />
+        <Skeleton class="h-8 w-full" />
+        <Skeleton class="h-8 w-full" />
+        <Skeleton class="h-8 w-3/4" />
+        <Skeleton class="h-24 w-full" />
+      </div>
+    {:else if internalMode === 'create' || issue}
       <!-- Loading overlay -->
-      {#if loading || createLoading}
+      {#if createLoading}
         <LoadingOverlay />
       {/if}
 
       <!-- Header -->
       <SheetHeader class="mb-6">
+        {#if issueBreadcrumb}
+          <p class="text-xs text-muted-foreground mb-1 truncate">{issueBreadcrumb}</p>
+        {/if}
         <div class="flex items-start justify-between gap-2">
-          <SheetTitle class="font-accent text-page-title flex-1 min-w-0 flex items-baseline gap-0">
+          <SheetTitle class="flex-1 min-w-0 flex items-baseline gap-0 text-base font-semibold">
             {#if internalMode === 'create'}
               New Issue
             {:else if issue}
-              <span class="text-muted-foreground font-mono text-base shrink-0"
-                >I-{issue.number}</span
-              >
+              <span class="text-muted-foreground font-mono text-sm shrink-0">I-{issue.number}</span>
               <span class="mx-2 text-muted-foreground shrink-0">·</span>
               <span>{issue.title}</span>
             {:else}
               Edit Issue
             {/if}
           </SheetTitle>
+          {#if internalMode === 'edit'}
+            {#if saveState === 'saving'}
+              <span class="shrink-0 mt-0.5 text-foreground-muted" aria-label="Saving">
+                <LoaderIcon class="size-4 animate-spin" />
+              </span>
+            {:else if saveState === 'saved'}
+              <span
+                class="shrink-0 mt-0.5 text-status-done animate-[scale-in_0.15s_ease-out]"
+                aria-label="Saved"
+              >
+                <CheckIcon class="size-4" />
+              </span>
+            {:else if saveState === 'error'}
+              <span
+                class="shrink-0 mt-0.5 text-destructive animate-[scale-in_0.15s_ease-out]"
+                aria-label="Save failed"
+              >
+                <AlertCircleIcon class="size-4" />
+              </span>
+            {/if}
+            <button
+              onclick={handleCopyLink}
+              aria-label="Copy link to issue"
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5 {isDesktop()
+                ? ''
+                : 'mr-8'}"
+            >
+              {#if copied}
+                <CheckIcon class="size-4" />
+              {:else}
+                <Link2Icon class="size-4" />
+              {/if}
+            </button>
+          {/if}
           {#if isDesktop()}
             <button
               onclick={() => (expanded = !expanded)}
-              aria-label={expanded ? 'Collapse to sidebar' : 'Expand to full page'}
-              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-1 mr-8"
+              aria-label={expanded ? 'Collapse' : 'Expand to full page'}
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5 mr-8"
             >
               {#if expanded}
                 <Minimize2Icon class="size-4" />
@@ -670,7 +790,7 @@
                   bind:value={selectedProjectId}
                   required
                   disabled={createLoading}
-                  class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input"
                 >
                   {#each projects as project (project.id)}
                     <option value={project.id}>{project.name}</option>
@@ -686,7 +806,7 @@
                   bind:value={localEpicId}
                   required
                   disabled={createLoading}
-                  class="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input"
                 >
                   {#each projectEpics as epic (epic.id)}
                     <option value={epic.id}>{epic.name}</option>
@@ -704,16 +824,6 @@
       {:else}
         <!-- Edit mode: auto-save behavior -->
         <div class="space-y-4 pb-6">
-          <div aria-live="polite" class="text-metadata text-foreground-muted min-h-4">
-            {#if saveState === 'saving'}
-              Saving...
-            {:else if saveState === 'saved'}
-              ✓ Saved
-            {:else if saveState === 'error'}
-              Save failed. Please retry.
-            {/if}
-          </div>
-
           <!-- Basic Info Section -->
           <section>
             <div class="space-y-2">
@@ -727,7 +837,6 @@
                   oninput={handleTitleChange}
                   onblur={handleTitleBlur}
                   required
-                  disabled={loading}
                   class="text-body h-8 flex-1"
                 />
               </div>
@@ -741,8 +850,7 @@
                   id="status"
                   bind:value={localStatus}
                   onchange={handleStatusChange}
-                  disabled={loading}
-                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input-sm"
                 >
                   <option value="backlog">Backlog</option>
                   <option value="todo">Todo</option>
@@ -762,8 +870,7 @@
                   id="priority"
                   bind:value={localPriority}
                   onchange={handlePriorityChange}
-                  disabled={loading}
-                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input-sm"
                 >
                   <option value={0}>P0 (Critical)</option>
                   <option value={1}>P1 (High)</option>
@@ -782,7 +889,6 @@
                     selectedMilestoneId={localMilestoneId}
                     {milestones}
                     issues={projectIssues}
-                    disabled={loading}
                     onChange={(id) => {
                       localMilestoneId = id;
                       autoSave('milestone_id', id);
@@ -798,11 +904,9 @@
                 >
                 <select
                   id="story_points"
-                  inputmode="numeric"
                   value={localStoryPoints?.toString() ?? 'null'}
                   onchange={handleStoryPointsChange}
-                  disabled={loading}
-                  class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="select-input-sm"
                 >
                   <option value="null">Not set</option>
                   {#each ALLOWED_STORY_POINTS as points (points)}
@@ -821,7 +925,6 @@
               onchange={handleDescriptionChange}
               onblur={handleDescriptionBlur}
               {uploadImage}
-              disabled={loading}
             />
           </section>
 
@@ -832,8 +935,13 @@
               {attachments}
               onUpload={handleAttachmentUpload}
               onDelete={handleAttachmentDelete}
-              disabled={loading}
             />
+          </section>
+
+          <!-- Links Section -->
+          <section>
+            <h3 class="section-header">Links</h3>
+            <LinkList {links} onAdd={handleLinkAdd} onDelete={handleLinkDelete} />
           </section>
 
           <!-- Dependencies Section -->

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { page } from '$app/stores';
   import type { ActionData } from './$types';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
@@ -9,6 +10,12 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
   let { form }: { form: ActionData } = $props();
+
+  const errorMessage = $derived(
+    $page.url.searchParams.get('error') === 'invalid_token'
+      ? 'This confirmation link is invalid or has expired. Please request a new one.'
+      : (form?.error ?? null),
+  );
 
   let loginLoading = $state(false);
   let signupLoading = $state(false);
@@ -23,9 +30,9 @@
     </CardHeader>
 
     <CardContent>
-      {#if form?.error}
+      {#if errorMessage}
         <Alert variant="destructive" class="mb-4">
-          <AlertDescription>{form.error}</AlertDescription>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       {/if}
 
@@ -75,9 +82,11 @@
                   name="password"
                   autocomplete="current-password"
                   required
+                  aria-describedby="login-password-hint"
                 />
+                <p id="login-password-hint" class="sr-only">Enter your account password</p>
               </div>
-              <Button type="submit" class="w-full" disabled={loginLoading}>
+              <Button type="submit" class="w-full" disabled={loginLoading} aria-busy={loginLoading}>
                 {loginLoading ? 'Logging in...' : 'Login'}
               </Button>
             </div>
@@ -129,7 +138,12 @@
                   required
                 />
               </div>
-              <Button type="submit" class="w-full" disabled={signupLoading}>
+              <Button
+                type="submit"
+                class="w-full"
+                disabled={signupLoading}
+                aria-busy={signupLoading}
+              >
                 {signupLoading ? 'Creating account...' : 'Sign Up'}
               </Button>
             </div>
@@ -161,7 +175,12 @@
                   required
                 />
               </div>
-              <Button type="submit" class="w-full" disabled={magicLinkLoading}>
+              <Button
+                type="submit"
+                class="w-full"
+                disabled={magicLinkLoading}
+                aria-busy={magicLinkLoading}
+              >
                 {magicLinkLoading ? 'Sending...' : 'Send Magic Link'}
               </Button>
             </div>

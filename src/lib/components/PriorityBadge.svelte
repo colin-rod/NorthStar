@@ -22,7 +22,7 @@
 
 <Badge {variant} class="text-xs {className}">
   {#if priority === 0}
-    <Flame class="h-3 w-3" />
+    <Flame aria-hidden="true" class="h-3 w-3" />
   {/if}
   P{priority}
 </Badge>

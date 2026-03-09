@@ -2,6 +2,18 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { writable } from 'svelte/store';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
+const { toastSuccessMock, toastErrorMock } = vi.hoisted(() => ({
+  toastSuccessMock: vi.fn(),
+  toastErrorMock: vi.fn(),
+}));
+
+vi.mock('svelte-sonner', () => ({
+  toast: {
+    success: toastSuccessMock,
+    error: toastErrorMock,
+  },
+}));
+
 import type { PageData } from '../../routes/(protected)/projects/$types';
 import ProjectsPage from '../../routes/(protected)/projects/+page.svelte';
 
@@ -12,6 +24,10 @@ import { goto, invalidateAll } from '$app/navigation';
 vi.mock('$app/navigation', () => ({
   goto: vi.fn(),
   invalidateAll: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock('$app/forms', () => ({
+  deserialize: (text: string) => JSON.parse(text),
 }));
 
 let mockPageStore: ReturnType<typeof writable>;
@@ -154,6 +170,8 @@ beforeEach(() => {
   });
   mockInvalidateAll.mockResolvedValue(undefined);
   global.fetch = vi.fn();
+  toastSuccessMock.mockReset();
+  toastErrorMock.mockReset();
 });
 
 // --- Tests ---
@@ -185,14 +203,14 @@ describe('ProjectsPage - Filter panel toggle', () => {
     render(ProjectsPage, { props: { data: pageData } });
     const filtersBtn = screen.getByRole('button', { name: /Filters/i });
 
-    // Initially shows ▼ (closed)
-    expect(filtersBtn).toHaveTextContent('▼');
+    // Initially closed
+    expect(filtersBtn).toHaveAttribute('aria-expanded', 'false');
 
     await fireEvent.click(filtersBtn);
-    expect(filtersBtn).toHaveTextContent('▲');
+    expect(filtersBtn).toHaveAttribute('aria-expanded', 'true');
 
     await fireEvent.click(filtersBtn);
-    expect(filtersBtn).toHaveTextContent('▼');
+    expect(filtersBtn).toHaveAttribute('aria-expanded', 'false');
   });
 });
 
@@ -255,8 +273,9 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
     await waitFor(() => {
       expect(mockInvalidateAll).toHaveBeenCalled();
     });
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Updated successfully');
+    await waitFor(() => {
+      expect(toastSuccessMock).toHaveBeenCalledWith('Updated successfully');
+    });
   });
 
   it('shows error toast on failed cell edit', async () => {
@@ -265,8 +284,9 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
 
     await fireEvent.click(screen.getByRole('button', { name: 'Cell edit project' }));
 
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to update');
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Failed to update');
+    });
   });
 
   it('identifies project nodeType when editing a project node', async () => {
@@ -309,8 +329,9 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
 
     await fireEvent.click(screen.getByRole('button', { name: 'Cell edit project' }));
 
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to update');
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Failed to update');
+    });
     consoleSpy.mockRestore();
   });
 });
@@ -326,12 +347,36 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
       expect.stringContaining('?/createEpic'),
       expect.objectContaining({ method: 'POST' }),
     );
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Epic created');
+    await waitFor(() => {
+      expect(toastSuccessMock).toHaveBeenCalledWith('Epic created');
+    });
   });
 
   it('calls ?/createIssue when creating a child of an epic', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({ ok: true } as Response);
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          type: 'success',
+          data: {
+            issue: {
+              id: 'issue-2',
+              title: 'New Issue',
+              status: 'todo',
+              priority: 1,
+              project_id: 'project-1',
+              epic_id: 'epic-1',
+              milestone_id: null,
+              story_points: null,
+              sort_order: 2,
+              created_at: new Date().toISOString(),
+              parent_issue_id: null,
+              description: null,
+            },
+          },
+          status: 200,
+        }),
+    } as unknown as Response);
     render(ProjectsPage, { props: { data: pageData } });
 
     await fireEvent.click(screen.getByRole('button', { name: 'Create issue child' }));
@@ -340,8 +385,9 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
       expect.stringContaining('?/createIssue'),
       expect.objectContaining({ method: 'POST' }),
     );
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Issue created');
+    await waitFor(() => {
+      expect(toastSuccessMock).toHaveBeenCalledWith('Issue created');
+    });
   });
 
   it('shows error toast when epic creation fails', async () => {
@@ -350,90 +396,24 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
 
     await fireEvent.click(screen.getByRole('button', { name: 'Create epic child' }));
 
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to create epic');
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Failed to create epic');
+    });
   });
 
   it('shows error toast when issue creation fails', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response);
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      text: async () =>
+        JSON.stringify({ type: 'failure', data: { error: 'Server error' }, status: 400 }),
+    } as unknown as Response);
     render(ProjectsPage, { props: { data: pageData } });
 
     await fireEvent.click(screen.getByRole('button', { name: 'Create issue child' }));
 
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to create issue');
-  });
-});
-
-describe('ProjectsPage - showToast via TreeGrid onShowToast', () => {
-  it('renders success feedback as polite status region', async () => {
-    render(ProjectsPage, { props: { data: pageData } });
-
-    await fireEvent.click(screen.getByRole('button', { name: 'Emit success' }));
-
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveAttribute('aria-live', 'polite');
-    expect(toast).toHaveTextContent('Saved from grid');
-  });
-
-  it('renders error feedback as assertive alert region', async () => {
-    render(ProjectsPage, { props: { data: pageData } });
-
-    await fireEvent.click(screen.getByRole('button', { name: 'Emit error' }));
-
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveAttribute('aria-live', 'assertive');
-    expect(toast).toHaveTextContent('Failed from grid');
-  });
-});
-
-describe('ProjectsPage - form response effect', () => {
-  it('shows success toast from form response', async () => {
-    render(ProjectsPage, { props: { data: pageData } });
-
-    mockPageStore.set({
-      url: new URL('http://localhost/projects'),
-      form: { success: true, action: 'create' },
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Failed to create issue');
     });
-
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Project created');
-  });
-
-  it('shows error toast from form response', async () => {
-    render(ProjectsPage, { props: { data: pageData } });
-
-    mockPageStore.set({
-      url: new URL('http://localhost/projects'),
-      form: { success: false, error: 'Something went wrong' },
-    });
-
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Something went wrong');
-  });
-
-  it('shows Epic created for createEpic form action', async () => {
-    render(ProjectsPage, { props: { data: pageData } });
-
-    mockPageStore.set({
-      url: new URL('http://localhost/projects'),
-      form: { success: true, action: 'createEpic' },
-    });
-
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Epic created');
-  });
-
-  it('shows Issue created for createIssue form action', async () => {
-    render(ProjectsPage, { props: { data: pageData } });
-
-    mockPageStore.set({
-      url: new URL('http://localhost/projects'),
-      form: { success: true, action: 'createIssue' },
-    });
-
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Issue created');
   });
 });
 

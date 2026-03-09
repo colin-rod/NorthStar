@@ -9,6 +9,7 @@
  * - Note: in_review counts as NOT done (still blocks)
  */
 
+import { VALID_STORY_POINTS } from '$lib/constants/validation';
 import type { Issue } from '$lib/types';
 
 /**
@@ -111,13 +112,23 @@ export function getPriorityLabel(priority: number): string {
  */
 export function isValidStoryPoints(points: number | null): boolean {
   if (points === null) return true;
-  return [1, 2, 3, 5, 8, 13, 21].includes(points);
+  return VALID_STORY_POINTS.includes(points as (typeof VALID_STORY_POINTS)[number]);
 }
 
 /**
  * Get allowed story point values
  */
-export const ALLOWED_STORY_POINTS = [1, 2, 3, 5, 8, 13, 21] as const;
+export const ALLOWED_STORY_POINTS = VALID_STORY_POINTS;
+
+/**
+ * Cycle to the next status in linear order.
+ * Order: backlog → todo → in_progress → in_review → done → canceled → backlog
+ */
+export function cycleStatus(current: string): string {
+  const order = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'];
+  const idx = order.indexOf(current);
+  return order[(idx + 1) % order.length];
+}
 
 /**
  * Get status transitions allowed from current status

@@ -25,6 +25,7 @@
   import type { Issue, IssueStatus } from '$lib/types';
   import Badge from '$lib/components/ui/badge/badge.svelte';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
+  import StoryPointsBadge from '$lib/components/StoryPointsBadge.svelte';
   import { isBlocked } from '$lib/utils/issue-helpers';
   import { getStatusDotClass, formatStatus } from '$lib/utils/design-tokens';
   import Lock from '@lucide/svelte/icons/lock';
@@ -149,7 +150,7 @@
             <!-- Story Points Cell -->
             <td class="px-3 py-4">
               {#if issue.story_points}
-                <Badge variant="secondary" class="text-xs">{issue.story_points}</Badge>
+                <StoryPointsBadge story_points={issue.story_points} />
               {:else}
                 <span class="text-metadata text-foreground-muted">—</span>
               {/if}

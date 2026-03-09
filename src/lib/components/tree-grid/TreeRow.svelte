@@ -15,10 +15,12 @@
   import DragHandleCell from './cells/DragHandleCell.svelte';
   import TitleCell from './cells/TitleCell.svelte';
   import StatusCell from './cells/StatusCell.svelte';
-  import MilestoneCell from './cells/MilestoneCell.svelte';
-  import StoryPointsCell from './cells/StoryPointsCell.svelte';
+
   import TotalPointsCell from './cells/TotalPointsCell.svelte';
   import ProgressCell from './cells/ProgressCell.svelte';
+  import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
+  import Plus from '@lucide/svelte/icons/plus';
+  import Ellipsis from '@lucide/svelte/icons/ellipsis';
 
   interface Props {
     node: TreeNode;
@@ -26,7 +28,6 @@
     isExpanded: boolean;
     expandedIds: Set<string>;
     isSelected: boolean;
-    editMode: boolean;
     dragDropState?: DragDropState;
     onToggleExpand: (id: string) => void;
     onToggleSelect: (id: string) => void;
@@ -40,7 +41,10 @@
     ) => void;
     onEpicClick?: (epic: Epic, counts: IssueCounts) => void;
     onContextMenu?: (node: TreeNode, event: MouseEvent) => void;
+    onAddChild?: (node: TreeNode) => void;
     showReorderHint?: boolean;
+    editingNodeId?: string | null;
+    onStopEdit?: () => void;
   }
 
   let {
@@ -49,7 +53,6 @@
     isExpanded,
     expandedIds,
     isSelected,
-    editMode,
     dragDropState,
     onToggleExpand,
     onToggleSelect,
@@ -58,7 +61,10 @@
     onProjectClick,
     onEpicClick,
     onContextMenu,
+    onAddChild,
     showReorderHint = false,
+    editingNodeId = null,
+    onStopEdit,
   }: Props = $props();
 
   // Level-based background shading (per spec)
@@ -123,6 +129,21 @@
     onContextMenu?.(node, event);
   }
 
+  function handleOpenClick(event: MouseEvent) {
+    event.stopPropagation();
+    handleDoubleClick();
+  }
+
+  function handleAddChildClick(event: MouseEvent) {
+    event.stopPropagation();
+    onAddChild?.(node);
+  }
+
+  function handleMoreClick(event: MouseEvent) {
+    event.stopPropagation();
+    onContextMenu?.(node, event);
+  }
+
   // Handle double-click to open drawer
   function handleDoubleClick() {
     if (node.type === 'issue' && onIssueClick) {
@@ -139,20 +160,16 @@
 </script>
 
 <tr
-  class="relative border-b border-border-divider hover:bg-surface-subtle transition-all duration-150 group {bgClass} {isSelected
+  class="relative border-b border-border-divider hover:bg-surface-subtle transition-all duration-150 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset {bgClass} {isSelected
     ? 'bg-primary-tint'
     : ''} {dragClasses} {expansionClasses}"
   data-node-id={node.id}
   data-node-type={node.type}
   data-node-level={node.level}
+  tabindex="0"
   oncontextmenu={handleContextMenuEvent}
   ondblclick={handleDoubleClick}
 >
-  <!-- Drag Handle -->
-  <td class="py-4 px-4 hidden md:table-cell">
-    <DragHandleCell {editMode} {showReorderHint} />
-  </td>
-
   <!-- Selection Checkbox -->
   <td class="py-4 px-4 hidden md:table-cell">
     <SelectionCell checked={isSelected} onToggle={() => onToggleSelect(node.id)} />
@@ -166,33 +183,16 @@
       {isExpanded}
       indentation={calculateIndentation(node.level)}
       {fontWeight}
-      {editMode}
+      isEditing={editingNodeId === node.id}
       onToggleExpand={() => onToggleExpand(node.id)}
       onEdit={(value) => onCellEdit(node.id, 'title', value)}
+      onStopEdit={() => onStopEdit?.()}
     />
   </td>
 
   <!-- Status -->
   <td class="py-4 px-4">
-    <StatusCell {node} {editMode} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
-  </td>
-
-  <!-- Milestone -->
-  <td class="py-4 px-4 hidden md:table-cell">
-    <MilestoneCell
-      {node}
-      {editMode}
-      onEdit={(value) => onCellEdit(node.id, 'milestone_id', value)}
-    />
-  </td>
-
-  <!-- Story Points -->
-  <td class="py-4 px-4 hidden md:table-cell">
-    <StoryPointsCell
-      {node}
-      {editMode}
-      onEdit={(value) => onCellEdit(node.id, 'story_points', value)}
-    />
+    <StatusCell {node} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
   </td>
 
   <!-- Total Story Points (Rollup) -->

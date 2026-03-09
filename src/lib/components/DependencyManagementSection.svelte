@@ -60,9 +60,9 @@
     <!-- Blocking Summary -->
     {#if blockingDeps.length > 0}
       <div class="flex items-center gap-1 text-sm text-destructive font-medium mb-2">
-        <Lock class="h-4 w-4" />
-        Blocked by {blockingDeps.length}
-        {blockingDeps.length === 1 ? 'dependency' : 'dependencies'}
+        <Lock class="h-4 w-4" aria-hidden="true" />
+        Waiting on {blockingDeps.length}
+        {blockingDeps.length === 1 ? 'issue' : 'issues'}
       </div>
     {/if}
 
@@ -70,9 +70,9 @@
     {#if blockingDeps.length > 0}
       <div>
         <p class="text-metadata text-foreground-muted mb-2">Waiting on:</p>
-        <div class="space-y-2">
+        <ul class="space-y-2">
           {#each blockingDeps as dep (dep.id)}
-            <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
+            <li class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
               <Badge variant={getStatusBadgeVariant(dep.status)} class="shrink-0">
                 {formatStatus(dep.status)}
               </Badge>
@@ -83,24 +83,24 @@
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
-                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                class="shrink-0 text-foreground-muted hover:text-destructive transition duration-150 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                 aria-label="Remove dependency"
               >
                 <X class="h-4 w-4" />
               </button>
-            </div>
+            </li>
           {/each}
-        </div>
+        </ul>
       </div>
     {/if}
 
     <!-- Satisfied Dependencies -->
     {#if satisfiedDeps.length > 0}
       <div>
-        <p class="text-metadata text-foreground-muted mb-2">Satisfied dependencies</p>
-        <div class="space-y-2">
+        <p class="text-metadata text-foreground-muted mb-2">Completed dependencies</p>
+        <ul class="space-y-2">
           {#each satisfiedDeps as dep (dep.id)}
-            <div class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
+            <li class="group flex items-center gap-2 p-2 rounded-md bg-muted/50">
               <Badge variant={getStatusBadgeVariant(dep.status)} class="shrink-0">
                 {formatStatus(dep.status)}
               </Badge>
@@ -111,14 +111,14 @@
               <button
                 type="button"
                 onclick={() => removeDependency(dep.id)}
-                class="shrink-0 text-foreground-muted hover:text-destructive transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                class="shrink-0 text-foreground-muted hover:text-destructive transition duration-150 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
                 aria-label="Remove dependency"
               >
                 <X class="h-4 w-4" />
               </button>
-            </div>
+            </li>
           {/each}
-        </div>
+        </ul>
       </div>
     {/if}
 
@@ -131,9 +131,9 @@
     {#if blockingIssues.length > 0}
       <div>
         <p class="text-metadata text-foreground-muted mb-2">Blocking:</p>
-        <div class="space-y-2">
+        <ul class="space-y-2">
           {#each blockingIssues as blocked (blocked.id)}
-            <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+            <li class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
               <Badge variant={getStatusBadgeVariant(blocked.status)} class="shrink-0">
                 {formatStatus(blocked.status)}
               </Badge>
@@ -141,9 +141,9 @@
               <span class="text-metadata text-foreground-muted shrink-0">
                 {blocked.epic?.name}
               </span>
-            </div>
+            </li>
           {/each}
-        </div>
+        </ul>
       </div>
     {/if}
 

@@ -132,11 +132,12 @@ Projects (top-level containers)
 - Top-level container for work
 - Contains multiple epics
 - Auto-creates one "Unassigned" epic
+- Status: `backlog`, `planned`, `active`, `on_hold`, `completed`, `canceled`
 
 **Epic**
 
 - Project-scoped thematic grouping
-- Status: `active`, `done`, `canceled`
+- Status: `backlog`, `active`, `on_hold`, `completed`, `canceled`
 - Each project has exactly one default "Unassigned" epic
 
 **Issue**
@@ -144,7 +145,7 @@ Projects (top-level containers)
 - Primary unit of work
 - Required fields: title, project, epic, status, priority, sort_order
 - Optional fields: parent_issue_id (for sub-issues), milestone, story_points, dependencies
-- Status: `todo`, `doing`, `in_review`, `done`, `canceled`
+- Status: `backlog`, `todo`, `in_progress`, `in_review`, `done`, `canceled`
 - Priority: Integer scale (P0-P3)
 - Story Points: Restricted to: 1, 2, 3, 5, 8, 13, 21 (nullable)
 
@@ -284,8 +285,8 @@ For UI and features without automated coverage, see [docs/MANUAL_TESTING.md](doc
 
 - Hierarchical tree grid: Projects → Epics → Issues → Sub-issues
 - **Multi-level filtering** (server-side):
-  - Project filters: status (active/done/canceled)
-  - Epic filters: status (active/done/canceled)
+  - Project filters: status (backlog/planned/active/on_hold/completed/canceled)
+  - Epic filters: status (backlog/active/on_hold/completed/canceled)
   - Issue filters: priority (P0-P3), status, story points
   - URL parameters: `?project_status=active&priority=0,1&status=todo`
 - **Issue grouping** (within expanded epics):
@@ -332,7 +333,7 @@ archived_at timestamptz
 id uuid PRIMARY KEY
 project_id uuid REFERENCES projects NOT NULL
 name text NOT NULL
-status text CHECK (status IN ('active', 'done', 'canceled'))
+status text CHECK (status IN ('backlog', 'active', 'on_hold', 'completed', 'canceled'))
 is_default boolean DEFAULT false
 sort_order integer
 ```
@@ -355,14 +356,12 @@ epic_id uuid REFERENCES epics NOT NULL
 parent_issue_id uuid REFERENCES issues
 milestone_id uuid REFERENCES milestones
 title text NOT NULL
-status text CHECK (status IN ('todo', 'doing', 'in_review', 'done', 'canceled'))
+status text CHECK (status IN ('backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'))
 priority integer CHECK (priority BETWEEN 0 AND 3)
 story_points integer CHECK (story_points IN (1, 2, 3, 5, 8, 13, 21))
 sort_order integer
 created_at timestamptz DEFAULT now()
 ```
-
-**Note**: UI displays "In Progress" for `status='doing'` to use more conventional terminology. Database values remain unchanged.
 
 **dependencies**
 

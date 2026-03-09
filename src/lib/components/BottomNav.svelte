@@ -8,7 +8,7 @@
    * - Minimal, clean appearance
    * - Mobile-first touch targets
    */
-  import { Home, Folder, Search } from '@lucide/svelte';
+  import { Home, Folder, Search, User } from '@lucide/svelte';
 
   import { page } from '$app/stores';
   import { cn } from '$lib/utils';
@@ -18,6 +18,7 @@
   const pathname = $derived($page.url.pathname);
   const isHome = $derived(pathname === '/');
   const isProjects = $derived(pathname.startsWith('/projects'));
+  const isSettings = $derived(pathname.startsWith('/settings'));
 </script>
 
 <!-- North Design: Minimal mobile nav with burnt orange active state -->
@@ -31,11 +32,11 @@
       aria-label="Home"
       aria-current={isHome ? 'page' : undefined}
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         isHome ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
-      <Home class="w-6 h-6" />
+      <Home aria-hidden={true} class="w-6 h-6" />
       <span class="text-xs font-medium">Home</span>
     </a>
 
@@ -44,11 +45,11 @@
       aria-label="Projects"
       aria-current={isProjects ? 'page' : undefined}
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         isProjects ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
-      <Folder class="w-6 h-6" />
+      <Folder aria-hidden={true} class="w-6 h-6" />
       <span class="text-xs font-medium">Projects</span>
     </a>
 
@@ -56,12 +57,25 @@
       onclick={() => navSearchOpen.set(true)}
       aria-label="Search"
       class={cn(
-        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors',
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         $navSearchOpen ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
-      <Search class="w-6 h-6" />
+      <Search aria-hidden={true} class="w-6 h-6" />
       <span class="text-xs font-medium">Search</span>
     </button>
+
+    <a
+      href="/settings"
+      aria-label="Account"
+      aria-current={isSettings ? 'page' : undefined}
+      class={cn(
+        'flex flex-col items-center justify-center gap-1 flex-1 self-stretch transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+        isSettings ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
+      )}
+    >
+      <User aria-hidden={true} class="w-6 h-6" />
+      <span class="text-xs font-medium">Account</span>
+    </a>
   </div>
 </nav>
