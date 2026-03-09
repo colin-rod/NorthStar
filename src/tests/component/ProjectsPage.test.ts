@@ -2,6 +2,18 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { writable } from 'svelte/store';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
+const { toastSuccessMock, toastErrorMock } = vi.hoisted(() => ({
+  toastSuccessMock: vi.fn(),
+  toastErrorMock: vi.fn(),
+}));
+
+vi.mock('svelte-sonner', () => ({
+  toast: {
+    success: toastSuccessMock,
+    error: toastErrorMock,
+  },
+}));
+
 import type { PageData } from '../../routes/(protected)/projects/$types';
 import ProjectsPage from '../../routes/(protected)/projects/+page.svelte';
 
@@ -158,6 +170,8 @@ beforeEach(() => {
   });
   mockInvalidateAll.mockResolvedValue(undefined);
   global.fetch = vi.fn();
+  toastSuccessMock.mockReset();
+  toastErrorMock.mockReset();
 });
 
 // --- Tests ---
@@ -259,8 +273,9 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
     await waitFor(() => {
       expect(mockInvalidateAll).toHaveBeenCalled();
     });
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Updated successfully');
+    await waitFor(() => {
+      expect(toastSuccessMock).toHaveBeenCalledWith('Updated successfully');
+    });
   });
 
   it('shows error toast on failed cell edit', async () => {
@@ -269,8 +284,9 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
 
     await fireEvent.click(screen.getByRole('button', { name: 'Cell edit project' }));
 
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to update');
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Failed to update');
+    });
   });
 
   it('identifies project nodeType when editing a project node', async () => {
@@ -313,8 +329,9 @@ describe('ProjectsPage - handleCellEdit via TreeGrid', () => {
 
     await fireEvent.click(screen.getByRole('button', { name: 'Cell edit project' }));
 
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to update');
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Failed to update');
+    });
     consoleSpy.mockRestore();
   });
 });
@@ -330,8 +347,9 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
       expect.stringContaining('?/createEpic'),
       expect.objectContaining({ method: 'POST' }),
     );
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Epic created');
+    await waitFor(() => {
+      expect(toastSuccessMock).toHaveBeenCalledWith('Epic created');
+    });
   });
 
   it('calls ?/createIssue when creating a child of an epic', async () => {
@@ -367,8 +385,9 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
       expect.stringContaining('?/createIssue'),
       expect.objectContaining({ method: 'POST' }),
     );
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('Issue created');
+    await waitFor(() => {
+      expect(toastSuccessMock).toHaveBeenCalledWith('Issue created');
+    });
   });
 
   it('shows error toast when epic creation fails', async () => {
@@ -377,8 +396,9 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
 
     await fireEvent.click(screen.getByRole('button', { name: 'Create epic child' }));
 
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to create epic');
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Failed to create epic');
+    });
   });
 
   it('shows error toast when issue creation fails', async () => {
@@ -391,8 +411,9 @@ describe('ProjectsPage - handleCreateChild via TreeGrid', () => {
 
     await fireEvent.click(screen.getByRole('button', { name: 'Create issue child' }));
 
-    const toast = await screen.findByRole('alert');
-    expect(toast).toHaveTextContent('Failed to create issue');
+    await waitFor(() => {
+      expect(toastErrorMock).toHaveBeenCalledWith('Failed to create issue');
+    });
   });
 });
 
