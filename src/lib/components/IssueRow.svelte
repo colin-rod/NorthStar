@@ -154,10 +154,8 @@
     <button
       type="button"
       aria-label="Drag to reorder"
+      tabindex="-1"
       class="p-2 cursor-grab active:cursor-grabbing touch-none"
-      onkeydown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-      }}
     >
       <GripVertical aria-hidden="true" class="h-4 w-4 text-muted-foreground" />
     </button>

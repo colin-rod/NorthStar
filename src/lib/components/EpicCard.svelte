@@ -19,7 +19,7 @@
 
   import type { Epic } from '$lib/types';
   import { computeProgress, type IssueCounts } from '$lib/utils/issue-counts';
-  import { formatStatus } from '$lib/utils/design-tokens';
+  import { formatStatus, getEpicStatusVariant } from '$lib/utils/design-tokens';
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
@@ -34,16 +34,6 @@
   }
 
   let { epic, counts, isExpanded = false, onToggle }: Props = $props();
-
-  // Status badge variant mapping
-  const getStatusVariant = (status: string) => {
-    if (status === 'active') return 'default';
-    if (status === 'backlog') return 'default';
-    if (status === 'on_hold') return 'status-in-review';
-    if (status === 'completed') return 'status-done';
-    if (status === 'canceled') return 'status-canceled';
-    return 'default';
-  };
 
   let headerProgress = $derived(computeProgress(counts));
 </script>
@@ -68,7 +58,7 @@
             {epic.milestone.name}
           </Badge>
         {/if}
-        <Badge variant={getStatusVariant(epic.status)} class="text-xs">
+        <Badge variant={getEpicStatusVariant(epic.status)} class="text-xs">
           {formatStatus(epic.status)}
         </Badge>
       </div>

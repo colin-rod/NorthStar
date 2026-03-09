@@ -87,9 +87,9 @@ export function getPriorityLabel(priority: number): string {
  * Epic Status
  */
 export const epicStatusVariants = {
-  backlog: 'default',
+  backlog: 'secondary',
   active: 'default',
-  on_hold: 'status-in-review',
+  on_hold: 'secondary',
   completed: 'status-done',
   canceled: 'status-canceled',
 } as const;
@@ -111,7 +111,7 @@ export function formatStatus(status: string): string {
  */
 export function getEpicStatusVariant(
   status: string,
-): 'default' | 'status-in-review' | 'status-done' | 'status-canceled' {
+): 'default' | 'secondary' | 'status-done' | 'status-canceled' {
   return epicStatusVariants[status as EpicStatus] || 'default';
 }
 

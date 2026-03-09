@@ -79,34 +79,6 @@
     --shadow-2: 0 6px 24px rgba(0, 0, 0, 0.08); /* Level 2 */
   }
 
-  /* Dark mode - keeping for future, but not in MVP */
-  .dark {
-    --progress-critical: 0 72% 60%;
-    --progress-low: 32 95% 62%;
-    --progress-mid: 217 91% 68%;
-    --progress-high: 158 64% 60%;
-    --progress-done: 142 71% 55%;
-
-    --background: 217 19% 15%;
-    --foreground: 210 40% 98%;
-    --card: 217 19% 15%;
-    --card-foreground: 210 40% 98%;
-    --popover: 217 19% 15%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 217 19% 15%;
-    --secondary: 217 33% 18%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 18%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 213 27% 84%;
-  }
 }
 
 @layer base {
@@ -176,6 +148,11 @@
   }
 
   /* Button press feedback — subtle scale-down on active for all interactive buttons */
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    transition: transform 0.1s ease-out;
+  }
+
   button:not([disabled]):active,
   [role="button"]:not([disabled]):active {
     transform: scale(0.97);
