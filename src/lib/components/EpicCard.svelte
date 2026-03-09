@@ -23,6 +23,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import IssueCountsBadges from '$lib/components/IssueCountsBadges.svelte';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
 
   interface Props {
     epic: Epic;
@@ -77,16 +78,8 @@
     <IssueCountsBadges {counts} />
     <!-- Progress bar -->
     {#if headerProgress.total > 0}
-      <div class="mt-3 flex items-center gap-2">
-        <div class="flex-1 h-[3px] bg-muted rounded-full overflow-hidden">
-          <div
-            class="h-full bg-foreground/40 rounded-full transition-all duration-300"
-            style="width: {headerProgress.percentage}%"
-          ></div>
-        </div>
-        <span class="text-metadata text-foreground-secondary shrink-0">
-          {headerProgress.percentage}%
-        </span>
+      <div class="mt-3">
+        <ProgressBar percentage={headerProgress.percentage} ariaLabel="Epic completion progress" />
       </div>
     {/if}
   </CardContent>

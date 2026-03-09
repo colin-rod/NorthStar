@@ -32,39 +32,51 @@
     event.stopPropagation();
     openIssueSheet(dep);
   }
+
+  function handleFocusLeave(e: FocusEvent) {
+    const next = e.relatedTarget as Node | null;
+    const popover = document.querySelector('[data-testid="dependency-popover"]');
+    if (!popover?.contains(next)) open = false;
+  }
 </script>
 
 {#if totalDeps > 0}
   <Popover bind:open>
-    <span
-      role="presentation"
-      onmouseenter={() => (open = true)}
-      onmouseleave={() => (open = false)}
-    >
-      <PopoverTrigger>
-        {#if hasBlockers}
-          <button
-            type="button"
-            data-testid="dependency-chip"
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-bg-blocked text-status-blocked-strong border border-status-blocked/20 hover:bg-bg-blocked/70 transition-colors cursor-pointer"
-            onclick={(e) => e.stopPropagation()}
-          >
-            <Lock aria-hidden="true" class="h-3 w-3" />
-            {blockingDeps.length} blocked
-          </button>
-        {:else}
-          <button
-            type="button"
-            data-testid="dependency-chip"
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border-divider hover:bg-surface-subtle transition-colors cursor-pointer"
-            onclick={(e) => e.stopPropagation()}
-          >
-            <CircleCheck aria-hidden="true" class="h-3 w-3" />
-            {satisfiedDeps.length} dep{satisfiedDeps.length !== 1 ? 's' : ''}
-          </button>
-        {/if}
-      </PopoverTrigger>
-    </span>
+    <PopoverTrigger>
+      {#if hasBlockers}
+        <button
+          type="button"
+          data-testid="dependency-chip"
+          aria-haspopup="true"
+          aria-expanded={open}
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-bg-blocked text-status-blocked-strong border border-status-blocked/20 hover:bg-bg-blocked/70 transition-colors cursor-pointer"
+          onclick={(e) => e.stopPropagation()}
+          onmouseenter={() => (open = true)}
+          onmouseleave={() => (open = false)}
+          onfocus={() => (open = true)}
+          onblur={handleFocusLeave}
+        >
+          <Lock aria-hidden="true" class="h-3 w-3" />
+          {blockingDeps.length} blocked
+        </button>
+      {:else}
+        <button
+          type="button"
+          data-testid="dependency-chip"
+          aria-haspopup="true"
+          aria-expanded={open}
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border-divider hover:bg-surface-subtle transition-colors cursor-pointer"
+          onclick={(e) => e.stopPropagation()}
+          onmouseenter={() => (open = true)}
+          onmouseleave={() => (open = false)}
+          onfocus={() => (open = true)}
+          onblur={handleFocusLeave}
+        >
+          <CircleCheck aria-hidden="true" class="h-3 w-3" />
+          {satisfiedDeps.length} dep{satisfiedDeps.length !== 1 ? 's' : ''}
+        </button>
+      {/if}
+    </PopoverTrigger>
 
     <PopoverContent class="w-[calc(100vw-2rem)] max-w-64 p-0" align="start" sideOffset={8}>
       <div class="p-3 space-y-2" data-testid="dependency-popover">
@@ -80,6 +92,7 @@
                   type="button"
                   class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-subtle transition-colors text-left group/dep"
                   onclick={(e) => handleDepClick(dep, e)}
+                  onblur={handleFocusLeave}
                 >
                   <div
                     class={`w-2 h-2 rounded-full shrink-0 ${getStatusDotClass(dep.status)}`}
@@ -110,6 +123,7 @@
                   type="button"
                   class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-subtle transition-colors text-left group/dep"
                   onclick={(e) => handleDepClick(dep, e)}
+                  onblur={handleFocusLeave}
                 >
                   <div
                     class={`w-2 h-2 rounded-full shrink-0 ${getStatusDotClass(dep.status)}`}

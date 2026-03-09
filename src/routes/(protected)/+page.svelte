@@ -161,6 +161,7 @@
       <button
         type="button"
         title={viewMode === 'sectioned' ? 'View all issues' : 'View by status'}
+        aria-label={viewMode === 'sectioned' ? 'View all issues' : 'View by status'}
         onclick={() =>
           goto(viewMode === 'sectioned' ? '?view=all' : '/', {
             replaceState: false,

@@ -36,7 +36,7 @@
         isHome ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
-      <Home class="w-6 h-6" />
+      <Home aria-hidden={true} class="w-6 h-6" />
       <span class="text-xs font-medium">Home</span>
     </a>
 
@@ -49,7 +49,7 @@
         isProjects ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
-      <Folder class="w-6 h-6" />
+      <Folder aria-hidden={true} class="w-6 h-6" />
       <span class="text-xs font-medium">Projects</span>
     </a>
 
@@ -61,7 +61,7 @@
         $navSearchOpen ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
-      <Search class="w-6 h-6" />
+      <Search aria-hidden={true} class="w-6 h-6" />
       <span class="text-xs font-medium">Search</span>
     </button>
 
@@ -74,7 +74,7 @@
         isSettings ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary',
       )}
     >
-      <User class="w-6 h-6" />
+      <User aria-hidden={true} class="w-6 h-6" />
       <span class="text-xs font-medium">Account</span>
     </a>
   </div>

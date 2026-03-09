@@ -33,7 +33,7 @@
   <IssueTable {issues} onRowClick={onIssueClick} />
 {:else}
   <!-- Mobile: Row-based list -->
-  <div class="border rounded-lg divide-y">
+  <div class="border rounded-lg divide-y" role="list">
     {#each issues as issue (issue.id)}
       <IssueRow {issue} onClick={() => onIssueClick(issue)} />
     {/each}

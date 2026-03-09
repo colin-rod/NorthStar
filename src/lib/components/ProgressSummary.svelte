@@ -21,14 +21,14 @@
   );
   let fillClass = $derived(
     clampedCompletionPercent === 100
-      ? 'bg-green-500'
+      ? 'bg-progress-done'
       : clampedCompletionPercent >= 75
-        ? 'bg-emerald-500'
+        ? 'bg-progress-high'
         : clampedCompletionPercent >= 50
-          ? 'bg-blue-500'
+          ? 'bg-progress-mid'
           : clampedCompletionPercent >= 25
-            ? 'bg-amber-500'
-            : 'bg-red-500',
+            ? 'bg-progress-low'
+            : 'bg-progress-critical',
   );
 
   let totalPoints = $derived(nonCanceled.reduce((sum, i) => sum + (i.story_points || 0), 0));

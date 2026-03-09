@@ -23,14 +23,14 @@
     !progress
       ? ''
       : progress.percentage === 100
-        ? 'bg-green-500'
+        ? 'bg-progress-done'
         : progress.percentage >= 75
-          ? 'bg-emerald-500'
+          ? 'bg-progress-high'
           : progress.percentage >= 50
-            ? 'bg-blue-500'
+            ? 'bg-progress-mid'
             : progress.percentage >= 25
-              ? 'bg-amber-500'
-              : 'bg-red-500',
+              ? 'bg-progress-low'
+              : 'bg-progress-critical',
   );
 </script>
 

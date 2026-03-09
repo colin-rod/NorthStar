@@ -10,14 +10,14 @@
   let clamped = $derived(Math.max(0, Math.min(100, Number(percentage) || 0)));
   let fillClass = $derived(
     clamped === 100
-      ? 'bg-green-500'
+      ? 'bg-progress-done'
       : clamped >= 75
-        ? 'bg-emerald-500'
+        ? 'bg-progress-high'
         : clamped >= 50
-          ? 'bg-teal-500'
+          ? 'bg-progress-mid'
           : clamped >= 25
-            ? 'bg-amber-500'
-            : 'bg-red-500',
+            ? 'bg-progress-low'
+            : 'bg-progress-critical',
   );
 </script>
 

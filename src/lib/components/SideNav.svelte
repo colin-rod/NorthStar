@@ -45,7 +45,7 @@
             : 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground',
         )}
       >
-        <Home class="w-5 h-5" />
+        <Home aria-hidden={true} class="w-5 h-5" />
         <span class="text-body">Home</span>
       </a>
 
@@ -60,7 +60,7 @@
             : 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground',
         )}
       >
-        <Folder class="w-5 h-5" />
+        <Folder aria-hidden={true} class="w-5 h-5" />
         <span class="text-body">Projects</span>
       </a>
 
@@ -75,7 +75,7 @@
             : 'text-foreground-muted hover:bg-surface-subtle hover:text-foreground',
         )}
       >
-        <Upload class="w-5 h-5" />
+        <Upload aria-hidden={true} class="w-5 h-5" />
         <span class="text-body">Import</span>
       </a>
     </div>

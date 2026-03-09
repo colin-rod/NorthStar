@@ -43,6 +43,13 @@
     --status-blocked: 32 95% 54%; /* #D97706 - Amber (more saturated for warning) */
     --status-canceled: 215 16% 57%; /* #9CA3AF - Gray (keep muted) */
 
+    /* Progress bar fill tiers */
+    --progress-critical: 0 72% 51%; /* red — 0-24% */
+    --progress-low: 32 95% 54%; /* amber — 25-49% */
+    --progress-mid: 217 91% 60%; /* blue — 50-74% */
+    --progress-high: 158 64% 52%; /* emerald — 75-99% */
+    --progress-done: 142 71% 45%; /* forest green — 100% */
+
     /* Semantic Background Tints - Very subtle */
     --bg-done: 138 76% 97%; /* #F0FDF4 - Done background */
     --bg-blocked: 48 100% 94%; /* #FEF3C7 - Blocked background (strengthened) */
@@ -74,6 +81,12 @@
 
   /* Dark mode - keeping for future, but not in MVP */
   .dark {
+    --progress-critical: 0 72% 60%;
+    --progress-low: 32 95% 62%;
+    --progress-mid: 217 91% 68%;
+    --progress-high: 158 64% 60%;
+    --progress-done: 142 71% 55%;
+
     --background: 217 19% 15%;
     --foreground: 210 40% 98%;
     --card: 217 19% 15%;

@@ -114,6 +114,14 @@ export default {
           'blocked-strong': 'hsl(var(--status-blocked-strong))',
           canceled: 'hsl(var(--status-canceled))',
         },
+        /* Progress bar fill tiers */
+        progress: {
+          critical: 'hsl(var(--progress-critical))',
+          low: 'hsl(var(--progress-low))',
+          mid: 'hsl(var(--progress-mid))',
+          high: 'hsl(var(--progress-high))',
+          done: 'hsl(var(--progress-done))',
+        },
         /* Semantic background tints */
         bg: {
           done: 'hsl(var(--bg-done))',
