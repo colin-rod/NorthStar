@@ -169,15 +169,18 @@ function parseNumberArray(value: string | null, validValues: readonly number[]):
 
 function parseStoryPoints(value: string | null): (number | null)[] {
   if (!value) return [];
-  const tokens = value.split(',');
-  const hasNone = tokens.includes('none');
-  return tokens
-    .map((v) => {
-      if (v === 'none') return null;
+  const result: (number | null)[] = [];
+  for (const v of value.split(',')) {
+    if (v === 'none') {
+      result.push(null);
+    } else {
       const num = parseInt(v, 10);
-      return !isNaN(num) && (VALID_STORY_POINTS as readonly number[]).includes(num) ? num : null;
-    })
-    .filter((v) => v !== null || hasNone);
+      if (!isNaN(num) && (VALID_STORY_POINTS as readonly number[]).includes(num)) {
+        result.push(num);
+      }
+    }
+  }
+  return result;
 }
 
 function parseEnum<T extends string>(
