@@ -71,6 +71,8 @@
   let filteredComputed = $derived(filteredOptions.filter((s) => s.section === 'computed'));
   let filteredRaw = $derived(filteredOptions.filter((s) => s.section === 'raw'));
 
+  let isActive = $derived(selectedStatuses.length > 0);
+
   // Display text for trigger button
   let buttonText = $derived.by(() => {
     if (selectedStatuses.length === 0) {
@@ -112,7 +114,12 @@
 
 <Popover bind:open>
   <PopoverTrigger
-    class="inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+    class={[
+      'inline-flex items-center justify-start rounded-md border px-4 py-2 text-sm font-medium',
+      isActive
+        ? 'bg-primary/10 border-primary text-primary hover:bg-primary/20'
+        : 'border-input bg-background hover:bg-accent hover:text-accent-foreground',
+    ].join(' ')}
   >
     {buttonText}
   </PopoverTrigger>

@@ -17,6 +17,8 @@
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  $: isActive = selectedProjectIds.length > 0;
+
   // Display text for trigger button
   $: buttonText =
     selectedProjectIds.length === 0 ? 'All Projects' : `Projects (${selectedProjectIds.length})`;
@@ -50,7 +52,12 @@
 
 <Popover bind:open>
   <PopoverTrigger
-    class="inline-flex items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+    class={[
+      'inline-flex items-center justify-start rounded-md border px-4 py-2 text-sm font-medium',
+      isActive
+        ? 'bg-primary/10 border-primary text-primary hover:bg-primary/20'
+        : 'border-input bg-background hover:bg-accent hover:text-accent-foreground',
+    ].join(' ')}
   >
     {buttonText}
   </PopoverTrigger>

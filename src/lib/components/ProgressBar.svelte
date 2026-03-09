@@ -14,7 +14,7 @@
       : clamped >= 75
         ? 'bg-emerald-500'
         : clamped >= 50
-          ? 'bg-blue-500'
+          ? 'bg-teal-500'
           : clamped >= 25
             ? 'bg-amber-500'
             : 'bg-red-500',

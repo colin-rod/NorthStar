@@ -91,13 +91,13 @@
       <div class="flex-1 min-w-0">
         <!-- Title: 16px, weight 500 (medium bold-ish) -->
         <h3 class="text-issue-title truncate flex items-center gap-2">
-          <span aria-label="Issue {issue.number}" class="text-muted-foreground font-mono text-sm"
+          <span aria-label="Issue {issue.number}" class="text-muted-foreground/40 font-mono text-sm"
             >I-{issue.number}</span
           >
           <span aria-hidden="true" class="mx-1 text-muted-foreground">·</span>
           <span
             class="flex-1 truncate {issue.status === 'done' || issue.status === 'canceled'
-              ? 'line-through decoration-foreground-muted'
+              ? 'line-through decoration-foreground-muted text-muted-foreground'
               : ''}">{issue.title}</span
           >
           <!-- Ready indicator: green checkmark for todo status when not blocked -->

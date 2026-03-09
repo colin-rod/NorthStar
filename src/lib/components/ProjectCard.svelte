@@ -27,6 +27,8 @@
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Pencil, Archive } from '@lucide/svelte';
+  import { getProjectColor } from '$lib/utils/project-colors';
+  import { getProjectIcon } from '$lib/utils/project-icons';
 
   interface Props {
     project: Project;
@@ -51,6 +53,8 @@
     canceled: 0,
   };
   let effectiveCounts = $derived(counts ?? defaultCounts);
+  let projectColor = $derived(getProjectColor(project.color));
+  let ProjectIcon = $derived(getProjectIcon(project.icon));
 
   function handleEdit(e: MouseEvent) {
     e.preventDefault();
@@ -77,8 +81,17 @@
   >
     <CardHeader class="pb-4">
       <div class="flex items-center justify-between">
-        <!-- Project name: section header weight -->
-        <h3 class="text-section-header font-accent">{project.name}</h3>
+        <!-- Project identity: colored icon badge + name -->
+        <div class="flex items-center gap-3">
+          <div
+            class="h-6 w-6 rounded-md flex items-center justify-center shrink-0 {projectColor.bg}"
+          >
+            {#key project.icon}
+              <ProjectIcon aria-hidden="true" size={13} class="text-white" />
+            {/key}
+          </div>
+          <h3 class="text-section-header font-accent truncate">{project.name}</h3>
+        </div>
 
         <!-- Action buttons - visible on hover, above overlay -->
         <div

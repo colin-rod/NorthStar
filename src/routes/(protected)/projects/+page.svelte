@@ -672,8 +672,8 @@
     {:else}
       <EmptyState
         icon={FolderOpen}
-        title="No projects yet"
-        description="Projects organize your work into epics and issues"
+        title="No projects yet."
+        description="Create a project to start organizing your work."
         ctaLabel="New Project"
         onCtaClick={() => projectSheetOpen.set(true)}
       />

@@ -279,8 +279,8 @@
           {#if filter === 'all' && allIssues.length === 0}
             <EmptyState
               icon={ListTodo}
-              title="No issues in this epic"
-              description="Add an issue to start tracking work"
+              title="Nothing here yet."
+              description="Add an issue to start tracking work."
               ctaLabel="New Issue"
               onCtaClick={() => (showInlineForm = true)}
             />

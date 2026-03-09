@@ -216,16 +216,16 @@
       {#if hasProjects}
         <EmptyState
           icon={Inbox}
-          title="No issues yet"
-          description="Add your first issue to start tracking work"
+          title="Your slate is clear."
+          description="Add your first issue to get started."
           ctaLabel="New Issue"
           onCtaClick={openCreateIssueSheet}
         />
       {:else}
         <EmptyState
           icon={Inbox}
-          title="No issues yet"
-          description="Create a project to start tracking your work"
+          title="Your slate is clear."
+          description="Start by creating a project."
           ctaLabel="New Project"
           onCtaClick={() => projectSheetOpen.set(true)}
         />
@@ -246,16 +246,16 @@
       {:else if hasProjects}
         <EmptyState
           icon={Inbox}
-          title="No issues yet"
-          description="Add your first issue to start tracking work"
+          title="Your slate is clear."
+          description="Add your first issue to get started."
           ctaLabel="New Issue"
           onCtaClick={openCreateIssueSheet}
         />
       {:else}
         <EmptyState
           icon={Inbox}
-          title="No issues yet"
-          description="Create a project to start tracking your work"
+          title="Your slate is clear."
+          description="Start by creating a project."
           ctaLabel="New Project"
           onCtaClick={() => projectSheetOpen.set(true)}
         />
