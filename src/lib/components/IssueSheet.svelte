@@ -39,6 +39,7 @@
   import Link2Icon from '@lucide/svelte/icons/link-2';
   import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
   import LoaderIcon from '@lucide/svelte/icons/loader';
+  import XIcon from '@lucide/svelte/icons/x';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll, goto } from '$app/navigation';
   import { deserialize } from '$app/forms';
@@ -94,6 +95,7 @@
   let localPriority = $state(2);
   let localStoryPoints = $state<StoryPoints | null>(null);
   let localEpicId = $state('');
+  let localProjectId = $state('');
   let localMilestoneId = $state<string | null>(null);
 
   // Guard: prevent auto-save effects from firing before init effect has run
@@ -173,6 +175,7 @@
 
   // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  let isExpandedDesktop = $derived(expanded && isDesktop());
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
   let sheetClass = $derived(
     isDesktop() ? 'w-[600px] h-screen overflow-y-auto p-6' : 'overflow-y-auto relative', // No max-h, handled by hook
@@ -196,6 +199,7 @@
       localPriority = issue.priority;
       localStoryPoints = issue.story_points;
       localEpicId = issue.epic_id;
+      localProjectId = issue.project_id;
       localMilestoneId = issue.milestone_id;
 
       // CRITICAL: Update prev values to match loaded issue to prevent false change detection
@@ -271,6 +275,7 @@
       createModeInitialized = false;
       expanded = false;
       selectedProjectId = '';
+      localProjectId = '';
       localEpicId = '';
       isEditInitialized = false;
       createLoading = false;
@@ -305,9 +310,7 @@
   let projectEpics = $derived(
     internalMode === 'create'
       ? epics.filter((epic) => epic.project_id === selectedProjectId)
-      : issue
-        ? epics.filter((epic) => epic.project_id === issue?.project_id)
-        : [],
+      : epics.filter((epic) => epic.project_id === localProjectId),
   );
 
   // Get blocking dependencies (issues that block this one)
@@ -605,6 +608,14 @@
     localEpicId = select.value;
   }
 
+  function handleEditProjectChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    localProjectId = select.value;
+    // Auto-select the first epic in the new project
+    const firstEpic = epics.find((e) => e.project_id === localProjectId);
+    localEpicId = firstEpic?.id ?? '';
+  }
+
   // Watch for changes and auto-save (guarded by isEditInitialized to prevent race conditions)
   $effect(() => {
     if (
@@ -668,6 +679,7 @@
     bind:ref={sheetContentRef}
     side={sheetSide}
     {expanded}
+    hideClose
     class={expanded && isDesktop() ? 'p-6' : sheetClass}
     onOpenChange={(isOpen) => {
       open = isOpen;
@@ -728,9 +740,7 @@
             <button
               onclick={handleCopyLink}
               aria-label="Copy link to issue"
-              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5 {isDesktop()
-                ? ''
-                : 'mr-8'}"
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5"
             >
               {#if copied}
                 <CheckIcon class="size-4" />
@@ -743,7 +753,7 @@
             <button
               onclick={() => (expanded = !expanded)}
               aria-label={expanded ? 'Collapse' : 'Expand to full page'}
-              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5 mr-8"
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5"
             >
               {#if expanded}
                 <Minimize2Icon class="size-4" />
@@ -752,6 +762,13 @@
               {/if}
             </button>
           {/if}
+          <button
+            onclick={() => (open = false)}
+            aria-label="Close"
+            class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5"
+          >
+            <XIcon class="size-4" />
+          </button>
         </div>
       </SheetHeader>
 
@@ -823,7 +840,7 @@
         </form>
       {:else}
         <!-- Edit mode: auto-save behavior -->
-        <div class="space-y-4 pb-6">
+        {#snippet metadataFields()}
           <!-- Basic Info Section -->
           <section>
             <div class="space-y-2">
@@ -914,9 +931,49 @@
                   {/each}
                 </select>
               </div>
+
+              <!-- Project -->
+              {#if projects.length > 1}
+                <div class="flex items-center gap-3">
+                  <label for="edit-project" class="text-xs text-foreground-muted w-20 shrink-0"
+                    >Project</label
+                  >
+                  <select
+                    id="edit-project"
+                    value={localProjectId}
+                    onchange={handleEditProjectChange}
+                    class="select-input-sm"
+                  >
+                    {#each projects as project (project.id)}
+                      <option value={project.id}>{project.name}</option>
+                    {/each}
+                  </select>
+                </div>
+              {/if}
+
+              <!-- Epic -->
+              {#if projectEpics.length > 1}
+                <div class="flex items-center gap-3">
+                  <label for="edit-epic" class="text-xs text-foreground-muted w-20 shrink-0"
+                    >Epic</label
+                  >
+                  <select
+                    id="edit-epic"
+                    bind:value={localEpicId}
+                    onchange={handleEpicChange}
+                    class="select-input-sm"
+                  >
+                    {#each projectEpics as epic (epic.id)}
+                      <option value={epic.id}>{epic.name}</option>
+                    {/each}
+                  </select>
+                </div>
+              {/if}
             </div>
           </section>
+        {/snippet}
 
+        {#snippet contentFields()}
           <!-- Description Section -->
           <section>
             <h3 class="section-header">Description</h3>
@@ -953,7 +1010,23 @@
               {blockingIssues}
             />
           {/if}
-        </div>
+        {/snippet}
+
+        {#if isExpandedDesktop}
+          <div class="grid grid-cols-[320px_1fr] gap-8 pb-6">
+            <div class="space-y-4">
+              {@render metadataFields()}
+            </div>
+            <div class="space-y-4 min-w-0">
+              {@render contentFields()}
+            </div>
+          </div>
+        {:else}
+          <div class="space-y-4 pb-6">
+            {@render metadataFields()}
+            {@render contentFields()}
+          </div>
+        {/if}
       {/if}
     {/if}
   </SheetContent>

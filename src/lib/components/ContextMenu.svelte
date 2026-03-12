@@ -16,7 +16,7 @@
   import Check from '@lucide/svelte/icons/check';
   import type { TreeNode } from '$lib/types/tree-grid';
 
-  import type { Milestone } from '$lib/types';
+  import type { Milestone, Project, Epic } from '$lib/types';
 
   interface Props {
     node: TreeNode | null;
@@ -33,6 +33,10 @@
     onStoryPointsChange?: (node: TreeNode, points: number) => void;
     milestones?: Milestone[];
     onMilestoneChange?: (node: TreeNode, milestoneId: string | null) => void;
+    projects?: Pick<Project, 'id' | 'name'>[];
+    allEpics?: Pick<Epic, 'id' | 'name' | 'project_id' | 'is_default'>[];
+    onMoveToProject?: (node: TreeNode, projectId: string) => void;
+    onMoveToEpic?: (node: TreeNode, epicId: string) => void;
   }
 
   let {
@@ -50,6 +54,10 @@
     onStoryPointsChange,
     milestones = [],
     onMilestoneChange,
+    projects = [],
+    allEpics = [],
+    onMoveToProject,
+    onMoveToEpic,
   }: Props = $props();
 
   let triggerRef: HTMLElement | null = $state(null);
@@ -111,6 +119,27 @@
   const currentPriority = $derived((node?.data as any)?.priority ?? null);
   const currentStoryPoints = $derived((node?.data as any)?.story_points ?? null);
   const currentMilestoneId = $derived((node?.data as any)?.milestone_id ?? null);
+  const currentProjectId = $derived((node?.data as any)?.project_id ?? null);
+  const currentEpicId = $derived((node?.data as any)?.epic_id ?? null);
+  const isDefaultEpic = $derived((node?.data as any)?.is_default ?? false);
+
+  // Group epics by project for the "Move to Epic" submenu
+  const epicsByProject = $derived.by(() => {
+    const grouped = new Map<
+      string,
+      {
+        project: Pick<Project, 'id' | 'name'>;
+        epics: Pick<Epic, 'id' | 'name' | 'project_id' | 'is_default'>[];
+      }
+    >();
+    for (const project of projects) {
+      const projectEpics = allEpics.filter((e) => e.project_id === project.id);
+      if (projectEpics.length > 0) {
+        grouped.set(project.id, { project, epics: projectEpics });
+      }
+    }
+    return grouped;
+  });
 
   function handleDelete() {
     deleteDialogOpen = false;
@@ -288,6 +317,32 @@
           </CM.ContextMenuSubContent>
         </CM.ContextMenuSub>
 
+        {#if !isDefaultEpic && projects.length > 1}
+          <CM.ContextMenuSub>
+            <CM.ContextMenuSubTrigger>Move to Project</CM.ContextMenuSubTrigger>
+            <CM.ContextMenuSubContent align="start">
+              {#each projects as project (project.id)}
+                <CM.ContextMenuItem
+                  disabled={currentProjectId === project.id}
+                  onclick={() => {
+                    onMoveToProject?.(node!, project.id);
+                    onClose();
+                  }}
+                >
+                  <span class="flex items-center gap-2">
+                    {#if currentProjectId === project.id}
+                      <Check class="h-3 w-3 shrink-0" />
+                    {:else}
+                      <span class="w-3 shrink-0"></span>
+                    {/if}
+                    {project.name}
+                  </span>
+                </CM.ContextMenuItem>
+              {/each}
+            </CM.ContextMenuSubContent>
+          </CM.ContextMenuSub>
+        {/if}
+
         <CM.ContextMenuSeparator />
 
         <CM.ContextMenuItem
@@ -429,6 +484,39 @@
             {/each}
           </CM.ContextMenuSubContent>
         </CM.ContextMenuSub>
+
+        {#if allEpics.length > 1}
+          <CM.ContextMenuSub>
+            <CM.ContextMenuSubTrigger>Move to Epic</CM.ContextMenuSubTrigger>
+            <CM.ContextMenuSubContent align="start">
+              {#each [...epicsByProject.values()] as { project, epics } (project.id)}
+                <CM.ContextMenuSub>
+                  <CM.ContextMenuSubTrigger>{project.name}</CM.ContextMenuSubTrigger>
+                  <CM.ContextMenuSubContent align="start">
+                    {#each epics as epic (epic.id)}
+                      <CM.ContextMenuItem
+                        disabled={currentEpicId === epic.id}
+                        onclick={() => {
+                          onMoveToEpic?.(node!, epic.id);
+                          onClose();
+                        }}
+                      >
+                        <span class="flex items-center gap-2">
+                          {#if currentEpicId === epic.id}
+                            <Check class="h-3 w-3 shrink-0" />
+                          {:else}
+                            <span class="w-3 shrink-0"></span>
+                          {/if}
+                          {epic.name}
+                        </span>
+                      </CM.ContextMenuItem>
+                    {/each}
+                  </CM.ContextMenuSubContent>
+                </CM.ContextMenuSub>
+              {/each}
+            </CM.ContextMenuSubContent>
+          </CM.ContextMenuSub>
+        {/if}
 
         <CM.ContextMenuSeparator />
 

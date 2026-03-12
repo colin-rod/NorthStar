@@ -62,7 +62,7 @@ export async function handleUpdateIssue(supabase: SupabaseClient, formData: Form
     }
   }
 
-  // Epic ID
+  // Epic ID (supports cross-project moves)
   const epicId = formData.get('epic_id')?.toString();
   if (epicId !== undefined && epicId !== '') {
     const { data: issue } = await supabase
@@ -79,14 +79,18 @@ export async function handleUpdateIssue(supabase: SupabaseClient, formData: Form
       .from('epics')
       .select('id, project_id')
       .eq('id', epicId)
-      .eq('project_id', issue.project_id)
       .maybeSingle();
 
     if (epicError || !epic) {
-      return fail(400, { error: 'Epic not found or does not belong to same project' });
+      return fail(400, { error: 'Epic not found' });
     }
 
     updates.epic_id = epicId;
+
+    // Cross-project move: also update the issue's project_id
+    if (epic.project_id !== issue.project_id) {
+      updates.project_id = epic.project_id;
+    }
   }
 
   // Milestone ID

@@ -126,7 +126,7 @@
   const nodeIsLastChild = $derived(isLastChild(node, allNodes));
 </script>
 
-<div class="relative flex items-center gap-2" style="padding-left: {indentation}">
+<div class="relative flex items-start gap-2" style="padding-left: {indentation}">
   <!-- Tree Lines (absolutely positioned within this cell) -->
   <div class="absolute inset-0 pointer-events-none">
     <TreeLine {node} isLastChild={nodeIsLastChild} {allNodes} />
@@ -139,7 +139,7 @@
         e.stopPropagation();
         onToggleExpand();
       }}
-      class="flex items-center justify-center w-7 h-7 cursor-pointer hover:bg-surface-subtle rounded transition-colors flex-shrink-0"
+      class="flex items-center justify-center w-7 h-7 mt-0.5 cursor-pointer hover:bg-surface-subtle rounded transition-colors shrink-0"
       aria-label={isExpanded ? 'Collapse' : 'Expand'}
       aria-expanded={isExpanded}
     >
@@ -151,7 +151,7 @@
     </button>
   {:else}
     <!-- Spacer to align titles when no chevron -->
-    <div class="w-7 flex-shrink-0"></div>
+    <div class="w-7 shrink-0 mt-0.5"></div>
   {/if}
 
   <!-- Project color+icon badge -->
@@ -173,7 +173,7 @@
       onblur={handleEditBlur}
     />
   {:else}
-    <span class="text-issue-title {fontWeight} truncate flex-1">
+    <span class="text-issue-title {fontWeight} flex-1 min-w-0 wrap-break-word">
       <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
       <span class="mx-1 text-muted-foreground">·</span>
       {title}

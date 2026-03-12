@@ -41,6 +41,7 @@
     class: className,
     side = 'bottom',
     expanded = false,
+    hideClose = false,
     portalProps,
     onOpenChange,
     children,
@@ -49,6 +50,7 @@
     portalProps?: WithoutChildrenOrChild<ComponentProps<typeof SheetPortal>>;
     side?: Side;
     expanded?: boolean;
+    hideClose?: boolean;
     onOpenChange?: (open: boolean) => void;
     children: Snippet;
   } = $props();
@@ -72,12 +74,14 @@
     {...restProps}
   >
     {@render children?.()}
-    <!-- North Design: Subtle close button -->
-    <SheetPrimitive.Close
-      class="absolute end-3 top-3 z-[60] flex items-center justify-center h-11 w-11 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none text-foreground-muted hover:text-foreground"
-    >
-      <XIcon class="size-5" />
-      <span class="sr-only">Close</span>
-    </SheetPrimitive.Close>
+    {#if !hideClose}
+      <!-- North Design: Subtle close button -->
+      <SheetPrimitive.Close
+        class="absolute end-3 top-3 z-[60] flex items-center justify-center h-11 w-11 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none text-foreground-muted hover:text-foreground"
+      >
+        <XIcon class="size-5" />
+        <span class="sr-only">Close</span>
+      </SheetPrimitive.Close>
+    {/if}
   </SheetPrimitive.Content>
 </SheetPortal>

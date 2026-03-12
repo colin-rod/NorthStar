@@ -558,6 +558,48 @@
     }
   }
 
+  async function handleContextMoveToProject(node: TreeNode, projectId: string) {
+    const formData = new FormData();
+    formData.append('epicId', node.id);
+    formData.append('newProjectId', projectId);
+    try {
+      const response = await fetch('?/moveEpic', { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        toast.success('Epic moved');
+      } else {
+        toast.error('Failed to move epic');
+      }
+    } catch {
+      toast.error('Failed to move epic');
+    }
+  }
+
+  async function handleContextMoveToEpic(node: TreeNode, epicId: string) {
+    const targetEpic = data.projects.flatMap((p) => p.epics || []).find((e) => e.id === epicId);
+    const formData = new FormData();
+    formData.append(
+      'update',
+      JSON.stringify({
+        id: node.id,
+        newSortOrder: 999999,
+        newEpicId: epicId,
+        newProjectId: targetEpic?.project_id,
+      }),
+    );
+    try {
+      const response = await fetch('?/reparentNode', { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        toast.success('Issue moved');
+      } else {
+        toast.error('Failed to move issue');
+      }
+    } catch {
+      toast.error('Failed to move issue');
+    }
+  }
+
   function handleIssueClick(issue: Issue) {
     const url = new URL($page.url);
     url.searchParams.set('issue', issue.id);
@@ -717,6 +759,7 @@
   issues={selectedEpicIssues}
   userId={data.session?.user?.id ?? ''}
   milestones={data.milestones ?? []}
+  projects={data.projects.map((p) => ({ id: p.id, name: p.name }))}
 />
 
 <!-- Issue sheet (using store) -->
@@ -747,6 +790,17 @@
   onStoryPointsChange={handleContextStoryPointsChange}
   milestones={data.milestones ?? []}
   onMilestoneChange={handleContextMilestoneChange}
+  projects={data.projects.map((p) => ({ id: p.id, name: p.name }))}
+  allEpics={data.projects.flatMap((p) =>
+    (p.epics || []).map((e) => ({
+      id: e.id,
+      name: e.name,
+      project_id: e.project_id,
+      is_default: e.is_default,
+    })),
+  )}
+  onMoveToProject={handleContextMoveToProject}
+  onMoveToEpic={handleContextMoveToEpic}
 />
 
 <!-- Bulk delete confirmation dialog -->

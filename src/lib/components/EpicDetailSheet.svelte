@@ -7,6 +7,7 @@
     Issue,
     IssueStatus,
     EpicStatus,
+    Project,
   } from '$lib/types';
   import type { IssueCounts } from '$lib/utils/issue-counts';
   import { computeProgress } from '$lib/utils/issue-counts';
@@ -21,6 +22,7 @@
   import Link2Icon from '@lucide/svelte/icons/link-2';
   import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
   import LoaderIcon from '@lucide/svelte/icons/loader';
+  import XIcon from '@lucide/svelte/icons/x';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll } from '$app/navigation';
   import { deserialize } from '$app/forms';
@@ -48,6 +50,7 @@
     userId?: string;
     milestones?: Milestone[];
     issues?: Issue[];
+    projects?: Pick<Project, 'id' | 'name'>[];
   }
 
   let {
@@ -60,6 +63,7 @@
     userId = '',
     milestones = [],
     issues = [],
+    projects = [],
   }: Props = $props();
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
@@ -72,6 +76,7 @@
   let localPriority = $state<number | null>(null);
   let localDescription = $state<string | null>(null);
   let localMilestoneId = $state<string | null>(null);
+  let localProjectId = $state('');
   let attachments = $state<Attachment[]>([]);
   let links = $state<Link[]>([]);
   let createLoading = $state(false);
@@ -95,6 +100,7 @@
   }
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  let isExpandedDesktop = $derived(expanded && isDesktop());
   let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
   let sheetClass = $derived(
     isDesktop() ? 'w-[480px] h-screen overflow-y-auto p-6' : 'overflow-y-auto relative',
@@ -113,6 +119,7 @@
       localStatus = effectiveEpic.status;
       localPriority = effectiveEpic.priority ?? null;
       localMilestoneId = effectiveEpic.milestone_id ?? null;
+      localProjectId = effectiveEpic.project_id;
       localDescription = effectiveEpic.description ?? null;
       lastPersistedDescriptionNormalized = normalizeDescription(effectiveEpic.description);
       saveState = 'idle';
@@ -298,6 +305,30 @@
     autoSave('milestone_id', milestoneId ?? '');
   }
 
+  async function handleProjectChange(event: Event) {
+    const newProjectId = (event.target as HTMLSelectElement).value;
+    if (!effectiveEpic || newProjectId === localProjectId) return;
+    localProjectId = newProjectId;
+
+    const formData = new FormData();
+    formData.append('epicId', effectiveEpic.id);
+    formData.append('newProjectId', newProjectId);
+
+    try {
+      const response = await fetch('?/moveEpic', { method: 'POST', body: formData });
+      if (response.ok) {
+        await invalidateAll();
+        toast.success('Epic moved to new project');
+      } else {
+        toast.error('Failed to move epic');
+        localProjectId = effectiveEpic.project_id;
+      }
+    } catch {
+      toast.error('Failed to move epic');
+      localProjectId = effectiveEpic.project_id;
+    }
+  }
+
   async function uploadImage(file: File): Promise<string> {
     if (!userId) throw new Error('User not authenticated');
     const path = `${userId}/inline-images/${crypto.randomUUID()}-${file.name}`;
@@ -436,6 +467,7 @@
   <SheetContent
     side={sheetSide}
     {expanded}
+    hideClose
     class={expanded && isDesktop() ? 'p-6' : sheetClass}
     bind:ref={sheetContentRef}
   >
@@ -473,27 +505,28 @@
           </SheetTitle>
           {#if internalMode === 'edit'}
             {#if saveState === 'saving'}
-              <span class="shrink-0 mt-0.5 text-muted-foreground" aria-label="Saving">
+              <span class="shrink-0 mt-0.5 text-foreground-muted" aria-label="Saving">
                 <LoaderIcon class="size-4 animate-spin" />
               </span>
             {:else if saveState === 'saved'}
               <span
-                class="shrink-0 mt-0.5 text-green-600 dark:text-green-400 transition-opacity duration-300"
+                class="shrink-0 mt-0.5 text-status-done animate-[scale-in_0.15s_ease-out]"
                 aria-label="Saved"
               >
                 <CheckIcon class="size-4" />
               </span>
             {:else if saveState === 'error'}
-              <span class="shrink-0 mt-0.5 text-destructive" aria-label="Save failed">
+              <span
+                class="shrink-0 mt-0.5 text-destructive animate-[scale-in_0.15s_ease-out]"
+                aria-label="Save failed"
+              >
                 <AlertCircleIcon class="size-4" />
               </span>
             {/if}
             <button
               onclick={handleCopyLink}
               aria-label="Copy link to epic"
-              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground {isDesktop()
-                ? ''
-                : 'mr-8'}"
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5"
             >
               {#if copied}
                 <CheckIcon class="size-4" />
@@ -506,7 +539,7 @@
             <button
               onclick={() => (expanded = !expanded)}
               aria-label={expanded ? 'Collapse' : 'Expand to full page'}
-              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mr-8"
+              class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5"
             >
               {#if expanded}
                 <Minimize2Icon class="size-4" />
@@ -515,6 +548,13 @@
               {/if}
             </button>
           {/if}
+          <button
+            onclick={() => (open = false)}
+            aria-label="Close"
+            class="shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-foreground-muted hover:text-foreground mt-0.5"
+          >
+            <XIcon class="size-4" />
+          </button>
         </div>
       </SheetHeader>
 
@@ -619,7 +659,7 @@
         </form>
       {:else}
         <!-- Edit mode: auto-save behavior -->
-        <div class="space-y-6 pb-6">
+        {#snippet metadataFields()}
           <!-- Name -->
           <section>
             <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
@@ -683,40 +723,24 @@
                   />
                 </div>
               </div>
+              {#if projects.length > 1 && !effectiveEpic?.is_default}
+                <div class="flex items-center gap-3">
+                  <label for="edit-project" class="text-xs text-foreground-muted w-20 shrink-0"
+                    >Project</label
+                  >
+                  <select
+                    id="edit-project"
+                    value={localProjectId}
+                    onchange={handleProjectChange}
+                    class="flex h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {#each projects as project (project.id)}
+                      <option value={project.id}>{project.name}</option>
+                    {/each}
+                  </select>
+                </div>
+              {/if}
             </div>
-          </section>
-
-          <!-- Description -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Description
-            </h3>
-            <RichTextEditor
-              content={localDescription}
-              onchange={handleDescriptionChange}
-              onblur={handleDescriptionBlur}
-              {uploadImage}
-            />
-          </section>
-
-          <!-- Attachments -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Attachments
-            </h3>
-            <AttachmentList
-              {attachments}
-              onUpload={handleAttachmentUpload}
-              onDelete={handleAttachmentDelete}
-            />
-          </section>
-
-          <!-- Links -->
-          <section>
-            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
-              Links
-            </h3>
-            <LinkList {links} onAdd={handleLinkAdd} onDelete={handleLinkDelete} />
           </section>
 
           <!-- Progress -->
@@ -751,7 +775,58 @@
               </div>
             </section>
           {/if}
-        </div>
+        {/snippet}
+
+        {#snippet contentFields()}
+          <!-- Description -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Description
+            </h3>
+            <RichTextEditor
+              content={localDescription}
+              onchange={handleDescriptionChange}
+              onblur={handleDescriptionBlur}
+              {uploadImage}
+            />
+          </section>
+
+          <!-- Attachments -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Attachments
+            </h3>
+            <AttachmentList
+              {attachments}
+              onUpload={handleAttachmentUpload}
+              onDelete={handleAttachmentDelete}
+            />
+          </section>
+
+          <!-- Links -->
+          <section>
+            <h3 class="text-xs uppercase font-medium text-foreground-muted mb-2 tracking-wide">
+              Links
+            </h3>
+            <LinkList {links} onAdd={handleLinkAdd} onDelete={handleLinkDelete} />
+          </section>
+        {/snippet}
+
+        {#if isExpandedDesktop}
+          <div class="grid grid-cols-[320px_1fr] gap-8 pb-6">
+            <div class="space-y-6">
+              {@render metadataFields()}
+            </div>
+            <div class="space-y-6 min-w-0">
+              {@render contentFields()}
+            </div>
+          </div>
+        {:else}
+          <div class="space-y-6 pb-6">
+            {@render metadataFields()}
+            {@render contentFields()}
+          </div>
+        {/if}
       {/if}
     {/if}
   </SheetContent>

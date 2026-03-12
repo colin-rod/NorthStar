@@ -581,7 +581,99 @@ export const actions: Actions = {
       return fail(500, { error: 'Failed to move item' });
     }
 
+    // Cascade project_id to child issues when moving an epic to a different project
+    if (table === 'epics' && update.newProjectId) {
+      const { error: cascadeError } = await supabase
+        .from('issues')
+        .update({ project_id: update.newProjectId })
+        .eq('epic_id', update.id);
+      if (cascadeError) {
+        console.error('Cascade child issues error:', cascadeError);
+        return fail(500, { error: 'Failed to update child issues' });
+      }
+    }
+
     return { success: true, action: 'reparentNode' };
+  },
+
+  /**
+   * Move an epic to a different project (with child issue cascade).
+   * Used by context menu "Move to Project" and EpicDetailSheet project picker.
+   */
+  moveEpic: async ({ request, locals: { supabase, session } }) => {
+    if (!session) return fail(401, { error: 'Unauthorized' });
+
+    const formData = await request.formData();
+    const epicId = formData.get('epicId')?.toString();
+    const newProjectId = formData.get('newProjectId')?.toString();
+
+    if (!epicId || !newProjectId) {
+      return fail(400, { error: 'Epic ID and target project ID are required' });
+    }
+
+    // Fetch the epic and verify it's not a default epic
+    const { data: epic, error: epicError } = await supabase
+      .from('epics')
+      .select('id, project_id, is_default')
+      .eq('id', epicId)
+      .maybeSingle();
+
+    if (epicError || !epic) {
+      return fail(404, { error: 'Epic not found' });
+    }
+
+    if (epic.is_default) {
+      return fail(400, { error: 'Cannot move the default epic' });
+    }
+
+    if (epic.project_id === newProjectId) {
+      return { success: true, action: 'moveEpic' };
+    }
+
+    // Validate target project exists
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', newProjectId)
+      .maybeSingle();
+
+    if (projectError || !project) {
+      return fail(404, { error: 'Target project not found' });
+    }
+
+    // Compute next sort_order in target project
+    const { data: siblings } = await supabase
+      .from('epics')
+      .select('sort_order')
+      .eq('project_id', newProjectId)
+      .order('sort_order', { ascending: false })
+      .limit(1);
+
+    const nextSortOrder = (siblings?.[0]?.sort_order ?? -1) + 1;
+
+    // Update the epic
+    const { error: updateError } = await supabase
+      .from('epics')
+      .update({ project_id: newProjectId, sort_order: nextSortOrder })
+      .eq('id', epicId);
+
+    if (updateError) {
+      console.error('Move epic error:', updateError);
+      return fail(500, { error: 'Failed to move epic' });
+    }
+
+    // Cascade project_id to all child issues
+    const { error: cascadeError } = await supabase
+      .from('issues')
+      .update({ project_id: newProjectId })
+      .eq('epic_id', epicId);
+
+    if (cascadeError) {
+      console.error('Cascade child issues error:', cascadeError);
+      return fail(500, { error: 'Failed to update child issues' });
+    }
+
+    return { success: true, action: 'moveEpic' };
   },
 
   /**
