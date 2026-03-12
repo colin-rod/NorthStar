@@ -51,6 +51,7 @@
     milestones?: Milestone[];
     issues?: Issue[];
     projects?: Pick<Project, 'id' | 'name'>[];
+    onIssueClick?: (issue: Issue) => void;
   }
 
   let {
@@ -64,6 +65,7 @@
     milestones = [],
     issues = [],
     projects = [],
+    onIssueClick,
   }: Props = $props();
 
   // Internal mode: can diverge from parent's `mode` prop during create-to-edit transition
@@ -765,12 +767,15 @@
               <h3 class="section-header">Issues</h3>
               <div class="space-y-2">
                 {#each issues as issue (issue.id)}
-                  <div class="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                  <button
+                    onclick={() => onIssueClick?.(issue)}
+                    class="w-full flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
+                  >
                     <Badge variant={getIssueStatusVariant(issue.status)} class="text-xs shrink-0">
                       {issueStatusLabel(issue.status)}
                     </Badge>
                     <span class="text-body flex-1 truncate">{issue.title}</span>
-                  </div>
+                  </button>
                 {/each}
               </div>
             </section>

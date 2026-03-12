@@ -90,6 +90,8 @@
   let contextMenuNode = $state<TreeNode | null>(null);
   let contextMenuX = $state(0);
   let contextMenuY = $state(0);
+  let contextMenuBulkCount = $state(0);
+  let contextMenuSelectedTypes = $state<Set<'project' | 'epic' | 'issue'>>(new Set());
 
   // Inline rename state
   let editingNodeId = $state<string | null>(null);
@@ -456,12 +458,26 @@
     contextMenuX = event.clientX;
     contextMenuY = event.clientY;
     contextMenuNode = node;
+
+    // Bulk mode: right-clicked node is selected AND multiple items selected
+    if (selectedIds.has(node.id) && selectedIds.size > 1) {
+      contextMenuBulkCount = selectedIds.size;
+      contextMenuSelectedTypes = new Set(
+        Array.from(selectedIds).map((id) => resolveNodeType(id) as 'project' | 'epic' | 'issue'),
+      );
+    } else {
+      contextMenuBulkCount = 0;
+      contextMenuSelectedTypes = new Set();
+    }
+
     contextMenuOpen = true;
   }
 
   function handleContextMenuClose() {
     contextMenuOpen = false;
     contextMenuNode = null;
+    contextMenuBulkCount = 0;
+    contextMenuSelectedTypes = new Set();
   }
 
   async function handleContextStatusChange(node: TreeNode, status: string) {
@@ -760,6 +776,12 @@
   userId={data.session?.user?.id ?? ''}
   milestones={data.milestones ?? []}
   projects={data.projects.map((p) => ({ id: p.id, name: p.name }))}
+  onIssueClick={(issue) =>
+    openIssueSheet({
+      ...issue,
+      blocked_by: issue.blocked_by || [],
+      blocking: issue.blocking || [],
+    })}
 />
 
 <!-- Issue sheet (using store) -->
@@ -801,6 +823,15 @@
   )}
   onMoveToProject={handleContextMoveToProject}
   onMoveToEpic={handleContextMoveToEpic}
+  bulkCount={contextMenuBulkCount}
+  selectedTypes={contextMenuSelectedTypes}
+  onBulkStatusChange={(status) => handleBulkEdit('status', status)}
+  onBulkPriorityChange={(p) => handleBulkEdit('priority', p.toString())}
+  onBulkStoryPointsChange={(pts) => handleBulkEdit('story_points', pts.toString())}
+  onBulkMilestoneChange={(id) => handleBulkEdit('milestone_id', id ?? '')}
+  onBulkDelete={() => {
+    bulkDeleteDialogOpen = true;
+  }}
 />
 
 <!-- Bulk delete confirmation dialog -->
