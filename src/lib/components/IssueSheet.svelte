@@ -40,6 +40,13 @@
   import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
   import LoaderIcon from '@lucide/svelte/icons/loader';
   import XIcon from '@lucide/svelte/icons/x';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import ChevronRight from '@lucide/svelte/icons/chevron-right';
+  import {
+    Collapsible,
+    CollapsibleTrigger,
+    CollapsibleContent,
+  } from '$lib/components/ui/collapsible';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { invalidateAll, goto } from '$app/navigation';
   import { deserialize } from '$app/forms';
@@ -131,6 +138,8 @@
   // Create mode state
   let selectedProjectId = $state('');
   let createLoading = $state(false);
+  let advancedOpen = $state(false);
+  let editAdvancedOpen = $state(false);
   let createModeInitialized = $state(false);
 
   // Description state
@@ -795,43 +804,54 @@
             </div>
           </section>
 
-          <!-- Organization Section -->
-          <section>
-            <h3 class="section-header">Organization</h3>
-            <div class="space-y-4">
-              <!-- Project Select -->
-              <div>
-                <Label for="project" class="text-metadata mb-2 block">Project</Label>
-                <select
-                  id="project"
-                  bind:value={selectedProjectId}
-                  required
-                  disabled={createLoading}
-                  class="select-input"
-                >
-                  {#each projects as project (project.id)}
-                    <option value={project.id}>{project.name}</option>
-                  {/each}
-                </select>
-              </div>
+          <!-- Advanced Settings (Project & Epic) -->
+          <Collapsible bind:open={advancedOpen}>
+            <CollapsibleTrigger
+              class="w-full flex items-center gap-2 py-2 text-xs uppercase font-medium text-foreground-muted tracking-wide cursor-pointer hover:text-foreground transition-colors"
+            >
+              {#if advancedOpen}
+                <ChevronDown class="h-3.5 w-3.5" />
+              {:else}
+                <ChevronRight class="h-3.5 w-3.5" />
+              {/if}
+              Advanced Settings
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div class="space-y-4 pt-2">
+                <!-- Project Select -->
+                <div>
+                  <Label for="project" class="text-metadata mb-2 block">Project</Label>
+                  <select
+                    id="project"
+                    bind:value={selectedProjectId}
+                    required
+                    disabled={createLoading}
+                    class="select-input"
+                  >
+                    {#each projects as project (project.id)}
+                      <option value={project.id}>{project.name}</option>
+                    {/each}
+                  </select>
+                </div>
 
-              <!-- Epic Select -->
-              <div>
-                <Label for="epic" class="text-metadata mb-2 block">Epic</Label>
-                <select
-                  id="epic"
-                  bind:value={localEpicId}
-                  required
-                  disabled={createLoading}
-                  class="select-input"
-                >
-                  {#each projectEpics as epic (epic.id)}
-                    <option value={epic.id}>{epic.name}</option>
-                  {/each}
-                </select>
+                <!-- Epic Select -->
+                <div>
+                  <Label for="epic" class="text-metadata mb-2 block">Epic</Label>
+                  <select
+                    id="epic"
+                    bind:value={localEpicId}
+                    required
+                    disabled={createLoading}
+                    class="select-input"
+                  >
+                    {#each projectEpics as epic (epic.id)}
+                      <option value={epic.id}>{epic.name}</option>
+                    {/each}
+                  </select>
+                </div>
               </div>
-            </div>
-          </section>
+            </CollapsibleContent>
+          </Collapsible>
 
           <!-- Submit Button -->
           <Button type="submit" disabled={createLoading || !localTitle.trim()} class="w-full">
@@ -932,42 +952,60 @@
                 </select>
               </div>
 
-              <!-- Project -->
-              {#if projects.length > 1}
-                <div class="flex items-center gap-3">
-                  <label for="edit-project" class="text-xs text-foreground-muted w-20 shrink-0"
-                    >Project</label
+              <!-- Advanced (Project & Epic) -->
+              {#if projects.length > 1 || projectEpics.length > 1}
+                <Collapsible bind:open={editAdvancedOpen}>
+                  <CollapsibleTrigger
+                    class="w-full flex items-center gap-2 py-1 text-xs text-foreground-muted cursor-pointer hover:text-foreground transition-colors"
                   >
-                  <select
-                    id="edit-project"
-                    value={localProjectId}
-                    onchange={handleEditProjectChange}
-                    class="select-input-sm"
-                  >
-                    {#each projects as project (project.id)}
-                      <option value={project.id}>{project.name}</option>
-                    {/each}
-                  </select>
-                </div>
-              {/if}
+                    {#if editAdvancedOpen}
+                      <ChevronDown class="h-3 w-3" />
+                    {:else}
+                      <ChevronRight class="h-3 w-3" />
+                    {/if}
+                    Advanced
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div class="space-y-2 pt-1">
+                      {#if projects.length > 1}
+                        <div class="flex items-center gap-3">
+                          <label
+                            for="edit-project"
+                            class="text-xs text-foreground-muted w-20 shrink-0">Project</label
+                          >
+                          <select
+                            id="edit-project"
+                            value={localProjectId}
+                            onchange={handleEditProjectChange}
+                            class="select-input-sm"
+                          >
+                            {#each projects as project (project.id)}
+                              <option value={project.id}>{project.name}</option>
+                            {/each}
+                          </select>
+                        </div>
+                      {/if}
 
-              <!-- Epic -->
-              {#if projectEpics.length > 1}
-                <div class="flex items-center gap-3">
-                  <label for="edit-epic" class="text-xs text-foreground-muted w-20 shrink-0"
-                    >Epic</label
-                  >
-                  <select
-                    id="edit-epic"
-                    bind:value={localEpicId}
-                    onchange={handleEpicChange}
-                    class="select-input-sm"
-                  >
-                    {#each projectEpics as epic (epic.id)}
-                      <option value={epic.id}>{epic.name}</option>
-                    {/each}
-                  </select>
-                </div>
+                      {#if projectEpics.length > 1}
+                        <div class="flex items-center gap-3">
+                          <label for="edit-epic" class="text-xs text-foreground-muted w-20 shrink-0"
+                            >Epic</label
+                          >
+                          <select
+                            id="edit-epic"
+                            bind:value={localEpicId}
+                            onchange={handleEpicChange}
+                            class="select-input-sm"
+                          >
+                            {#each projectEpics as epic (epic.id)}
+                              <option value={epic.id}>{epic.name}</option>
+                            {/each}
+                          </select>
+                        </div>
+                      {/if}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               {/if}
             </div>
           </section>

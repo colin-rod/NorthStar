@@ -489,30 +489,29 @@
           <CM.ContextMenuSub>
             <CM.ContextMenuSubTrigger>Move to Epic</CM.ContextMenuSubTrigger>
             <CM.ContextMenuSubContent align="start">
-              {#each [...epicsByProject.values()] as { project, epics } (project.id)}
-                <CM.ContextMenuSub>
-                  <CM.ContextMenuSubTrigger>{project.name}</CM.ContextMenuSubTrigger>
-                  <CM.ContextMenuSubContent align="start">
-                    {#each epics as epic (epic.id)}
-                      <CM.ContextMenuItem
-                        disabled={currentEpicId === epic.id}
-                        onclick={() => {
-                          onMoveToEpic?.(node!, epic.id);
-                          onClose();
-                        }}
-                      >
-                        <span class="flex items-center gap-2">
-                          {#if currentEpicId === epic.id}
-                            <Check class="h-3 w-3 shrink-0" />
-                          {:else}
-                            <span class="w-3 shrink-0"></span>
-                          {/if}
-                          {epic.name}
-                        </span>
-                      </CM.ContextMenuItem>
-                    {/each}
-                  </CM.ContextMenuSubContent>
-                </CM.ContextMenuSub>
+              {#each [...epicsByProject.values()] as { project, epics }, i (project.id)}
+                {#if i > 0}
+                  <CM.ContextMenuSeparator />
+                {/if}
+                <CM.ContextMenuGroupHeading>{project.name}</CM.ContextMenuGroupHeading>
+                {#each epics as epic (epic.id)}
+                  <CM.ContextMenuItem
+                    disabled={currentEpicId === epic.id}
+                    onclick={() => {
+                      onMoveToEpic?.(node!, epic.id);
+                      onClose();
+                    }}
+                  >
+                    <span class="flex items-center gap-2">
+                      {#if currentEpicId === epic.id}
+                        <Check class="h-3 w-3 shrink-0" />
+                      {:else}
+                        <span class="w-3 shrink-0"></span>
+                      {/if}
+                      {epic.name}
+                    </span>
+                  </CM.ContextMenuItem>
+                {/each}
               {/each}
             </CM.ContextMenuSubContent>
           </CM.ContextMenuSub>
