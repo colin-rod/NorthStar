@@ -107,20 +107,23 @@
   ></div>
 {/if}
 
-<div class="min-h-screen flex">
-  <!-- Desktop: Left sidebar -->
-  <SideNav />
+<div class="min-h-screen flex flex-col">
+  <Header session={data.session} {breadcrumbs} />
 
-  <!-- Main content area -->
-  <div class="flex-1 flex flex-col pb-16 md:pb-0 md:ml-64">
-    <Header session={data.session} {breadcrumbs} />
-    <main class="flex-1 container mx-auto px-4 py-6 max-w-6xl">
-      {@render children()}
-    </main>
+  <div class="flex flex-1">
+    <!-- Desktop: Left sidebar -->
+    <SideNav />
+
+    <!-- Main content area -->
+    <div class="flex-1 flex flex-col pb-16 md:pb-0 md:ml-64">
+      <main class="flex-1 container mx-auto px-4 py-6 max-w-6xl">
+        {@render children()}
+      </main>
+    </div>
+
+    <!-- Mobile: Bottom navigation -->
+    <BottomNav />
   </div>
-
-  <!-- Mobile: Bottom navigation -->
-  <BottomNav />
 </div>
 
 <!-- Toast notifications -->
