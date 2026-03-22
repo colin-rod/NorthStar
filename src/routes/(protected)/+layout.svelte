@@ -115,7 +115,7 @@
     <SideNav />
 
     <!-- Main content area -->
-    <div class="flex-1 flex flex-col pb-16 md:pb-0 md:ml-64">
+    <div class="flex-1 flex flex-col content-area md:pb-0 md:ml-64">
       <main class="flex-1 container mx-auto px-4 py-6 max-w-6xl">
         {@render children()}
       </main>
@@ -132,3 +132,14 @@
 <!-- Keyboard shortcut modals -->
 <KeyboardShortcutsHelp />
 <StoryPointsPicker />
+
+<style>
+  .content-area {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 768px) {
+    .content-area {
+      padding-bottom: 0;
+    }
+  }
+</style>
