@@ -25,6 +25,7 @@
 <nav
   aria-label="Mobile navigation"
   class="fixed bottom-0 inset-x-0 z-40 border-t border-border-divider bg-surface md:hidden"
+  style="padding-bottom: env(safe-area-inset-bottom)"
 >
   <div class="flex justify-around items-center h-16">
     <a
