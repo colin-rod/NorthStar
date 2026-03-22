@@ -24,16 +24,11 @@
 <!-- North Design: Clean sidebar with subtle styling -->
 <nav
   aria-label="Main navigation"
-  class="fixed left-0 top-0 h-screen w-64 border-r border-border-divider bg-surface hidden md:block"
+  class="fixed left-0 top-[57px] h-[calc(100vh-57px)] w-64 border-r border-border-divider bg-surface hidden md:block"
 >
   <div class="flex flex-col h-full">
-    <!-- Logo/App title with serif font per North spec -->
-    <div class="p-6 border-b border-border-divider">
-      <h1 class="font-accent text-page-title">North</h1>
-    </div>
-
     <!-- Navigation items -->
-    <div class="flex-1 p-4 space-y-1">
+    <div class="flex-1 p-4 pt-6 space-y-1">
       <a
         href="/"
         aria-label="Home"

@@ -23,14 +23,17 @@
 </script>
 
 <!-- North Design: Minimal header with subtle border -->
-<header aria-label="Site header" class="border-b border-border-divider bg-surface">
+<header
+  aria-label="Site header"
+  class="sticky top-0 z-40 border-b border-border-divider bg-surface"
+>
   <div class="container mx-auto flex items-center justify-between px-4 py-4">
     <div class="flex items-center gap-4">
       <!-- North wordmark with serif font per design spec -->
       <a
         href="/"
         aria-label="Home"
-        class="font-accent text-page-title text-foreground hover:text-primary transition-colors md:hidden"
+        class="font-accent text-page-title text-foreground hover:text-primary transition-colors"
       >
         North
       </a>
