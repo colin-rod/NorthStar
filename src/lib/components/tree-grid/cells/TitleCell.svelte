@@ -196,8 +196,8 @@
         <span class="mx-1 text-muted-foreground">·</span>
         {title}
       </span>
-      <!-- Line 2: priority + story points + status (mobile only) -->
-      <span class="flex items-center gap-1.5 md:hidden">
+      <!-- Line 2: priority + story points + status -->
+      <span class="flex items-center gap-1.5">
         {#if issuePriority !== null}
           <PriorityBadge priority={issuePriority} />
         {/if}
@@ -214,18 +214,6 @@
           <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
         {/if}
       </span>
-    </span>
-    <!-- Desktop-only: inline badges -->
-    <span class="hidden md:flex items-center gap-1 shrink-0 flex-wrap">
-      {#if issuePriority !== null}
-        <PriorityBadge priority={issuePriority} />
-      {/if}
-      {#if issueSp !== null}
-        <StoryPointsBadge story_points={issueSp} />
-      {/if}
-      {#if issueMilestone}
-        <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
-      {/if}
     </span>
     <DependencyChip issue={node.data as Issue} />
   {:else}

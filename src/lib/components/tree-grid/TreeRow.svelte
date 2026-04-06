@@ -190,8 +190,8 @@
     />
   </td>
 
-  <!-- Status (hidden on mobile; shown in TitleCell second line for issues) -->
-  <td class="py-4 px-4 hidden md:table-cell">
+  <!-- Status: hidden for issues (status is in TitleCell second line); desktop-only for projects/epics -->
+  <td class="py-4 px-4 {node.type === 'issue' ? 'hidden' : 'hidden md:table-cell'}">
     <StatusCell {node} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
   </td>
 
