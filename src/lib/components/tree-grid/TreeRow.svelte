@@ -190,8 +190,8 @@
     />
   </td>
 
-  <!-- Status -->
-  <td class="py-4 px-4">
+  <!-- Status (hidden on mobile; shown in TitleCell second line for issues) -->
+  <td class="py-4 px-4 hidden md:table-cell">
     <StatusCell {node} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
   </td>
 

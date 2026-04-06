@@ -20,6 +20,7 @@
   import { isLastChild } from '$lib/utils/tree-grid-helpers';
   import { getProjectColor } from '$lib/utils/project-colors';
   import { getProjectIcon } from '$lib/utils/project-icons';
+  import { ISSUE_STATUS_LABELS } from '$lib/utils/status-labels';
 
   interface Props {
     node: TreeNode;
@@ -110,6 +111,20 @@
   const issueSp = $derived(issueData?.story_points ?? null);
   const issueMilestone = $derived(issueData?.milestone ?? null);
 
+  // Issue status (for mobile second line)
+  const issueStatusOptions = [
+    { value: 'backlog', label: ISSUE_STATUS_LABELS.backlog, color: 'bg-status-todo' },
+    { value: 'todo', label: ISSUE_STATUS_LABELS.todo, color: 'bg-status-todo' },
+    { value: 'in_progress', label: ISSUE_STATUS_LABELS.in_progress, color: 'bg-status-doing' },
+    { value: 'in_review', label: ISSUE_STATUS_LABELS.in_review, color: 'bg-status-in-review' },
+    { value: 'done', label: ISSUE_STATUS_LABELS.done, color: 'bg-status-done' },
+    { value: 'canceled', label: ISSUE_STATUS_LABELS.canceled, color: 'bg-status-canceled' },
+  ];
+  const issueStatus = $derived(issueData?.status ?? null);
+  const issueStatusOption = $derived(
+    issueStatus ? issueStatusOptions.find((o) => o.value === issueStatus) : null,
+  );
+
   // Epic pills
   const epicData = $derived(isEpicNode ? (node.data as Epic) : null);
   const epicPriority = $derived(epicData?.priority ?? null);
@@ -172,6 +187,47 @@
       onkeydown={handleEditKeydown}
       onblur={handleEditBlur}
     />
+  {:else if isIssueNode}
+    <!-- Issue: two-line layout on mobile, inline on desktop -->
+    <span class="flex-1 min-w-0 flex flex-col gap-0.5">
+      <!-- Line 1: number + title -->
+      <span class="text-issue-title {fontWeight} wrap-break-word">
+        <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
+        <span class="mx-1 text-muted-foreground">·</span>
+        {title}
+      </span>
+      <!-- Line 2: priority + story points + status (mobile only) -->
+      <span class="flex items-center gap-1.5 md:hidden">
+        {#if issuePriority !== null}
+          <PriorityBadge priority={issuePriority} />
+        {/if}
+        {#if issueSp !== null}
+          <StoryPointsBadge story_points={issueSp} />
+        {/if}
+        {#if issueStatusOption}
+          <span class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full shrink-0 {issueStatusOption.color}"></span>
+            <span class="text-xs text-foreground">{issueStatusOption.label}</span>
+          </span>
+        {/if}
+        {#if issueMilestone}
+          <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
+        {/if}
+      </span>
+    </span>
+    <!-- Desktop-only: inline badges -->
+    <span class="hidden md:flex items-center gap-1 shrink-0 flex-wrap">
+      {#if issuePriority !== null}
+        <PriorityBadge priority={issuePriority} />
+      {/if}
+      {#if issueSp !== null}
+        <StoryPointsBadge story_points={issueSp} />
+      {/if}
+      {#if issueMilestone}
+        <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
+      {/if}
+    </span>
+    <DependencyChip issue={node.data as Issue} />
   {:else}
     <span class="text-issue-title {fontWeight} flex-1 min-w-0 wrap-break-word">
       <span class="text-muted-foreground font-mono text-xs">{prefix}-{number}</span>
@@ -188,19 +244,5 @@
         <Badge variant="outline" class="text-xs max-w-25 truncate">{epicMilestone.name}</Badge>
       {/if}
     </span>
-  {/if}
-  {#if isIssueNode}
-    <span class="flex items-center gap-1 shrink-0 flex-wrap">
-      {#if issuePriority !== null}
-        <PriorityBadge priority={issuePriority} />
-      {/if}
-      {#if issueSp !== null}
-        <StoryPointsBadge story_points={issueSp} />
-      {/if}
-      {#if issueMilestone}
-        <Badge variant="outline" class="text-xs max-w-25 truncate">{issueMilestone.name}</Badge>
-      {/if}
-    </span>
-    <DependencyChip issue={node.data as Issue} />
   {/if}
 </div>
