@@ -649,7 +649,7 @@
   });
 </script>
 
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="font-accent text-page-title">Projects</h1>
     <div class="flex gap-2 items-center flex-wrap justify-end">
