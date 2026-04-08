@@ -274,7 +274,7 @@
   // Column definitions (per spec)
   const columns = [
     { key: 'select', header: '', width: '40px', hideOnMobile: true },
-    { key: 'title', header: 'Title', width: 'flex min-w-0', hideOnMobile: false },
+    { key: 'title', header: 'Title', width: undefined, hideOnMobile: false },
     { key: 'status', header: 'Status', width: '140px', hideOnMobile: true },
     { key: 'total_sp', header: 'Total pts', width: '96px', hideOnMobile: true },
     { key: 'progress', header: 'Progress', width: '200px', hideOnMobile: true },

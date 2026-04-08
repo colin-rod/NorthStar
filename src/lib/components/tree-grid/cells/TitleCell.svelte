@@ -141,7 +141,7 @@
   const nodeIsLastChild = $derived(isLastChild(node, allNodes));
 </script>
 
-<div class="relative flex items-start gap-2" style="padding-left: {indentation}">
+<div class="relative flex items-start gap-2 overflow-hidden" style="padding-left: {indentation}">
   <!-- Tree Lines (absolutely positioned within this cell) -->
   <div class="absolute inset-0 pointer-events-none">
     <TreeLine {node} isLastChild={nodeIsLastChild} {allNodes} />

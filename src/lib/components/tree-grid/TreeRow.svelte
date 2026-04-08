@@ -176,7 +176,7 @@
   </td>
 
   <!-- Title with Indentation + Chevron -->
-  <td class="py-4 px-4">
+  <td class="py-4 px-4 min-w-0 overflow-hidden">
     <TitleCell
       {node}
       {allNodes}
