@@ -190,9 +190,11 @@
     />
   </td>
 
-  <!-- Status: hidden for issues (status is in TitleCell second line); desktop-only for projects/epics -->
-  <td class="py-4 px-4 {node.type === 'issue' ? 'hidden' : 'hidden md:table-cell'}">
-    <StatusCell {node} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
+  <!-- Status: empty for issues (status is in TitleCell second line); desktop-only for all -->
+  <td class="py-4 px-4 hidden md:table-cell">
+    {#if node.type !== 'issue'}
+      <StatusCell {node} onEdit={(value) => onCellEdit(node.id, 'status', value)} />
+    {/if}
   </td>
 
   <!-- Total Story Points (Rollup) -->
