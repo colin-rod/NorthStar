@@ -70,7 +70,6 @@
   import { buildStoragePath } from '$lib/utils/attachment-helpers';
   import { normalizeDescription } from '$lib/utils/text-helpers';
   import { useMediaQuery } from '$lib/hooks/useMediaQuery.svelte';
-  import { useKeyboardAwareHeight } from '$lib/hooks/useKeyboardAwareHeight.svelte';
   import { toast } from 'svelte-sonner';
   import { get } from 'svelte/store';
   import { createIssueContext } from '$lib/stores/issues';
@@ -185,17 +184,10 @@
   // Responsive behavior: desktop uses right-side drawer, mobile uses bottom sheet
   const isDesktop = useMediaQuery('(min-width: 768px)');
   let isExpandedDesktop = $derived(expanded && isDesktop());
-  let sheetSide = $derived<'right' | 'bottom'>(isDesktop() ? 'right' : 'bottom');
+  let sheetSide = $derived<'right' | 'bottom' | 'fullscreen'>(isDesktop() ? 'right' : 'fullscreen');
   let sheetClass = $derived(
-    isDesktop() ? 'w-[600px] h-screen overflow-y-auto p-6' : 'overflow-y-auto relative', // No max-h, handled by hook
+    isDesktop() ? 'w-[600px] h-screen overflow-y-auto p-6' : 'overflow-y-auto relative',
   );
-
-  // Apply keyboard-aware height on mobile only
-  $effect(() => {
-    if (!isDesktop() && sheetContentRef) {
-      useKeyboardAwareHeight(sheetContentRef);
-    }
-  });
 
   // Initialize local state when issue changes (edit mode)
   // Only re-initialize when the issue ID actually changes (not just object reference)
@@ -710,7 +702,7 @@
       {/if}
 
       <!-- Header -->
-      <SheetHeader class="mb-6">
+      <SheetHeader class="mb-6" style={!isDesktop() ? 'padding-top: env(safe-area-inset-top)' : ''}>
         {#if issueBreadcrumb}
           <p class="text-xs text-muted-foreground mb-1 truncate">{issueBreadcrumb}</p>
         {/if}
@@ -1066,6 +1058,9 @@
           </div>
         {/if}
       {/if}
+    {/if}
+    {#if !isDesktop()}
+      <div style="height: env(safe-area-inset-bottom)"></div>
     {/if}
   </SheetContent>
 </Sheet>
