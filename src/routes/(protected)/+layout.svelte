@@ -115,7 +115,7 @@
     <SideNav />
 
     <!-- Main content area -->
-    <div class="flex-1 flex flex-col content-area md:pb-0 md:ml-64">
+    <div class="flex-1 flex flex-col content-area md:pb-0 md:ml-64 min-w-0">
       <main class="flex-1 container mx-auto px-4 py-4 md:py-6 max-w-6xl">
         {@render children()}
       </main>
