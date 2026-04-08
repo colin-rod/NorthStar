@@ -54,7 +54,7 @@
     ariaLabel="Completion progress"
   />
 
-  <div class="flex gap-4 text-xs text-muted-foreground">
+  <div class="flex flex-wrap gap-4 text-xs text-muted-foreground">
     <span>{doneCount} / {totalCount} issues complete</span>
     {#if totalPoints > 0}
       <span>{donePoints} / {totalPoints} story points done</span>
