@@ -274,7 +274,7 @@
   // Column definitions (per spec)
   const columns = [
     { key: 'select', header: '', width: '40px', hideOnMobile: true },
-    { key: 'title', header: 'Title', width: undefined, hideOnMobile: false },
+    { key: 'title', header: 'Title', width: undefined, minWidth: '200px', hideOnMobile: false },
     { key: 'status', header: 'Status', width: '140px', hideOnMobile: true },
     { key: 'total_sp', header: 'Total pts', width: '96px', hideOnMobile: true },
     { key: 'progress', header: 'Progress', width: '200px', hideOnMobile: true },
@@ -473,7 +473,7 @@
 
   <!-- Tree Grid Table -->
   <div class="border border-border-divider rounded-lg overflow-hidden bg-surface">
-    <table class="w-full table-fixed">
+    <table class="w-full table-auto">
       <!-- Header Row -->
       <thead class="bg-transparent">
         <tr class="border-b border-border-divider">
@@ -482,7 +482,12 @@
               class="text-left py-3 px-4 text-metadata uppercase text-foreground-muted tracking-wide {col.hideOnMobile
                 ? 'hidden md:table-cell'
                 : ''}"
-              style={col.width ? `width: ${col.width}` : undefined}
+              style={[
+                col.width ? `width: ${col.width}` : '',
+                col.minWidth ? `min-width: ${col.minWidth}` : '',
+              ]
+                .filter(Boolean)
+                .join('; ') || undefined}
             >
               {col.header}
             </th>
