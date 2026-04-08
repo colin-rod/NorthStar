@@ -274,11 +274,10 @@
   // Column definitions (per spec)
   const columns = [
     { key: 'select', header: '', width: '40px', hideOnMobile: true },
-    { key: 'title', header: 'Title', width: 'flex min-w-[340px]', hideOnMobile: false },
+    { key: 'title', header: 'Title', width: '', hideOnMobile: false },
     { key: 'status', header: 'Status', width: '140px', hideOnMobile: true },
     { key: 'total_sp', header: 'Total pts', width: '96px', hideOnMobile: true },
     { key: 'progress', header: 'Progress', width: '200px', hideOnMobile: true },
-    { key: 'actions', header: '', width: '80px', hideOnMobile: true },
   ];
 
   // Drag-drop handlers
@@ -474,7 +473,7 @@
 
   <!-- Tree Grid Table -->
   <div class="border border-border-divider rounded-lg overflow-hidden bg-surface">
-    <table class="w-full">
+    <table class="w-full table-fixed">
       <!-- Header Row -->
       <thead class="bg-transparent">
         <tr class="border-b border-border-divider">
@@ -483,7 +482,7 @@
               class="text-left py-3 px-4 text-metadata uppercase text-foreground-muted tracking-wide {col.hideOnMobile
                 ? 'hidden md:table-cell'
                 : ''}"
-              style="width: {col.width}"
+              style={col.width ? `width: ${col.width}` : undefined}
             >
               {col.header}
             </th>
