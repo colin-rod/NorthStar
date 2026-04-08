@@ -27,7 +27,7 @@
   aria-label="Site header"
   class="sticky top-0 z-40 border-b border-border-divider bg-surface"
 >
-  <div class="container mx-auto flex items-center justify-between px-4 py-4">
+  <div class="container mx-auto flex items-center justify-between px-4 py-2 md:py-4">
     <div class="flex items-center gap-4">
       <!-- North wordmark with serif font per design spec -->
       <a
