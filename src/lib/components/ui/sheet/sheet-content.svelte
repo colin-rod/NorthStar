@@ -16,6 +16,9 @@
         /* Center peek: full-screen centered modal for desktop expand mode */
         center:
           'data-[state=open]:fade-in data-[state=closed]:fade-out inset-4 md:inset-8 w-auto h-auto max-h-[calc(100vh-4rem)] overflow-y-auto rounded-xl border border-border',
+        /* Mobile fullscreen: covers entire viewport, safe area padding applied by consumer */
+        fullscreen:
+          'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 inset-y-0 border-none rounded-none',
       },
     },
     defaultVariants: {
